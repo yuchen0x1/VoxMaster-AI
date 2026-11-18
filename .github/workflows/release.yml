@@ -43,6 +43,18 @@ jobs:
           }
           $bash = (Get-ChildItem "$env:RUNNER_TEMP/msys64/usr/bin/bash.exe","D:/a/_temp/msys64/usr/bin/bash.exe" -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
           if (-not $bash) { throw 'MSYS2 bash not found' }
+          $innoLanguages = 'C:/Program Files (x86)/Inno Setup 6/Languages'
+          if (-not (Test-Path "$innoLanguages/ChineseSimplified.isl")) {
+            # Older Inno Setup 6 builds ship without it; fetch the file pinned to
+            # an issrc commit and verify its SHA-256 before installing.
+            curl --retry 4 --fail --silent --show-error --location `
+              --output "$env:RUNNER_TEMP/ChineseSimplified.isl" `
+              https://raw.githubusercontent.com/jrsoftware/issrc/6ef32198ef1f7b7b375cd4b6b90896c2a58eb4c2/Files/Languages/ChineseSimplified.isl
+            $expected = 'e0b0b350e2245f3c5e65586dfe43d574f6e7f06f2261149aba284954b3fc9a8d'
+            $actual = (Get-FileHash "$env:RUNNER_TEMP/ChineseSimplified.isl" -Algorithm SHA256).Hash.ToLower()
+            if ($actual -ne $expected) { throw 'ChineseSimplified.isl checksum mismatch' }
+            Copy-Item "$env:RUNNER_TEMP/ChineseSimplified.isl" "$innoLanguages/ChineseSimplified.isl"
+          }
           ./scripts/build.ps1 -Bash $bash
       - shell: pwsh
         env:
