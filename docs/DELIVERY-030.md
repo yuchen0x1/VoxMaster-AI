@@ -36,10 +36,23 @@
 - Android/iOS/Web/PWA/浏览器扩展/Docker/NAS 本轮仍未开发，理由见 [PLATFORMS](PLATFORMS.md) 与 RESEARCH-030 差距表。
 - PyAV 18→19（GIL 释放修复）、模型镜像下载、自动回滚等候选保持暂缓，原因见 RESEARCH-030。
 
-## 0.3.0 发布步骤（执行后回填）
+## 0.3.0 发布结果（已执行并验证）
 
-1. 等待 CI 五项任务（4 平台回归 + workflows）全部通过 —— 见下方状态。
-2. 合并 codex/ecosystem-0.2 → main 并推送。
-3. 在 main 上打 `v0.3.0` 标签推送，由 Release 工作流创建 Release 并上传资产。
-4. 运行 `scripts/verify_release.py` 复核公开清单、资产链接与 Ed25519 签名。
-5. 回填实际 Release 地址与资产清单。
+| 步骤 | 结果 | 证据 |
+|---|---|---|
+| CI 五项任务（4 平台回归 + actionlint） | PASS | 运行 44416395046 全绿 |
+| PR #1 合并至 main（4 项必需检查 + 会话解决） | PASS | merge commit fdc8243 |
+| v0.3.0 标签触发 Release 工作流 | PASS | 运行 44421851263 |
+| checks 阶段（5 任务） | PASS | 同上 |
+| package 阶段（MSYS2 编解码构建、PyInstaller 双入口、包自检、Inno 安装器、签名、发布、发布后验证） | PASS | 首次运行因 CI 缺 `ChineseSimplified.isl` 失败，已修复（固定 issrc commit + SHA-256 校验下载） |
+| CI 内发布后验证（公开清单重读、逐资产链接、Ed25519） | PASS | 日志：Setup/Portable `link PASS`，`Public manifest Ed25519 PASS 0.3.0` |
+| 独立本地签名验证（API 通道绕开本地 CDN 限制） | PASS | update.json/.sig 用仓库内公钥验签通过 |
+| 清单与 SHA256SUMS.txt 交叉核对 | PASS | 逐资产 SHA-256 一致 |
+
+Release 地址：https://github.com/yuchen0x1/VoxMaster-AI/releases/tag/v0.3.0
+资产：`VoxMasterAI-0.3.0-Windows-x64-Setup.exe`（118,412,402 字节）、`VoxMasterAI-0.3.0-Windows-x64-Portable.zip`（131,629,596 字节）、`VoxMasterAI-0.3.0-Source-Kit.zip`、`Qt-6.12.0-Corresponding-Sources.zip`、`update.json`、`update.json.sig`、`SHA256SUMS.txt`。
+
+## 遗留事项
+
+- Dependabot 已开始提交依赖更新 PR（含 onnxruntime 1.32.0）；该 PR 因 1.32.0 起 onnxruntime 不再提供 Intel macOS wheel，不能直接合并，需按 requirements 的平台条件重新评估。
+- 本机 `scripts/verify_release.py` 因本地网络到 GitHub CDN 的 SSL 中断未能直连；已用 API 通道完成独立签名验证，并在 CI 内完成链接验证。用户网络正常时可直接重跑该脚本。
