@@ -5,6 +5,16 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # onnxruntime 在 requirements.txt 中按平台分支固定：darwin x86_64 用 1.23.2
+      # （上游自 1.23.2 起不再发布 Intel macOS wheel，1.32.0 会导致 macos-15-intel
+      # 安装失败）；linux/arm64 分支升级也必须与该矩阵同步重测。恢复版本更新前先
+      # 复核 docs/RESEARCH-030 的差距表与 docs/DELIVERY-030 的遗留事项。
+      - dependency-name: onnxruntime
+      # av 19 修复了打开编解码器时释放 GIL（#2517），但发行物用固定源码构建的
+      # FFmpeg 共享库替换 PyAV wheel 的编解码库，必须整链重验后再升级。
+      # 触发条件见 docs/RESEARCH-030 升级候选 15/28。
+      - dependency-name: av
   - package-ecosystem: github-actions
     directory: /
     schedule:

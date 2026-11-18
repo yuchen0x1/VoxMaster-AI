@@ -54,5 +54,7 @@ Release 地址：https://github.com/yuchen0x1/VoxMaster-AI/releases/tag/v0.3.0
 
 ## 遗留事项
 
-- Dependabot 已开始提交依赖更新 PR（含 onnxruntime 1.32.0）；该 PR 因 1.32.0 起 onnxruntime 不再提供 Intel macOS wheel，不能直接合并，需按 requirements 的平台条件重新评估。
+- ① Dependabot 的 onnxruntime 1.32.0 PR（#6）已说明原因并关闭（上游自 1.23.2 起不再发布 Intel macOS wheel）；`dependabot.yml` 已加 ignore 规则防止每周重建。恢复版本更新的条件：平台矩阵与升级候选统一重测（见 RESEARCH-030 差距表）。
+- ② PyAV 19（GIL 修复）升级 PR（#9）已按 RESEARCH-030 候选 15/28 暂缓并关闭，同样加入 ignore 规则。触发条件：用固定源码构建的 FFmpeg 共享库对 PyAV 19 的 ABI 整链重验（build.ps1 → 冻结 → 包自检 → 安装器 → 音频回归）。自动回滚维持暂缓（需安装器级投入）。
+- ③ Win10 实机安装/卸载验收：已建立可执行清单 [ACCEPTANCE-WIN10](ACCEPTANCE-WIN10.md)（12 项检查 + 记录要求），待真实设备执行后回填结果。
 - 本机 `scripts/verify_release.py` 因本地网络到 GitHub CDN 的 SSL 中断未能直连；已用 API 通道完成独立签名验证，并在 CI 内完成链接验证。用户网络正常时可直接重跑该脚本。
