@@ -8,7 +8,7 @@ excluded = ["pytest", "_pytest", "tkinter", "unittest.test", "matplotlib", "IPyt
 runtime_metadata = []
 for name in ("av", "scipy", "sounddevice", "pyside6-essentials", "onnxruntime-directml"):
     runtime_metadata.extend(copy_metadata(name))
-analysis = Analysis([str(root / "app.py")], pathex=[str(root)], binaries=[], datas=runtime_metadata,
+analysis = Analysis([str(root / "app.py"), str(root / "scripts/cli_entry.py")], pathex=[str(root)], binaries=[], datas=runtime_metadata,
                     hiddenimports=["vox.package_check"], excludes=excluded, noarchive=False)
 
 def allowed(item):
@@ -24,7 +24,13 @@ def allowed(item):
 analysis.binaries = [item for item in analysis.binaries if allowed(item)]
 analysis.datas = [item for item in analysis.datas if allowed(item)]
 pyz = PYZ(analysis.pure)
-exe = EXE(pyz, analysis.scripts, [], exclude_binaries=True, name="VoxMasterAI",
+runtime_scripts = [item for item in analysis.scripts if Path(item[1]).name.startswith("pyi_rth_")]
+gui_scripts = runtime_scripts + [item for item in analysis.scripts if Path(item[1]).name.lower() == "app.py"]
+cli_scripts = runtime_scripts + [item for item in analysis.scripts if Path(item[1]).name.lower() == "cli_entry.py"]
+exe = EXE(pyz, gui_scripts, [], exclude_binaries=True, name="VoxMasterAI",
           debug=False, strip=False, upx=False, console=False, version=str(root/"packaging"/"version.txt"),
           icon=str(root/"packaging"/"VoxMasterAI.ico"))
-dist = COLLECT(exe, analysis.binaries, analysis.datas, strip=False, upx=False, name="VoxMasterAI")
+cli = EXE(pyz, cli_scripts, [], exclude_binaries=True, name="VoxMasterAI-CLI",
+          debug=False, strip=False, upx=False, console=True, version=str(root/"packaging"/"version.txt"),
+          icon=str(root/"packaging"/"VoxMasterAI.ico"))
+dist = COLLECT(exe, cli, analysis.binaries, analysis.datas, strip=False, upx=False, name="VoxMasterAI")

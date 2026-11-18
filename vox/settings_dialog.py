@@ -133,7 +133,7 @@ class SettingsDialog(QDialog):
                 tree.addTopLevelItem(item)
             return item
 
-        row("Windows", r.get("system"))
+        row("操作系统", r.get("system"))
         cpu = row("处理器", r.get("cpu"))
         row(
             "物理核心 / 逻辑线程",
@@ -216,7 +216,7 @@ class SettingsDialog(QDialog):
 
     def _populate_devices(self, settings):
         self.output.clear()
-        self.output.addItem("跟随 Windows 默认输出", None)
+        self.output.addItem("跟随系统默认输出", None)
         self._outputs = {d["id"]: d for d in self._report.get("devices", []) if d["outputs"]}
         for i, item in self._outputs.items():
             self.output.addItem(f"{item['name']}  ·  {item['host']}", i)
@@ -255,8 +255,11 @@ class SettingsDialog(QDialog):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.addWidget(_label(f"VoxMaster AI  {__version__}", "section"))
+        official = QPushButton('检查并安装官方更新…')
+        official.clicked.connect(self._official_update)
+        layout.addWidget(official)
         layout.addWidget(
-            _label("当前版本尚未发布到官方更新源。可指定自己的 HTTPS JSON 版本清单，手动检查版本。")
+            _label("官方更新使用签名清单校验。下方自定义清单仅用于查询版本，不参与下载和安装。")
         )
         self.url = QLineEdit(self._settings.get("update_url", ""))
         self.url.setPlaceholderText("HTTPS 更新清单地址")
@@ -274,6 +277,11 @@ class SettingsDialog(QDialog):
         self._timer.setInterval(150)
         self._timer.timeout.connect(self._poll)
         return page
+
+    def _official_update(self):
+        from .update_dialog import UpdateDialog
+
+        UpdateDialog(self.parent()).exec()
 
     def _check(self):
         url = self.url.text().strip()

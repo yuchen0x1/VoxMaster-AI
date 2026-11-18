@@ -9,9 +9,10 @@ idna==3.20
 iniconfig==2.3.1
 mpmath==1.3.0
 numpy==2.4.6
-onnxruntime-directml==1.24.4
+onnxruntime-directml==1.24.4; sys_platform == 'win32'
+onnxruntime==1.24.4; sys_platform != 'win32'
 packaging==26.3
-pefile==2024.8.26
+pefile==2024.8.26; sys_platform == 'win32'
 pluggy==1.7.0
 protobuf==7.36.2
 pycparser==3.12
@@ -20,7 +21,7 @@ pyinstaller==6.22.3
 pyinstaller-hooks-contrib==2026.10
 pyside6-essentials==6.12.0
 pytest==9.2.0
-pywin32-ctypes==0.2.3
+pywin32-ctypes==0.2.3; sys_platform == 'win32'
 requests==2.34.2
 scipy==1.17.1
 setuptools==84.2.1
@@ -28,3 +29,4 @@ shiboken6==6.12.0
 sounddevice==0.5.6
 sympy==1.14.0
 urllib3==2.8.0
+cryptography==50.0.2

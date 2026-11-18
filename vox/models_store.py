@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import http.client
 import json
-import os
 import re
 import shutil
 import tempfile
@@ -32,9 +31,9 @@ BLOCK = 256 * 1024
 
 
 def app_data():
-    return Path(
-        os.getenv("VOXMASTER_DATA") or Path(os.getenv("LOCALAPPDATA", Path.home())) / "VoxMasterAI"
-    )
+    from .platforms import data_directory
+
+    return data_directory()
 
 
 def settings():

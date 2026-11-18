@@ -102,7 +102,7 @@ def frozen_inputs():
     files = [
         ROOT / "app.py", ROOT / "requirements.txt", ROOT / "packaging/VoxMasterAI.spec",
         ROOT / "packaging/version.txt", ROOT / "packaging/VoxMasterAI.ico",
-        DIST / "VoxMasterAI.exe", *sorted((ROOT / "vox").rglob("*.py")),
+        DIST / "VoxMasterAI.exe", DIST / "VoxMasterAI-CLI.exe", ROOT / "scripts/cli_entry.py", *sorted((ROOT / "vox").rglob("*.py")),
     ]
     return {path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in files}

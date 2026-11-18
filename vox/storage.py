@@ -7,9 +7,9 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(
-    os.environ.get("VOXMASTER_DATA") or Path(os.getenv("LOCALAPPDATA", Path.home())) / "VoxMasterAI"
-)
+from .platforms import data_directory
+
+ROOT = data_directory()
 PROJECT_EXT = ".voxproj"
 
 

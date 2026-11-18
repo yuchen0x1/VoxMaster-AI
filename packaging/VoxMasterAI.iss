@@ -1,4 +1,4 @@
-#define ProductVersion "0.1.1"
+#define ProductVersion "0.2.0"
 [Setup]
 AppId={{88A1E9AC-B8AB-4BB9-B1B8-FC4046736E24}
 AppName=VoxMaster AI
