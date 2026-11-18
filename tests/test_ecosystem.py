@@ -131,3 +131,19 @@ def test_real_cli_render_and_no_overwrite(tmp_path):
     before = output.read_bytes()
     repeated = subprocess.run(command, capture_output=True, timeout=90)
     assert repeated.returncode == 1 and output.read_bytes() == before
+
+
+def test_cli_styles_and_report_file(tmp_path):
+    fixture = Path(__file__).parent / 'fixtures/fleurs-mandarin.wav'
+    listed = subprocess.run([sys.executable, 'app.py', '--cli', 'styles'],
+                            capture_output=True, timeout=60)
+    assert listed.returncode == 0, listed.stderr
+    payload = json.loads(listed.stdout.decode('utf-8'))
+    assert payload['version'] and '经典喊麦' in payload['styles']
+    report = tmp_path / 'reports' / 'analysis.json'
+    analyzed = subprocess.run([sys.executable, 'app.py', '--cli', 'analyze', str(fixture),
+                               '--report', str(report)], capture_output=True, timeout=90)
+    assert analyzed.returncode == 0, analyzed.stderr
+    saved = json.loads(report.read_text('utf-8'))
+    assert saved['version'] and saved['results'][0]['input'].endswith('.wav')
+    assert saved['results'][0]['original']['lufs'] < 0

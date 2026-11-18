@@ -1,0 +1,2992 @@
+{
+  "observed_at": "2026-11-18T22:13:44.878215+00:00",
+  "window_days": 90,
+  "projects": {
+    "audacity/audacity": {
+      "commits": [
+        {
+          "sha": "1aff8b3e08c9",
+          "date": "2026-11-18T17:37:54Z",
+          "subject": "[DockWindow] Removed v1 (#12806)"
+        },
+        {
+          "sha": "401b810790f6",
+          "date": "2026-11-18T14:44:31Z",
+          "subject": "Remove legacy images/, add AU4 svg logo (#11099)"
+        },
+        {
+          "sha": "d85ca390ca56",
+          "date": "2026-11-18T13:04:05Z",
+          "subject": "Updated the framework"
+        },
+        {
+          "sha": "ea836a76d2ce",
+          "date": "2026-11-18T12:13:36Z",
+          "subject": "cmake: remove the MUSE_MODULE_DOCKWINDOW_KDDOCKWIDGETS_V2 option"
+        },
+        {
+          "sha": "9e042bed0040",
+          "date": "2026-11-18T11:24:23Z",
+          "subject": "Add brand/"
+        },
+        {
+          "sha": "e354285b9c84",
+          "date": "2026-11-18T11:24:23Z",
+          "subject": "Remove images/"
+        },
+        {
+          "sha": "b1c8dbe10d09",
+          "date": "2026-11-18T10:14:49Z",
+          "subject": "Fall back to the default temp folder when the saved one is unusable (#12796)"
+        },
+        {
+          "sha": "3139b1be0afa",
+          "date": "2026-11-18T10:14:28Z",
+          "subject": "Only ask for the fallback temp folder, set it in the caller"
+        },
+        {
+          "sha": "55ce6bc29662",
+          "date": "2026-11-18T10:14:28Z",
+          "subject": "Ask before switching to the default temp folder"
+        },
+        {
+          "sha": "96abcc88569a",
+          "date": "2026-11-18T10:14:28Z",
+          "subject": "Fall back to the default temp folder when the saved one is unusable"
+        },
+        {
+          "sha": "48662d21ffb7",
+          "date": "2026-11-18T09:48:43Z",
+          "subject": "Follow the system theme by default on first launch (#12798)"
+        },
+        {
+          "sha": "d4fdfb83704f",
+          "date": "2026-11-18T09:48:23Z",
+          "subject": "Follow the system theme by default on first launch"
+        },
+        {
+          "sha": "4b1cc592e7f9",
+          "date": "2026-11-18T09:42:58Z",
+          "subject": "Update in-repo translations from Transifex (#12802)"
+        },
+        {
+          "sha": "a5d1c343a1dc",
+          "date": "2026-11-18T09:08:37Z",
+          "subject": "Update in-repo translations from Transifex"
+        },
+        {
+          "sha": "cfd366e0a648",
+          "date": "2026-11-17T14:41:12Z",
+          "subject": "[Shortcuts] Applied new approach from framework for shortcuts scopes (#12784)"
+        },
+        {
+          "sha": "9c6e0e3d1606",
+          "date": "2026-11-17T12:56:58Z",
+          "subject": "(fix) Move the playhead to the start of a drag selection (#12613)"
+        },
+        {
+          "sha": "e83601b1d682",
+          "date": "2026-11-17T09:27:10Z",
+          "subject": "testscripts: explicitly wait for the program quit"
+        },
+        {
+          "sha": "4ef3f4f60368",
+          "date": "2026-11-17T09:27:10Z",
+          "subject": "enabled shortcuts module for utests"
+        },
+        {
+          "sha": "e44421f7a03b",
+          "date": "2026-11-17T09:27:10Z",
+          "subject": "shortcuts: updated shortcuts resolver"
+        },
+        {
+          "sha": "2111b6e4600e",
+          "date": "2026-11-17T09:27:10Z",
+          "subject": "Updated the framework"
+        },
+        {
+          "sha": "af293a900a76",
+          "date": "2026-11-17T08:37:49Z",
+          "subject": "Keep the view when a drag selection moves the playhead to its start"
+        },
+        {
+          "sha": "d2cdff5c0082",
+          "date": "2026-11-17T08:37:49Z",
+          "subject": "(fix) Move the playhead to the start of a drag selection"
+        },
+        {
+          "sha": "20f88f6b50dd",
+          "date": "2026-11-17T07:32:54Z",
+          "subject": "Disbanded group fix (#12682)"
+        },
+        {
+          "sha": "80f5d517e6be",
+          "date": "2026-11-17T07:32:43Z",
+          "subject": "Name the group id that means an item is not grouped"
+        },
+        {
+          "sha": "8d275587912b",
+          "date": "2026-11-17T07:32:43Z",
+          "subject": "Dim the whole clip group while dragging with a time selection"
+        },
+        {
+          "sha": "65a54f367058",
+          "date": "2026-11-17T07:32:43Z",
+          "subject": "Move the whole clip group when dragging with a time selection"
+        },
+        {
+          "sha": "262319f797b2",
+          "date": "2026-11-17T07:31:30Z",
+          "subject": "Sound activated recording (#12690)"
+        },
+        {
+          "sha": "3c9fd617177d",
+          "date": "2026-11-17T07:31:18Z",
+          "subject": "Clamp the sound activation level to the meter range when recording starts"
+        },
+        {
+          "sha": "1f68c73e3f43",
+          "date": "2026-11-17T07:31:18Z",
+          "subject": "Show live input levels on the sound activation level meter"
+        },
+        {
+          "sha": "39f8bf4bcc29",
+          "date": "2026-11-17T07:31:18Z",
+          "subject": "Add sound activated recording actions to the Record menu"
+        }
+      ],
+      "last_commit": "2026-11-18T17:37:54Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 0
+      }
+    },
+    "Ardour/ardour": {
+      "commits": [
+        {
+          "sha": "2db53a48853a",
+          "date": "2026-11-18T20:10:36Z",
+          "subject": "[#10556] Add source and target BPM to time stretching"
+        },
+        {
+          "sha": "078166c6bba4",
+          "date": "2026-11-18T20:10:16Z",
+          "subject": "remove demo of how to connect to SupportedSurfaceCallbackChange"
+        },
+        {
+          "sha": "c453ffb46913",
+          "date": "2026-11-18T03:16:16Z",
+          "subject": "fix mistakenly included change from previous commit"
+        },
+        {
+          "sha": "bac5684ec55b",
+          "date": "2026-11-18T00:43:49Z",
+          "subject": "demonstrate/test surface callback signal and handler"
+        },
+        {
+          "sha": "d1f780d8e358",
+          "date": "2026-11-18T00:43:21Z",
+          "subject": "amend ee419293d to adjust/emit surface callback info at the right time during surface deactivation"
+        },
+        {
+          "sha": "75ac633e10dc",
+          "date": "2026-11-18T00:42:19Z",
+          "subject": "alter prototype for control surface surface callback function ptrs"
+        },
+        {
+          "sha": "ee419293d241",
+          "date": "2026-11-17T23:36:37Z",
+          "subject": "infrastructure for ControlProtocolManager::SupportedSurfaceCallbackChange signal"
+        },
+        {
+          "sha": "0354590a33d8",
+          "date": "2026-11-17T17:08:49Z",
+          "subject": "Use dropdown in dialog for copy/embed/transient import option"
+        },
+        {
+          "sha": "ca69ca24e29a",
+          "date": "2026-11-17T16:49:38Z",
+          "subject": "Set Region colors of transient regions"
+        },
+        {
+          "sha": "1e7054d0875e",
+          "date": "2026-11-17T16:49:13Z",
+          "subject": "Theme track-header of transient audio-tracks"
+        },
+        {
+          "sha": "b111bf379ef9",
+          "date": "2026-11-17T06:12:57Z",
+          "subject": "Use same outline color for input meter and scope"
+        },
+        {
+          "sha": "50f60106c014",
+          "date": "2026-11-16T15:54:45Z",
+          "subject": "Implement recusive RWLock::reader_lock"
+        },
+        {
+          "sha": "f8ed9abab664",
+          "date": "2026-11-16T01:39:58Z",
+          "subject": "Ask for confirmation before one-click dropping VCAs"
+        },
+        {
+          "sha": "500806d0f88e",
+          "date": "2026-11-16T01:31:16Z",
+          "subject": "Update Preferences > Appearance"
+        },
+        {
+          "sha": "9d2cdee6b740",
+          "date": "2026-11-16T01:08:58Z",
+          "subject": "VST3: catch uncaught exceptions from plugin binaries #10555"
+        },
+        {
+          "sha": "993a8b458e82",
+          "date": "2026-11-15T23:42:49Z",
+          "subject": "VST3: use actual GUI thread (not butler) to reactivate plugin"
+        },
+        {
+          "sha": "522303bf7cbf",
+          "date": "2026-11-15T00:20:14Z",
+          "subject": "Remove unused gtk_type_init"
+        },
+        {
+          "sha": "f99affa4f56f",
+          "date": "2026-11-14T01:23:14Z",
+          "subject": "Implement LUFS integration start/stop API"
+        },
+        {
+          "sha": "872b5ce77f6e",
+          "date": "2026-11-13T19:14:09Z",
+          "subject": "VST3: Handle automation transmission on rolling backwards"
+        },
+        {
+          "sha": "1661b06c0d9e",
+          "date": "2026-11-12T20:10:55Z",
+          "subject": "Replace pixbuf timescale GTimeVal"
+        },
+        {
+          "sha": "37098cd909d6",
+          "date": "2026-11-12T20:10:55Z",
+          "subject": "Remove X11 related GTimeVal"
+        },
+        {
+          "sha": "c684c4854731",
+          "date": "2026-11-12T17:41:46Z",
+          "subject": "MSVC: Detect and compile SSE/AVX/FMA functions"
+        },
+        {
+          "sha": "01cac4405d8a",
+          "date": "2026-11-12T17:41:46Z",
+          "subject": "check_link_status: use std strings, build proper platform dependant paths"
+        },
+        {
+          "sha": "4e7e2df0e5f2",
+          "date": "2026-11-12T17:41:46Z",
+          "subject": "PBD hard link on windows should use wide characters"
+        },
+        {
+          "sha": "9e9b19575aab",
+          "date": "2026-11-12T17:39:45Z",
+          "subject": "Make y[dt]k year-2038 safe, remove deprecated GTimeVal"
+        },
+        {
+          "sha": "8fd8ec91dc83",
+          "date": "2026-11-12T17:32:19Z",
+          "subject": "mackie: attempted fix banking problems caused by a misunderstanding"
+        },
+        {
+          "sha": "5eb1655a00a6",
+          "date": "2026-11-12T17:32:19Z",
+          "subject": "mackie: additional DEBUG_TRACE output"
+        },
+        {
+          "sha": "d3226db83fc5",
+          "date": "2026-11-12T16:17:54Z",
+          "subject": "MSVC: Consolidate _WINSOCKAPI_ and LEAN_AND_MEAN defines"
+        },
+        {
+          "sha": "b32eab5c6514",
+          "date": "2026-11-12T09:44:08Z",
+          "subject": "editor: add missing lollipos drag handler for middle-click in grab mode"
+        },
+        {
+          "sha": "2f2f1e8ea891",
+          "date": "2026-11-12T09:42:38Z",
+          "subject": "no-op: merge two switch statements into one"
+        }
+      ],
+      "last_commit": "2026-11-18T20:10:36Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 0
+      }
+    },
+    "LMMS/lmms": {
+      "commits": [
+        {
+          "sha": "6b00eab040d8",
+          "date": "2026-11-16T01:28:45Z",
+          "subject": "Fix Node 20 deprecation warnings in the `checks` and `doxygen` workflows (#8648)"
+        },
+        {
+          "sha": "39c5654ab392",
+          "date": "2026-11-16T00:44:01Z",
+          "subject": "Mitigate beat preview performance issues (#8636)"
+        },
+        {
+          "sha": "d090650b1528",
+          "date": "2026-11-13T12:24:25Z",
+          "subject": "CI: Fix MinGW build"
+        },
+        {
+          "sha": "16dcfe96610e",
+          "date": "2026-11-13T08:35:29Z",
+          "subject": "Don't try to render the graph for an empty sample buffer (#8644)"
+        },
+        {
+          "sha": "5ba6744e5814",
+          "date": "2026-11-12T12:33:29Z",
+          "subject": "Don't ask Qt to free VestigeInstrument's subwindow before manually deleting it (#8608)"
+        },
+        {
+          "sha": "f2a4cd24de5a",
+          "date": "2026-11-10T22:04:54Z",
+          "subject": "Refactor `SampleThumbnail` (#8596)"
+        },
+        {
+          "sha": "382ba0117fa6",
+          "date": "2026-11-08T06:35:04Z",
+          "subject": "Create new Journal Object IDs when cloning tracks (#8614)"
+        },
+        {
+          "sha": "18678c0d585f",
+          "date": "2026-11-08T03:09:35Z",
+          "subject": "Purge old automated values from Song.m_oldAutomatedValues (#8606)"
+        },
+        {
+          "sha": "458c10754186",
+          "date": "2026-11-05T03:38:05Z",
+          "subject": "Convert paths to their absolutes (#8619)"
+        },
+        {
+          "sha": "af32051d1717",
+          "date": "2026-11-02T11:12:53Z",
+          "subject": "Fix missing scale & chord translations (#8141)"
+        },
+        {
+          "sha": "0bfb1ac3a8e7",
+          "date": "2026-11-01T11:42:18Z",
+          "subject": "Map BarModelEditor progress directly to cursor (#8405)"
+        },
+        {
+          "sha": "2bb90791a8b5",
+          "date": "2026-10-31T16:24:52Z",
+          "subject": "Disable vst embedding by default (#8390)"
+        },
+        {
+          "sha": "bed447baab18",
+          "date": "2026-10-25T12:12:29Z",
+          "subject": "Only disable auto-resize on manual resize if the clip length has actually changed (#8601)"
+        },
+        {
+          "sha": "4fde529fb371",
+          "date": "2026-10-19T03:45:08Z",
+          "subject": "Fix Tempo BPM clamped down to smaller integer number in AutomatableModel (#8592)"
+        },
+        {
+          "sha": "fd7c4960d4cb",
+          "date": "2026-10-18T20:13:26Z",
+          "subject": "Add 176.4 kHz to the selectable sample rates (#8597)"
+        },
+        {
+          "sha": "6674cd2877b2",
+          "date": "2026-10-18T17:16:20Z",
+          "subject": "Fix builds (#8593)"
+        },
+        {
+          "sha": "a2f57e70ce9c",
+          "date": "2026-09-27T21:00:26Z",
+          "subject": "Fix Base Note's value setting (#8572)"
+        },
+        {
+          "sha": "1a82b9ee8460",
+          "date": "2026-09-21T08:34:52Z",
+          "subject": "Miscellaneous CI improvements/fixes (#8559)"
+        },
+        {
+          "sha": "70aeceeff9fa",
+          "date": "2026-09-15T23:17:45Z",
+          "subject": "MidiExport: Support multi-track export, banks/programs, and more (#8048)"
+        },
+        {
+          "sha": "96cdb3e471be",
+          "date": "2026-09-15T21:56:16Z",
+          "subject": "Fix inconsistent mmp attribute order on save (#8513)"
+        },
+        {
+          "sha": "55042def21a1",
+          "date": "2026-09-15T20:30:30Z",
+          "subject": "Upgrade to Visual Studio 2026 (#8539)"
+        },
+        {
+          "sha": "a52afdef8fdc",
+          "date": "2026-09-15T00:34:38Z",
+          "subject": "Update translations (#8514)"
+        },
+        {
+          "sha": "518a7e8ef525",
+          "date": "2026-09-10T22:59:21Z",
+          "subject": "Update macOS and Windows ARM64 builds to Qt6 (#8544)"
+        },
+        {
+          "sha": "e04f9c8deba3",
+          "date": "2026-09-10T21:48:26Z",
+          "subject": "Sf2Player: Fix non-ASCII soundfont file paths on Windows (#8545)"
+        },
+        {
+          "sha": "44c429153987",
+          "date": "2026-09-10T19:21:39Z",
+          "subject": "Fix VST effect controls toolbar (#8546)"
+        },
+        {
+          "sha": "3d97b11f3a4e",
+          "date": "2026-09-09T04:51:26Z",
+          "subject": "Revert knife tool auto-selecting short ends (#8502)"
+        },
+        {
+          "sha": "76ffa57efe51",
+          "date": "2026-09-09T03:06:05Z",
+          "subject": "Resolve all Doxygen warnings & docs cleanup (#8361)"
+        },
+        {
+          "sha": "e64cf9b8ad0f",
+          "date": "2026-09-09T00:57:36Z",
+          "subject": "Remove OSS audio backend (#8482)"
+        },
+        {
+          "sha": "d10f6a23d75d",
+          "date": "2026-09-09T00:56:05Z",
+          "subject": "Remove libsoundio audio backend (#8475)"
+        },
+        {
+          "sha": "b6908f60ab6f",
+          "date": "2026-09-09T00:53:50Z",
+          "subject": "Add .vs, .vscode to gitignore (#7988)"
+        }
+      ],
+      "last_commit": "2026-11-16T01:28:45Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 2
+      }
+    },
+    "musescore/MuseScore": {
+      "commits": [
+        {
+          "sha": "6da159dd49c5",
+          "date": "2026-11-18T20:25:12Z",
+          "subject": "Merge pull request #35681 from ajuncosa/jianpu-text-styles"
+        },
+        {
+          "sha": "e93f1e4aae69",
+          "date": "2026-11-18T18:27:10Z",
+          "subject": "Add missing text styles for jianpu"
+        },
+        {
+          "sha": "c209bbee0fba",
+          "date": "2026-11-18T16:35:49Z",
+          "subject": "Merge pull request #35671 from miiizen/keyListReference"
+        },
+        {
+          "sha": "bbcbc552953e",
+          "date": "2026-11-18T15:34:40Z",
+          "subject": "Merge pull request #35518 from miiizen/invalidProperties"
+        },
+        {
+          "sha": "0b5a4994656a",
+          "date": "2026-11-18T14:10:40Z",
+          "subject": "Merge pull request #35675 from Eism/dock_window_v1_remove"
+        },
+        {
+          "sha": "185e7f6e0051",
+          "date": "2026-11-18T13:05:30Z",
+          "subject": "Updated the framework"
+        },
+        {
+          "sha": "c24d69971f10",
+          "date": "2026-11-18T13:04:59Z",
+          "subject": "cmake: remove the MUSE_MODULE_DOCKWINDOW_KDDOCKWIDGETS_V2 option"
+        },
+        {
+          "sha": "39fa0f7852c7",
+          "date": "2026-11-18T13:04:59Z",
+          "subject": "appshell: include dockcommands from the main dockwindow module"
+        },
+        {
+          "sha": "dca9e3d31947",
+          "date": "2026-11-18T12:52:58Z",
+          "subject": "Merge pull request #35674 from Eism/web_interactive_fix_step2"
+        },
+        {
+          "sha": "b82037b47f19",
+          "date": "2026-11-18T12:16:41Z",
+          "subject": "Merge pull request #35613 from cbjeukendrup/fix-figured-bass-restore-hang"
+        },
+        {
+          "sha": "0e1ee8083355",
+          "date": "2026-11-18T11:59:07Z",
+          "subject": "Updated the framework"
+        },
+        {
+          "sha": "7ad4f3b0f75e",
+          "date": "2026-11-18T11:59:07Z",
+          "subject": "engraving: remove MessageBox"
+        },
+        {
+          "sha": "cb2233df6259",
+          "date": "2026-11-18T11:59:07Z",
+          "subject": "engraving: report that a tuplet cannot be created through the error"
+        },
+        {
+          "sha": "a4680a147ba7",
+          "date": "2026-11-18T11:59:07Z",
+          "subject": "capella: report the import error instead of showing it"
+        },
+        {
+          "sha": "f07e43b12a43",
+          "date": "2026-11-18T11:59:07Z",
+          "subject": "midi: report the import error instead of showing it"
+        },
+        {
+          "sha": "5b4ed8ee7450",
+          "date": "2026-11-18T11:59:07Z",
+          "subject": "project: show what is wrong with a file of a bad format in the details"
+        },
+        {
+          "sha": "a5a384c3f53e",
+          "date": "2026-11-18T11:59:07Z",
+          "subject": "notation: ask about replacing the contents of the measures before adding a measure repeat"
+        },
+        {
+          "sha": "0c7f3d73903a",
+          "date": "2026-11-18T11:59:07Z",
+          "subject": "engraving: tell whether adding a measure repeat replaces the contents of the measures"
+        },
+        {
+          "sha": "eaa6a3cdce4f",
+          "date": "2026-11-18T11:59:07Z",
+          "subject": "notation: ask about removing a measure repeat before entering the note"
+        },
+        {
+          "sha": "668b193af7e5",
+          "date": "2026-11-18T11:59:07Z",
+          "subject": "engraving: tell whether note input removes a measure repeat"
+        },
+        {
+          "sha": "9fefaa9462fd",
+          "date": "2026-11-18T11:59:07Z",
+          "subject": "mei: report the import problems instead of asking about them"
+        },
+        {
+          "sha": "37e2e6b88b9a",
+          "date": "2026-11-18T11:59:07Z",
+          "subject": "notationscene/tests: cover saving a percussion shortcut"
+        },
+        {
+          "sha": "4f470b104e96",
+          "date": "2026-11-18T11:57:03Z",
+          "subject": "instrumentsscene: ask about removing the instruments asynchronously"
+        },
+        {
+          "sha": "577ee4b17734",
+          "date": "2026-11-18T11:57:03Z",
+          "subject": "notationscene: ask about reassigning a percussion shortcut asynchronously"
+        },
+        {
+          "sha": "4070b113926f",
+          "date": "2026-11-18T11:57:03Z",
+          "subject": "appshell: ask about closing the getting started dialog early asynchronously"
+        },
+        {
+          "sha": "bfe5f6a5365d",
+          "date": "2026-11-18T10:38:46Z",
+          "subject": "palette: ask about loading an old drumset file asynchronously"
+        },
+        {
+          "sha": "6080ba255fa2",
+          "date": "2026-11-18T10:38:46Z",
+          "subject": "playback: ask about changing the sound profile asynchronously"
+        },
+        {
+          "sha": "78ddd3f1c8b2",
+          "date": "2026-11-18T10:38:46Z",
+          "subject": "mixer: ask about changing the sound asynchronously"
+        },
+        {
+          "sha": "270756b27a2e",
+          "date": "2026-11-18T10:26:27Z",
+          "subject": "Merge pull request #35289 from mnorrisvuw/codex/fix-24336-beamlet-direction"
+        },
+        {
+          "sha": "de0031bbcc25",
+          "date": "2026-11-18T10:03:16Z",
+          "subject": "Merge pull request #35669 from RomanPudashkin/shared_staves_groups"
+        }
+      ],
+      "last_commit": "2026-11-18T20:25:12Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 0
+      }
+    },
+    "mixxxdj/mixxx": {
+      "commits": [
+        {
+          "sha": "dc4bf99322bb",
+          "date": "2026-11-14T18:45:08Z",
+          "subject": "Merge pull request #17270 from xARSENICx/latenight-qml-effects-parity"
+        },
+        {
+          "sha": "2a97ac974f59",
+          "date": "2026-11-14T03:14:50Z",
+          "subject": "Merge pull request #17452 from jclsn/fix/matrix-api"
+        },
+        {
+          "sha": "25b8af3902fb",
+          "date": "2026-11-14T03:07:16Z",
+          "subject": "Merge pull request #17478 from jclsn/cleanup/remove-unused-hermite4-function"
+        },
+        {
+          "sha": "e3f8540674f5",
+          "date": "2026-11-13T21:43:43Z",
+          "subject": "refactor(bufferscaler): Fix implicit casts and use auto where applicable"
+        },
+        {
+          "sha": "5548cedf8403",
+          "date": "2026-11-13T21:43:43Z",
+          "subject": "refactor(bufferscaler): Convert local variables to camel case"
+        },
+        {
+          "sha": "1b513122a0bc",
+          "date": "2026-11-13T20:37:35Z",
+          "subject": "cleanup(bufferscaler): Remove unused hermite4 function"
+        },
+        {
+          "sha": "76b1672d46ff",
+          "date": "2026-11-10T12:49:14Z",
+          "subject": "tests: Matrices that can't be inverted should fail"
+        },
+        {
+          "sha": "20f2c218ae1b",
+          "date": "2026-11-10T12:25:52Z",
+          "subject": "Merge pull request #17435 from daschuer/dependabot_26"
+        },
+        {
+          "sha": "897ee289d802",
+          "date": "2026-11-10T12:02:49Z",
+          "subject": "xwax: Add better comments to matrix API"
+        },
+        {
+          "sha": "8dc142740b1c",
+          "date": "2026-11-10T11:56:00Z",
+          "subject": "xwax: Make parameter order in matrix functions more consistent"
+        },
+        {
+          "sha": "22b102668f25",
+          "date": "2026-11-10T11:53:28Z",
+          "subject": "xwax: Fix memory leak in matrix api"
+        },
+        {
+          "sha": "489b47a99d78",
+          "date": "2026-11-09T17:58:43Z",
+          "subject": "Merge pull request #17428 from SamarthPD-21/fix/9073-log-sound-routing"
+        },
+        {
+          "sha": "7c888ce018dc",
+          "date": "2026-11-09T17:01:15Z",
+          "subject": "SoundManager: log which device and channels each path uses"
+        },
+        {
+          "sha": "38f4219408c0",
+          "date": "2026-11-08T09:37:16Z",
+          "subject": "Retarget Dependabot to the 2.6 branch."
+        },
+        {
+          "sha": "64c1cbec91a8",
+          "date": "2026-11-06T07:22:08Z",
+          "subject": "Merge pull request #17316 from sleepwalkera/appimage-icon-test"
+        },
+        {
+          "sha": "646e6fbc1cac",
+          "date": "2026-11-06T07:15:51Z",
+          "subject": "Merge pull request #17402 from elricfd/svg-icon-engine"
+        },
+        {
+          "sha": "d4a0f204df01",
+          "date": "2026-11-03T07:21:46Z",
+          "subject": "CMake: install the Qt SVG icon engine plugin"
+        },
+        {
+          "sha": "e79a815ff32a",
+          "date": "2026-11-02T03:20:14Z",
+          "subject": "Merge branch 'main' into appimage-icon-test"
+        },
+        {
+          "sha": "f3734085ba97",
+          "date": "2026-11-01T15:43:36Z",
+          "subject": "Merge upstream main and preserve effect parameter reordering"
+        },
+        {
+          "sha": "494a70c704b1",
+          "date": "2026-11-01T15:34:02Z",
+          "subject": "Recalculate effect parameter widths on viewport resize"
+        },
+        {
+          "sha": "bc49961fd3e5",
+          "date": "2026-10-30T12:57:51Z",
+          "subject": "Merge pull request #15251 from ronso0/qt5-remove"
+        },
+        {
+          "sha": "12c2c6ff62cb",
+          "date": "2026-10-30T10:04:00Z",
+          "subject": "remove Qt5 compatibility for QMutex/QMutexLocker"
+        },
+        {
+          "sha": "3d8c4a380090",
+          "date": "2026-10-30T10:04:00Z",
+          "subject": "remove Qt5 compatibility from make_const_iterator.h"
+        },
+        {
+          "sha": "d27631e5f6bf",
+          "date": "2026-10-30T10:04:00Z",
+          "subject": "remove Qt5 compatibility from KeyboardEventFilter"
+        },
+        {
+          "sha": "a9dc3316fd07",
+          "date": "2026-10-30T10:04:00Z",
+          "subject": "remove Qt5 compatibility from DlgPrefReplayGain"
+        },
+        {
+          "sha": "a09711f0533c",
+          "date": "2026-10-30T10:03:59Z",
+          "subject": "remove QT5 from CMakeLists.txt"
+        },
+        {
+          "sha": "538a54c2a1f1",
+          "date": "2026-10-30T10:01:41Z",
+          "subject": "remove Qt5 compatibility for QWidget::screen()"
+        },
+        {
+          "sha": "bcba48b84a6e",
+          "date": "2026-10-30T10:01:41Z",
+          "subject": "remove Qt5 compatibility for QColor components"
+        },
+        {
+          "sha": "d29b169cb754",
+          "date": "2026-10-30T10:01:40Z",
+          "subject": "remove Qt5 compatibility for QHash"
+        },
+        {
+          "sha": "19d17243f64e",
+          "date": "2026-10-30T10:01:40Z",
+          "subject": "remove Qt5 compatibility for QByteArray"
+        }
+      ],
+      "last_commit": "2026-11-14T18:45:08Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 4
+      }
+    },
+    "tenacityteam/tenacity": {
+      "commits": [
+        {
+          "sha": "500a2d63b6cb",
+          "date": "2026-11-17T13:03:37Z",
+          "subject": "[AppImage] Let system FFmpeg load"
+        },
+        {
+          "sha": "6137a706612b",
+          "date": "2026-11-16T15:01:58Z",
+          "subject": "CI: Cut cppcheck code scanning noise"
+        },
+        {
+          "sha": "bbffd2f6f37b",
+          "date": "2026-11-12T17:47:53Z",
+          "subject": "Theme: Update comment"
+        },
+        {
+          "sha": "2f3f288c6600",
+          "date": "2026-11-12T17:47:53Z",
+          "subject": "ThemePackage: Throw exception when parsing min. version"
+        },
+        {
+          "sha": "14eca162f983",
+          "date": "2026-11-12T17:47:53Z",
+          "subject": "ThemePackage: Parse package in OpenPackage()"
+        },
+        {
+          "sha": "8e7ee3819f79",
+          "date": "2026-11-12T17:47:52Z",
+          "subject": "Theme: Add includes in Types.h"
+        },
+        {
+          "sha": "a212088d51f7",
+          "date": "2026-11-12T17:47:49Z",
+          "subject": "New theme system: Change minAppVersion type"
+        },
+        {
+          "sha": "13adcd743257",
+          "date": "2026-11-11T09:09:41Z",
+          "subject": "[ci] Stop installing libpcre3-dev for cppcheck"
+        },
+        {
+          "sha": "492b1509f7e5",
+          "date": "2026-11-10T04:56:20Z",
+          "subject": "[AppImage] Point appimagetool at the metainfo"
+        },
+        {
+          "sha": "93939e5b8826",
+          "date": "2026-11-10T04:56:18Z",
+          "subject": "[AppImage] Give appimagetool a PNG to make .DirIcon from"
+        },
+        {
+          "sha": "32a30eb1c5c8",
+          "date": "2026-11-10T04:56:14Z",
+          "subject": "[AppImage] Stop hand-linking a stale icon"
+        },
+        {
+          "sha": "d09c71278e45",
+          "date": "2026-11-11T08:22:06Z",
+          "subject": "[code-scanning] Resolve the open critical results"
+        },
+        {
+          "sha": "6b88c19874e0",
+          "date": "2026-11-10T05:18:20Z",
+          "subject": "[ci] Drop lib-src results from CodeQL before uploading"
+        },
+        {
+          "sha": "cc413018922b",
+          "date": "2026-11-10T05:09:17Z",
+          "subject": "[cmake] Copy the VC runtime at configure time"
+        },
+        {
+          "sha": "6b242f0b86ea",
+          "date": "2026-11-10T05:09:16Z",
+          "subject": "[Inno] Prefetch translations before running iscc"
+        },
+        {
+          "sha": "d3ff1e0a32cd",
+          "date": "2026-11-10T05:09:16Z",
+          "subject": "[Inno] Detect the installer arch from Tenacity.exe"
+        },
+        {
+          "sha": "6bbbd2dd146b",
+          "date": "2026-11-10T04:41:38Z",
+          "subject": "Drop unused JSON parsing code"
+        },
+        {
+          "sha": "aa7c79ea7e7c",
+          "date": "2026-11-10T02:44:11Z",
+          "subject": "[ci] Pin the Ubuntu build to ubuntu-24.04"
+        },
+        {
+          "sha": "0a1538d9c084",
+          "date": "2026-11-10T02:11:26Z",
+          "subject": "[macOS] Bundle third-party dylibs and drop build tree rpaths"
+        },
+        {
+          "sha": "f87bbf295c0c",
+          "date": "2026-11-10T02:00:13Z",
+          "subject": "[macOS] Show notarization progress instead of going silent"
+        },
+        {
+          "sha": "a98da1e06dc8",
+          "date": "2026-11-10T01:59:35Z",
+          "subject": "[macOS] Only sign actual .framework bundles"
+        },
+        {
+          "sha": "430f6f3761b3",
+          "date": "2026-11-10T01:59:33Z",
+          "subject": "[cmake] Add signed arm64 macOS release preset"
+        },
+        {
+          "sha": "0529e3f8ee67",
+          "date": "2026-11-10T01:59:31Z",
+          "subject": "[ci] Sign macOS builds when the Apple certificate secret exists"
+        },
+        {
+          "sha": "3a6ef0c679da",
+          "date": "2026-11-10T01:59:29Z",
+          "subject": "[macOS] Fix codesigning and move notarization to notarytool"
+        },
+        {
+          "sha": "3e628e4aca98",
+          "date": "2026-11-10T01:59:20Z",
+          "subject": "[macOS] Install Tenacity.app at the top of the prefix"
+        },
+        {
+          "sha": "7f4d74f88335",
+          "date": "2026-11-09T18:37:31Z",
+          "subject": "[macOS] Fix make_ds_store.py so the DMG actually gets its layout"
+        },
+        {
+          "sha": "fab7d4069198",
+          "date": "2026-11-08T08:43:11Z",
+          "subject": "AudacityApp: Don't install ZIP filesystem handler"
+        },
+        {
+          "sha": "75b2c91a64a4",
+          "date": "2026-11-08T08:42:32Z",
+          "subject": "Windows: Fix Mixerboard window icon"
+        },
+        {
+          "sha": "b1dfd6b4621b",
+          "date": "2026-10-29T16:07:18Z",
+          "subject": "[CMake] Keep libnyquist's install rules out of our packages"
+        },
+        {
+          "sha": "03f53aed720b",
+          "date": "2026-10-29T16:01:23Z",
+          "subject": "[cmake] Link lib-wave-track-settings directly so NYQUIST=OFF builds"
+        }
+      ],
+      "last_commit": "2026-11-17T13:03:37Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 1
+      }
+    },
+    "zrythm/zrythm": {
+      "commits": [
+        {
+          "sha": "c680fbad9265",
+          "date": "2026-11-14T13:22:04Z",
+          "subject": "Release v2.0.0-alpha.8"
+        },
+        {
+          "sha": "7585d905887e",
+          "date": "2026-11-14T11:24:15Z",
+          "subject": "ProjectSaver: fix shadowed pause scope in save lambda"
+        },
+        {
+          "sha": "a770249ba1ad",
+          "date": "2026-11-14T09:57:27Z",
+          "subject": "Mixer: push strip section metrics into a typed store"
+        },
+        {
+          "sha": "36267add1fd5",
+          "date": "2026-11-14T08:25:13Z",
+          "subject": "Operations: route track routing through the operations layer"
+        },
+        {
+          "sha": "72a4ad08d6cf",
+          "date": "2026-11-14T07:18:00Z",
+          "subject": "Operations: route track comment and timebase changes through the layer"
+        },
+        {
+          "sha": "05adb624fc6b",
+          "date": "2026-11-14T06:52:03Z",
+          "subject": "Inspector: mirror the mixer's fader section"
+        },
+        {
+          "sha": "3076a1cc9e25",
+          "date": "2026-11-14T06:50:51Z",
+          "subject": "Mixer: redesign channel strips with aligned sections and visible metering"
+        },
+        {
+          "sha": "544e1e5eea5b",
+          "date": "2026-11-14T05:53:06Z",
+          "subject": "DESIGN.md: specify views by rules and component reuse"
+        },
+        {
+          "sha": "e75c778a6cf9",
+          "date": "2026-11-14T05:44:37Z",
+          "subject": "Operations: route track color changes through the operations layer"
+        },
+        {
+          "sha": "faf5ba2084ba",
+          "date": "2026-11-14T05:43:02Z",
+          "subject": "MeterProcessor: smooth peak falloff and track a held peak"
+        },
+        {
+          "sha": "ef52853443e3",
+          "date": "2026-11-14T05:05:18Z",
+          "subject": "Operations: add a typed call path and route track rename through it"
+        },
+        {
+          "sha": "2dedabf1ff38",
+          "date": "2026-11-14T02:51:12Z",
+          "subject": "ProjectSession: own the operation environment and registry"
+        },
+        {
+          "sha": "5fc76c109387",
+          "date": "2026-11-14T00:14:20Z",
+          "subject": "PluginImporter: allow dropping plugins on tracks"
+        },
+        {
+          "sha": "fb2e887c9eea",
+          "date": "2026-11-13T14:21:22Z",
+          "subject": "RecordingCoordinator: move drained packets into signals"
+        },
+        {
+          "sha": "fcdd75003691",
+          "date": "2026-11-13T13:47:59Z",
+          "subject": "qml: hoist drag sources out of list delegates"
+        },
+        {
+          "sha": "4e860e06e914",
+          "date": "2026-11-13T13:26:38Z",
+          "subject": "Operations: surface engine-refused pushes as error reports"
+        },
+        {
+          "sha": "8ad509ea895e",
+          "date": "2026-11-13T12:19:26Z",
+          "subject": "Operations: enforce expected revisions on edits"
+        },
+        {
+          "sha": "b1cffee89ee8",
+          "date": "2026-11-13T10:59:43Z",
+          "subject": "tests: wait for plugin-applied state before roundtrip save"
+        },
+        {
+          "sha": "19539ef5cc74",
+          "date": "2026-11-12T17:55:24Z",
+          "subject": "AudioEngine: refuse overlapping offline render sessions"
+        },
+        {
+          "sha": "a53dca9d381f",
+          "date": "2026-11-12T16:45:13Z",
+          "subject": "AudioEngine: replace manual pause/resume with RAII pause scope"
+        },
+        {
+          "sha": "4098da548a6b",
+          "date": "2026-11-12T15:45:51Z",
+          "subject": "cpack: sign Windows installers through the Certum cloud API with ssign"
+        },
+        {
+          "sha": "f6bed82eb1ca",
+          "date": "2026-11-12T14:14:56Z",
+          "subject": "PassthroughProcessors: register as uncreatable QML types"
+        },
+        {
+          "sha": "308250e84696",
+          "date": "2026-11-12T12:00:21Z",
+          "subject": "tests: fix CI build failures and keep plugin helpers separate"
+        },
+        {
+          "sha": "5d7e7e1f9543",
+          "date": "2026-11-12T11:30:05Z",
+          "subject": "Operations: add typed operation registry and builtin operations"
+        },
+        {
+          "sha": "340b4e634a8c",
+          "date": "2026-11-11T11:39:31Z",
+          "subject": "cpack: sign Windows installers and bundled binaries with Authenticode"
+        },
+        {
+          "sha": "62ec7e19049e",
+          "date": "2026-11-11T09:50:31Z",
+          "subject": "EventActivityIndicator: use an explicit release animation"
+        },
+        {
+          "sha": "55183645b722",
+          "date": "2026-11-11T09:22:11Z",
+          "subject": "AGENTS.md: keep changelog edits to release preparation"
+        },
+        {
+          "sha": "a07449f4c8e5",
+          "date": "2026-11-11T09:12:19Z",
+          "subject": "ChannelSend: add user-controllable channel sends with routing UI"
+        },
+        {
+          "sha": "aa26744e439f",
+          "date": "2026-11-10T08:46:43Z",
+          "subject": "cmake: suppress -Winterference-size globally under GCC"
+        },
+        {
+          "sha": "3206cbe94bff",
+          "date": "2026-11-10T08:29:36Z",
+          "subject": "UuidIdentifiableObject: merge UUID base classes into one QObject"
+        }
+      ],
+      "last_commit": "2026-11-14T13:22:04Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 4
+      }
+    },
+    "surge-synthesizer/surge": {
+      "commits": [
+        {
+          "sha": "78f07b152a9f",
+          "date": "2026-11-17T12:10:48Z",
+          "subject": "Fix FX plugin crash from uninitialized globaldata range (#8645)"
+        },
+        {
+          "sha": "636410a85ba2",
+          "date": "2026-11-17T12:09:49Z",
+          "subject": "Version linux debs so apt orders nightlies and releases (#8648)"
+        },
+        {
+          "sha": "9655b525d753",
+          "date": "2026-11-17T02:17:35Z",
+          "subject": "Update clap-juce-extensions and sst submodules; sndstation-kind deb, aarch64 name (#8647)"
+        },
+        {
+          "sha": "529bb52fe6fd",
+          "date": "2026-11-13T11:08:57Z",
+          "subject": "Fix incorrect link for global.volume in paramdocumentation.xml (#8641)"
+        },
+        {
+          "sha": "63851ccd3624",
+          "date": "2026-11-12T00:48:50Z",
+          "subject": "Make VST3 program change 0 reachable (#8640)"
+        },
+        {
+          "sha": "e2a299e15a2f",
+          "date": "2026-11-11T21:47:02Z",
+          "subject": "Remove SURGE_EXPOSE_PRESETS cmake option, rename ARM64 releases (#8639)"
+        },
+        {
+          "sha": "1761f6e45491",
+          "date": "2026-11-11T17:54:33Z",
+          "subject": "Receive MIDI program changes in VST3 (#8638)"
+        },
+        {
+          "sha": "b251659798fb",
+          "date": "2026-11-11T16:22:41Z",
+          "subject": "Add a PUC-Rio Lua backend to keep Formula Modulator on Windows ARM"
+        },
+        {
+          "sha": "c16aeba39e67",
+          "date": "2026-11-11T16:22:41Z",
+          "subject": "Make clang-cl a usable toolchain again"
+        },
+        {
+          "sha": "d307b472cd5e",
+          "date": "2026-11-10T10:16:40Z",
+          "subject": "Flow oscillator phase across notes in mono modes (#8615)"
+        },
+        {
+          "sha": "23b37a2d7b2a",
+          "date": "2026-11-10T10:15:50Z",
+          "subject": "Add two piano patches from j5v (#8637)"
+        },
+        {
+          "sha": "757c7cc3bb18",
+          "date": "2026-11-09T13:46:59Z",
+          "subject": "Fix host context menu crashes in hosts that don't implement them (#8636)"
+        },
+        {
+          "sha": "d152d7930b0b",
+          "date": "2026-11-05T13:43:59Z",
+          "subject": "Fix the deb dependencies to match what the binaries use (#8634)"
+        },
+        {
+          "sha": "72a602284b7a",
+          "date": "2026-11-02T23:51:43Z",
+          "subject": "Stop all sound on reset() (#8633)"
+        },
+        {
+          "sha": "906a04edc855",
+          "date": "2026-11-02T17:41:03Z",
+          "subject": "Prefill the macro and modulator rename dialogs with the default name (#8632)"
+        },
+        {
+          "sha": "915e26a5a85a",
+          "date": "2026-11-02T12:05:39Z",
+          "subject": "More IRs (#8631)"
+        },
+        {
+          "sha": "0852de8663dd",
+          "date": "2026-10-31T18:46:37Z",
+          "subject": "Fixed all ratchet curves from being reported as unknown to screen readers (#8630)"
+        },
+        {
+          "sha": "5a4828a33ac4",
+          "date": "2026-10-29T15:51:41Z",
+          "subject": "Adjust a few screen reader labels in MSEG editor (#8629)"
+        },
+        {
+          "sha": "dab78c617073",
+          "date": "2026-10-25T22:33:13Z",
+          "subject": "Don't crash on the MSEG Trigger EG shortcuts for scene LFOs (#8627)"
+        },
+        {
+          "sha": "1118dc58bb40",
+          "date": "2026-10-25T20:49:43Z",
+          "subject": "Raise the CMake minimum to 3.22 (#8623)"
+        },
+        {
+          "sha": "16c8976ee889",
+          "date": "2026-10-25T19:13:25Z",
+          "subject": "Add the warning suppression for xcode 27 (#8625)"
+        },
+        {
+          "sha": "f21a8046129e",
+          "date": "2026-10-25T14:26:48Z",
+          "subject": "Update the Formula presets, add Promenadi IRs (#8622)"
+        },
+        {
+          "sha": "a30341be0048",
+          "date": "2026-10-20T10:36:06Z",
+          "subject": "Fix missing silent padding in sample wavetables (#8619)"
+        },
+        {
+          "sha": "472f7665f998",
+          "date": "2026-10-20T10:35:35Z",
+          "subject": "Clamp the unison voice count in the Modern and Alias oscillators (#8618)"
+        },
+        {
+          "sha": "4f0da4e423a6",
+          "date": "2026-10-17T23:20:56Z",
+          "subject": "Mousewheel works on indexed modulators (#8613)"
+        },
+        {
+          "sha": "6b696b5c2401",
+          "date": "2026-10-16T14:19:50Z",
+          "subject": "Remove All Patches Have Bounded Output test (#8612)"
+        },
+        {
+          "sha": "d8b4a7bf97b3",
+          "date": "2026-10-13T16:13:54Z",
+          "subject": "Don't destroy the previous wavetable script when a save fails (#8610)"
+        },
+        {
+          "sha": "72ed1f155443",
+          "date": "2026-10-13T15:36:27Z",
+          "subject": "Start BLIT oscillators mid-cycle instead of delaying their first impulse (#8543)"
+        },
+        {
+          "sha": "45568c7d60be",
+          "date": "2026-10-13T14:44:55Z",
+          "subject": "Update JUCE fork (String allocation security fix) (#8609)"
+        },
+        {
+          "sha": "f398826e8567",
+          "date": "2026-10-13T13:21:02Z",
+          "subject": "Keep the VKB playable while a context menu is open"
+        }
+      ],
+      "last_commit": "2026-11-17T12:10:48Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 1
+      }
+    },
+    "Anjok07/ultimatevocalremovergui": {
+      "commits": [
+        {
+          "sha": "a5f88453bfb2",
+          "date": "2026-10-06T22:39:25Z",
+          "subject": "Revise README for Ultimate Vocal Remover GUI v5.6"
+        }
+      ],
+      "last_commit": "2026-10-06T22:39:25Z",
+      "windows": {
+        "in_30d": false,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 42
+      }
+    },
+    "facebookresearch/demucs": {
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    },
+    "deezer/spleeter": {
+      "commits": [
+        {
+          "sha": "6f2c8a2e2839",
+          "date": "2026-10-28T15:05:21Z",
+          "subject": "Update README.md"
+        }
+      ],
+      "last_commit": "2026-10-28T15:05:21Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 21
+      }
+    },
+    "nomadkaraoke/python-audio-separator": {
+      "commits": [
+        {
+          "sha": "4dd3477c0a8f",
+          "date": "2026-10-29T17:19:49Z",
+          "subject": "feat: download models from our mirror first and verify SHA-256 (v0.48.0) (#317)"
+        },
+        {
+          "sha": "6d7d3fd60acc",
+          "date": "2026-10-29T07:13:33Z",
+          "subject": "fix: refuse untrusted globals when loading model checkpoints (v0.47.2) (#316)"
+        },
+        {
+          "sha": "465b60f0271e",
+          "date": "2026-10-19T18:31:20Z",
+          "subject": "test: pin RoFormer forward-pass budget + GPU per-pass timing guard (v0.47.1) (#313)"
+        },
+        {
+          "sha": "45127bd25048",
+          "date": "2026-10-01T23:59:52Z",
+          "subject": "ci: disable automatic Cloud Run deploys (audio-separator service shut down) (#309)"
+        },
+        {
+          "sha": "bf1164aa0f1e",
+          "date": "2026-08-27T02:45:52Z",
+          "subject": "test: harden DrumSep e2e clip + reconcile MDXC chunk-starts (#298×#299) (#303)"
+        },
+        {
+          "sha": "c7f2a5c8c3be",
+          "date": "2026-08-27T02:13:35Z",
+          "subject": "chore: release v0.47.0"
+        },
+        {
+          "sha": "1eaa08898629",
+          "date": "2026-08-27T02:13:18Z",
+          "subject": "fix: honor MSST MDXC inference defaults (#299)"
+        },
+        {
+          "sha": "b2d1da3e84a1",
+          "date": "2026-08-27T01:25:06Z",
+          "subject": "chore: release v0.46.0"
+        },
+        {
+          "sha": "7a1c06f42fb5",
+          "date": "2026-08-27T01:24:41Z",
+          "subject": "Add opt-in native fp16 and regional torch.compile, optimize RoFormer/MPS inference, and move to a validated PyTorch 2.13"
+        },
+        {
+          "sha": "ce6463d298f4",
+          "date": "2026-08-26T19:32:23Z",
+          "subject": "chore: release v0.45.0"
+        },
+        {
+          "sha": "87746f251aee",
+          "date": "2026-08-26T19:31:39Z",
+          "subject": "Fix ONNX Runtime CUDA fallback by preloading shared library dependencies (#276)"
+        },
+        {
+          "sha": "ab524481735b",
+          "date": "2026-08-26T19:31:32Z",
+          "subject": "New models until 10-19-2025 (#244)"
+        },
+        {
+          "sha": "bc12682e6d69",
+          "date": "2026-08-26T19:31:16Z",
+          "subject": "fix: preserve silent outputs and surface export failures (#301)"
+        },
+        {
+          "sha": "9e6a221d4a3c",
+          "date": "2026-08-26T19:31:09Z",
+          "subject": "fix: prioritize config for RoFormer model type detection (#300)"
+        },
+        {
+          "sha": "ffcb151dc759",
+          "date": "2026-08-26T19:31:02Z",
+          "subject": "fix: support librosa 1 duration API (#302)"
+        }
+      ],
+      "last_commit": "2026-10-29T17:19:49Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 20
+      }
+    },
+    "RVC-Project/Retrieval-based-Voice-Conversion-WebUI": {
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    },
+    "w-okada/voice-changer": {
+      "commits": [
+        {
+          "sha": "7e2ce5c48000",
+          "date": "2026-11-17T17:18:43Z",
+          "subject": "@lustez has signed the CLA from Pull Request #1690"
+        },
+        {
+          "sha": "d8ef15799470",
+          "date": "2026-09-26T20:32:06Z",
+          "subject": "@kzndotsh has signed the CLA from Pull Request #1684"
+        }
+      ],
+      "last_commit": "2026-11-17T17:18:43Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 1
+      }
+    },
+    "xiph/rnnoise": {
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    },
+    "noise-suppression-for-voice/noise-suppression-for-voice": {
+      "error": "HTTP 404",
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    },
+    "breakfastquay/rubberband": {
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    },
+    "rspeyer/soundtouch": {
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    },
+    "aubio/aubio": {
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    },
+    "librosa/librosa": {
+      "commits": [
+        {
+          "sha": "036ecbc20faf",
+          "date": "2026-11-18T19:55:02Z",
+          "subject": "libfmp migration (#2091)"
+        },
+        {
+          "sha": "76f10b8d2d00",
+          "date": "2026-11-14T13:43:40Z",
+          "subject": "Use eig for the possibly asymmetric Laplacian in segmentation tutorial (#2127)"
+        },
+        {
+          "sha": "448a92ec3da6",
+          "date": "2026-11-14T13:41:50Z",
+          "subject": "Accumulate peak_pick's DP window sums in float64 (#2125)"
+        },
+        {
+          "sha": "4baa5e45cc9a",
+          "date": "2026-11-13T23:45:49Z",
+          "subject": "cleaning up docstrings"
+        },
+        {
+          "sha": "41cea008ee3e",
+          "date": "2026-11-13T23:45:49Z",
+          "subject": "DOC: Document note-name string support for fmin and fmax in constantq, pitch, and spectral"
+        },
+        {
+          "sha": "47fc0e7a1490",
+          "date": "2026-11-13T23:45:49Z",
+          "subject": "FIX: Support _FloatLike_co in frequency typing and clarify Sa docstrings"
+        },
+        {
+          "sha": "3ce7d31aff12",
+          "date": "2026-11-13T23:45:49Z",
+          "subject": "ENH: Accept SPN note strings for frequency parameters across the API"
+        },
+        {
+          "sha": "e57f4c84fb42",
+          "date": "2026-11-13T23:45:49Z",
+          "subject": "fmin float | str"
+        },
+        {
+          "sha": "6fd6c82c50fb",
+          "date": "2026-11-13T23:45:49Z",
+          "subject": "ENH: Allow frequency parameters to accept SPN string inputs (e.g., 'C2')"
+        },
+        {
+          "sha": "d99630cd655d",
+          "date": "2026-11-13T20:52:35Z",
+          "subject": "Drop 3.12 from the build matrix"
+        },
+        {
+          "sha": "51755290cf5e",
+          "date": "2026-11-13T20:52:35Z",
+          "subject": "chore: Drop support for unsupported packages conform SPEC 0"
+        },
+        {
+          "sha": "495c8d74ab02",
+          "date": "2026-11-13T20:52:35Z",
+          "subject": "fixed cmap deprecation after refactor"
+        },
+        {
+          "sha": "c2fcac5f58de",
+          "date": "2026-11-13T20:52:35Z",
+          "subject": "reimplemented expired deprecation of display.cmap"
+        },
+        {
+          "sha": "c61f11b60d20",
+          "date": "2026-11-13T20:52:35Z",
+          "subject": "fixing tests for deprecations"
+        },
+        {
+          "sha": "bca95fe5cd04",
+          "date": "2026-11-13T20:52:35Z",
+          "subject": "fixed bad import"
+        },
+        {
+          "sha": "73dd3354691b",
+          "date": "2026-11-13T20:52:35Z",
+          "subject": "expired 1.1 deprecations"
+        },
+        {
+          "sha": "047b829b2f0e",
+          "date": "2026-11-13T20:52:35Z",
+          "subject": "implemented #2070"
+        },
+        {
+          "sha": "119e1cc774f1",
+          "date": "2026-11-13T20:52:35Z",
+          "subject": "nudged version"
+        },
+        {
+          "sha": "9caf46a4ecae",
+          "date": "2026-11-12T16:45:12Z",
+          "subject": "Reverting parallel doc build for production"
+        },
+        {
+          "sha": "4f8f47d111b8",
+          "date": "2026-11-12T15:55:17Z",
+          "subject": "fixing date on changelog for 1.0.1 release"
+        },
+        {
+          "sha": "bf01832999d6",
+          "date": "2026-11-12T15:37:54Z",
+          "subject": "Merge pull request #2123 from librosa/1.0.1-release-prep"
+        },
+        {
+          "sha": "55c3849f7cfb",
+          "date": "2026-11-12T15:11:53Z",
+          "subject": "parallelize the sphinx builds"
+        },
+        {
+          "sha": "76f1b9caeeec",
+          "date": "2026-11-12T15:10:38Z",
+          "subject": "fixing up doc formatting"
+        },
+        {
+          "sha": "5eaf4c61ddc7",
+          "date": "2026-11-11T12:26:06Z",
+          "subject": "minor changes to changelog"
+        },
+        {
+          "sha": "c03d159342b1",
+          "date": "2026-11-11T02:25:48Z",
+          "subject": "attribution updates"
+        },
+        {
+          "sha": "a0d64a8fcf41",
+          "date": "2026-11-11T01:47:23Z",
+          "subject": "fixing up doc build errors"
+        },
+        {
+          "sha": "ec7ef8d57ca7",
+          "date": "2026-11-11T00:00:20Z",
+          "subject": "updated zenodo.json"
+        },
+        {
+          "sha": "3659b99ffff4",
+          "date": "2026-11-10T23:55:44Z",
+          "subject": "updated changelog and authors.md"
+        },
+        {
+          "sha": "6d3825def6f1",
+          "date": "2026-11-10T22:44:31Z",
+          "subject": "Add release preparation script to automate changelog and authors updates"
+        },
+        {
+          "sha": "a2d7e4e1384d",
+          "date": "2026-11-10T19:57:18Z",
+          "subject": "version bump for new release"
+        }
+      ],
+      "last_commit": "2026-11-18T19:55:02Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 0
+      }
+    },
+    "spotify/basic-pitch": {
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    },
+    "csteinmetz1/pyloudnorm": {
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    },
+    "FFmpeg/FFmpeg": {
+      "commits": [
+        {
+          "sha": "a5ed44135fa4",
+          "date": "2026-11-18T19:42:34Z",
+          "subject": "avformat/mxfenc: take colour from the essence bitstream"
+        },
+        {
+          "sha": "ce53bc5975c4",
+          "date": "2026-11-18T19:42:34Z",
+          "subject": "avformat/avc: parse the VUI video signal type"
+        },
+        {
+          "sha": "70362e450f5d",
+          "date": "2026-11-18T19:42:34Z",
+          "subject": "avformat/mxf: read the ITU-R BT.470 PAL transfer label as gamma 2.8"
+        },
+        {
+          "sha": "88ff3a1e58b9",
+          "date": "2026-11-18T19:42:34Z",
+          "subject": "avformat/mxfdec: use the ST 377-1 defaults for missing range items"
+        },
+        {
+          "sha": "7230003a0f39",
+          "date": "2026-11-18T19:42:34Z",
+          "subject": "avformat/mxf: map more colour labels from the SMPTE register"
+        },
+        {
+          "sha": "7dc6b582c018",
+          "date": "2026-11-18T19:38:45Z",
+          "subject": "avformat/dashenc: omit the obsolete MPD schema hint"
+        },
+        {
+          "sha": "90c61d9ba93a",
+          "date": "2026-11-18T19:36:27Z",
+          "subject": "avfilter/af_amix: preserve next_pts while waiting for the first input's EOF"
+        },
+        {
+          "sha": "7c792b425d76",
+          "date": "2026-11-18T19:35:09Z",
+          "subject": "avfilter/x86/scene_sad: add AVX2 and AVX-512 byte-swapped 16-bit SAD"
+        },
+        {
+          "sha": "0e553f74a912",
+          "date": "2026-11-18T19:35:09Z",
+          "subject": "avfilter/f_select: accept high bit depth gray, YUV and RGB for scene detection"
+        },
+        {
+          "sha": "1d08d999c7ed",
+          "date": "2026-11-18T19:35:09Z",
+          "subject": "avfilter/x86/scene_sad: skip the SIMD loop for rows narrower than a vector"
+        },
+        {
+          "sha": "0883d9a2945f",
+          "date": "2026-11-18T14:58:31Z",
+          "subject": "configure: flatten extralibs level by level"
+        },
+        {
+          "sha": "fe2b1982994d",
+          "date": "2026-11-18T14:58:31Z",
+          "subject": "configure: skip already flattened entries in flatten_extralibs()"
+        },
+        {
+          "sha": "38f4bfcda7d4",
+          "date": "2026-11-18T14:58:31Z",
+          "subject": "configure: read extralibs entries directly in flatten_extralibs()"
+        },
+        {
+          "sha": "c41b6f302ecb",
+          "date": "2026-11-18T14:58:31Z",
+          "subject": "configure: drop empty extralibs entries before calling unique()"
+        },
+        {
+          "sha": "c0911be8e3c2",
+          "date": "2026-11-18T14:53:21Z",
+          "subject": "tests/fate: add tests for the Super Audio CD demuxer"
+        },
+        {
+          "sha": "7791b7562bf4",
+          "date": "2026-11-18T14:53:21Z",
+          "subject": "avformat: add a Super Audio CD demuxer"
+        },
+        {
+          "sha": "9aa0ad8985af",
+          "date": "2026-11-18T13:42:05Z",
+          "subject": "tests/fate/iamf: add missing channelmap dependency gates to IAMF tests"
+        },
+        {
+          "sha": "342cb6374fee",
+          "date": "2026-11-18T12:54:42Z",
+          "subject": "avformat/demux: saturate the end sample used for the discard padding"
+        },
+        {
+          "sha": "9e7f4fb97ea9",
+          "date": "2026-11-18T12:54:42Z",
+          "subject": "swscale/output: avoid signed overflow in yuv2gbrpf32_full_X_c()"
+        },
+        {
+          "sha": "3ed2e4d62492",
+          "date": "2026-11-18T12:54:42Z",
+          "subject": "swscale/output: avoid signed overflow in the chroma products of yuv2gbrp16_full_X_c()"
+        },
+        {
+          "sha": "b47a01947150",
+          "date": "2026-11-18T12:54:42Z",
+          "subject": "avcodec/proresdsp: avoid signed overflow in the ProRes RAW dequantization"
+        },
+        {
+          "sha": "f3299781dfa5",
+          "date": "2026-11-18T12:54:42Z",
+          "subject": "avformat/matroskadec: reject cue positions before the segment in the DASH manifest"
+        },
+        {
+          "sha": "c989deb9e520",
+          "date": "2026-11-18T12:54:42Z",
+          "subject": "avformat/flvdec: apply the concatenation time offset once per tag"
+        },
+        {
+          "sha": "c30e4186f701",
+          "date": "2026-11-18T12:54:42Z",
+          "subject": "avformat/rpl: reject chunks whose video data ends beyond INT64_MAX"
+        },
+        {
+          "sha": "868ab9f81852",
+          "date": "2026-11-18T12:54:42Z",
+          "subject": "avformat/rpl: check the audio size of a chunk before using it"
+        },
+        {
+          "sha": "1d06a0103eb5",
+          "date": "2026-11-18T12:54:42Z",
+          "subject": "avcodec/sanm: add the FTCH offsets without signed overflow"
+        },
+        {
+          "sha": "b5146a431a6f",
+          "date": "2026-11-18T12:53:45Z",
+          "subject": "avfilter/vf_lcevc: pass the LCEVCdec log messages through"
+        },
+        {
+          "sha": "62fad741bad0",
+          "date": "2026-11-18T12:53:45Z",
+          "subject": "avfilter/vf_lcevc: wait for the flushed frames before collecting their base pictures"
+        },
+        {
+          "sha": "67dde306a07b",
+          "date": "2026-11-18T12:53:45Z",
+          "subject": "avfilter/vf_lcevc: free the output picture when LCEVC_SendDecoderPicture() fails"
+        },
+        {
+          "sha": "a6e272469c56",
+          "date": "2026-11-18T12:53:45Z",
+          "subject": "avfilter/vf_lcevc: keep the output frame while LCEVCdec holds its picture"
+        }
+      ],
+      "last_commit": "2026-11-18T19:42:34Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 0
+      }
+    },
+    "PyAV-Org/PyAV": {
+      "commits": [
+        {
+          "sha": "005c08d2c152",
+          "date": "2026-11-18T22:10:23Z",
+          "subject": "Run hwaccel tests with VideoToolbox by default on macOS"
+        },
+        {
+          "sha": "ba113e6f2cee",
+          "date": "2026-11-18T22:04:15Z",
+          "subject": "Release the GIL when opening a codec, fixes #2517"
+        },
+        {
+          "sha": "264c428119ec",
+          "date": "2026-11-16T20:40:43Z",
+          "subject": "Pass the stream's time base to bitstream filters"
+        },
+        {
+          "sha": "d55db0e72e0c",
+          "date": "2026-11-12T06:08:21Z",
+          "subject": "Update ffmpeg binaries"
+        },
+        {
+          "sha": "7029f28b2cc7",
+          "date": "2026-11-12T06:08:21Z",
+          "subject": "Treat escaped braces as literal in AssSubtitle.dialogue"
+        },
+        {
+          "sha": "38df009989ca",
+          "date": "2026-11-08T06:25:38Z",
+          "subject": "Skip tests for musllinux riscv64 wheels"
+        },
+        {
+          "sha": "c4ae123d048f",
+          "date": "2026-11-08T06:21:21Z",
+          "subject": "Build riscv64 wheels for GitHub releases only"
+        },
+        {
+          "sha": "cba13c22c9de",
+          "date": "2026-11-08T02:00:07Z",
+          "subject": "Use a Matroska source in test_remux_clear_initial_padding"
+        },
+        {
+          "sha": "a8ce0ca305df",
+          "date": "2026-11-08T01:20:39Z",
+          "subject": "Make CodecContext.initial_padding writable"
+        },
+        {
+          "sha": "19d7258692a2",
+          "date": "2026-11-06T03:36:45Z",
+          "subject": "Strip ASS override tags in AssSubtitle.dialogue"
+        },
+        {
+          "sha": "a7794775032f",
+          "date": "2026-11-05T05:03:59Z",
+          "subject": "Expose Frame.key_frame setter in stub"
+        },
+        {
+          "sha": "78fa27ca99d8",
+          "date": "2026-11-05T05:03:59Z",
+          "subject": "Add Stream.name to the base class"
+        },
+        {
+          "sha": "7e2458151abb",
+          "date": "2026-11-05T05:03:59Z",
+          "subject": "Mark read-only attributes as properties in stubs"
+        },
+        {
+          "sha": "85d65d574885",
+          "date": "2026-11-05T05:03:59Z",
+          "subject": "Fix incorrect types in stubs"
+        },
+        {
+          "sha": "bf2da759b794",
+          "date": "2026-11-05T05:03:59Z",
+          "subject": "Type SideDataContainer.get() defaults per key"
+        },
+        {
+          "sha": "0edf2b7bac2c",
+          "date": "2026-11-04T23:36:46Z",
+          "subject": "Preserve selected codec across a failed CodecContext.open()"
+        },
+        {
+          "sha": "b1328a3940b0",
+          "date": "2026-11-03T01:56:06Z",
+          "subject": "Reject AudioFIFO frames with a different channel layout"
+        },
+        {
+          "sha": "1e29f47d99f0",
+          "date": "2026-11-02T19:42:25Z",
+          "subject": "Share AudioFrame plane count with AudioPlane"
+        },
+        {
+          "sha": "abd73405f6e3",
+          "date": "2026-11-02T18:50:34Z",
+          "subject": "Bound `AudioFrame.planes` by the number of planes (#2502)"
+        },
+        {
+          "sha": "31cf756fcc77",
+          "date": "2026-10-28T17:16:25Z",
+          "subject": "Move program code to container/input"
+        },
+        {
+          "sha": "c40ce8894465",
+          "date": "2026-10-28T15:10:40Z",
+          "subject": "Expose FFmpeg programs"
+        },
+        {
+          "sha": "43c826197c97",
+          "date": "2026-10-28T08:10:52Z",
+          "subject": "Drop crop fields when reformat() resizes a frame"
+        },
+        {
+          "sha": "519f1db670f3",
+          "date": "2026-10-28T08:10:52Z",
+          "subject": "Validate VideoFrame crop setters"
+        },
+        {
+          "sha": "2df67536a034",
+          "date": "2026-10-28T08:10:52Z",
+          "subject": "Keep VideoPlane geometry in sync with its frame"
+        },
+        {
+          "sha": "47ef074842f6",
+          "date": "2026-10-28T03:34:44Z",
+          "subject": "Declare av_parser_init with AVCodecID"
+        },
+        {
+          "sha": "80cb107640cd",
+          "date": "2026-10-28T03:34:44Z",
+          "subject": "Add Frame.decode_error_flags and VideoFrame.repeat_pict"
+        },
+        {
+          "sha": "f488a535cad1",
+          "date": "2026-10-28T03:34:44Z",
+          "subject": "Add InputContainer.duration_estimation_method"
+        },
+        {
+          "sha": "db935aca66c2",
+          "date": "2026-10-28T03:34:44Z",
+          "subject": "Expose probe score, codec frame rate, and frame cropping"
+        },
+        {
+          "sha": "b7ac6ccb0e94",
+          "date": "2026-10-28T02:33:19Z",
+          "subject": "Type subtitle decoder names for CodecContext.create()"
+        },
+        {
+          "sha": "5af47f1602a4",
+          "date": "2026-10-28T02:33:19Z",
+          "subject": "Strip debug info from Linux wheel extensions"
+        }
+      ],
+      "last_commit": "2026-11-18T22:10:23Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 0
+      }
+    },
+    "spatialaudio/python-sounddevice": {
+      "commits": [
+        {
+          "sha": "dea905f65bfd",
+          "date": "2026-11-14T03:29:20Z",
+          "subject": "docs: Clarify recording and playback parameters in playrec"
+        },
+        {
+          "sha": "283f40d6ebde",
+          "date": "2026-10-26T04:05:17Z",
+          "subject": "Bump certifi"
+        },
+        {
+          "sha": "bcffb4f01f11",
+          "date": "2026-10-18T15:29:17Z",
+          "subject": "Bump urllib3 from 2.7.0 to 2.8.0 in the uv group across 1 directory"
+        },
+        {
+          "sha": "a4e5f77e1a03",
+          "date": "2026-10-18T15:28:28Z",
+          "subject": "Use the midpoint for unsigned 8-bit playback silence (#645)"
+        },
+        {
+          "sha": "626fcb071638",
+          "date": "2026-08-22T08:42:36Z",
+          "subject": "Less obscure, slightly more complicated but maybe faster implementation"
+        },
+        {
+          "sha": "8a8ccec539a3",
+          "date": "2026-08-22T07:51:47Z",
+          "subject": "Use more obscure implementation using a sub-array dtype"
+        },
+        {
+          "sha": "a85f1d280057",
+          "date": "2026-08-22T06:49:19Z",
+          "subject": "Replace assignment to .shape by np.reshape()"
+        }
+      ],
+      "last_commit": "2026-11-14T03:29:20Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 4
+      }
+    },
+    "PortAudio/portaudio": {
+      "commits": [
+        {
+          "sha": "8b6333ff8744",
+          "date": "2026-11-13T00:34:10Z",
+          "subject": "Fix broken conditional in patest_sine_time.c"
+        },
+        {
+          "sha": "c6de0153cc0c",
+          "date": "2026-11-13T00:34:10Z",
+          "subject": "Remove unused variables from pa_mac_core.c"
+        },
+        {
+          "sha": "0e94e0f51281",
+          "date": "2026-11-13T00:34:10Z",
+          "subject": "Fix uninitialized variables in paqa_devs.c"
+        },
+        {
+          "sha": "1ca0eeedb678",
+          "date": "2026-10-23T00:28:09Z",
+          "subject": "Fix/1174 coreaudio startstop deadlock (#1175)"
+        },
+        {
+          "sha": "567595cd9046",
+          "date": "2026-10-22T23:36:11Z",
+          "subject": "pa_mac_core: remove duplicate single quotes from a DBUG() output. only compute DBUG inputs when they are used. (#1192)"
+        },
+        {
+          "sha": "7c45fed9322b",
+          "date": "2026-10-16T00:31:34Z",
+          "subject": "converters: fix signed left shift UB in integer converters (#1189)"
+        },
+        {
+          "sha": "3e8da43eb371",
+          "date": "2026-10-15T23:12:45Z",
+          "subject": "coreaudio: fix misaligned UInt32 store in PaMacCore_SetError (#1188)"
+        },
+        {
+          "sha": "d71746635dae",
+          "date": "2026-10-07T23:16:35Z",
+          "subject": "docs: document that calling PortAudio API functions from within the stream finished callback is not permitted. (#1185)"
+        },
+        {
+          "sha": "873e3c83fbe2",
+          "date": "2026-10-01T23:30:24Z",
+          "subject": "Patch \"pa_linux_asla.c\" with \"PA_ALSA_DYNAMIC\" to not stop everything, just because ALSA is not found. (#1181)"
+        },
+        {
+          "sha": "17967f32de95",
+          "date": "2026-09-17T23:18:30Z",
+          "subject": "WDMKS: fix crash-bug (3 places) where the wrong pointer was freed and the freed ptr was returned. (#1177)"
+        },
+        {
+          "sha": "a4dbf68c51fd",
+          "date": "2026-09-04T00:43:37Z",
+          "subject": "alsa: jack: suppress stderr noise from device probing (#1162)"
+        },
+        {
+          "sha": "07a60c59f374",
+          "date": "2026-09-03T23:10:38Z",
+          "subject": "fix monotonic latency errors on MacOS (#1172)"
+        },
+        {
+          "sha": "bc2f865c0954",
+          "date": "2026-08-27T22:53:18Z",
+          "subject": "Fix test criteria to fix paqa_latency.c (#1111)"
+        }
+      ],
+      "last_commit": "2026-11-13T00:34:10Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 5
+      }
+    },
+    "juce-framework/JUCE": {
+      "commits": [
+        {
+          "sha": "d60b7a780306",
+          "date": "2026-11-02T12:32:17Z",
+          "subject": "JUCE version 9.0.5"
+        },
+        {
+          "sha": "5144e4559e81",
+          "date": "2026-11-02T12:30:33Z",
+          "subject": "Docs: Update change list"
+        },
+        {
+          "sha": "2303b551cf51",
+          "date": "2026-11-02T11:20:32Z",
+          "subject": "ZipFile: Check for a symbolic parent before deleting an existing target file"
+        },
+        {
+          "sha": "df978b66ae95",
+          "date": "2026-10-30T16:45:22Z",
+          "subject": "Windows: Fix a bug changing a thread's priority"
+        },
+        {
+          "sha": "fde0a524a05c",
+          "date": "2026-10-30T13:35:05Z",
+          "subject": "ValueTree: Limit the nesting depth of trees and arrays read from a stream"
+        },
+        {
+          "sha": "486906b64040",
+          "date": "2026-10-30T13:08:40Z",
+          "subject": "JSON: Limit the nesting depth of parsed objects and arrays"
+        },
+        {
+          "sha": "ab5645ca9c88",
+          "date": "2026-10-30T12:33:13Z",
+          "subject": "Resave all projects and regenerate the dependency SPDX"
+        },
+        {
+          "sha": "dcc5d04f99f1",
+          "date": "2026-10-30T12:28:03Z",
+          "subject": "README: Update the minimum Android build requirements"
+        },
+        {
+          "sha": "12095c0670c8",
+          "date": "2026-10-30T12:28:03Z",
+          "subject": "Projucer (Android): Compile Java sources at language level 17"
+        },
+        {
+          "sha": "01904c20a632",
+          "date": "2026-10-30T12:28:02Z",
+          "subject": "Projucer (Android): Update default Gradle version"
+        },
+        {
+          "sha": "7f5e58eaeb7f",
+          "date": "2026-10-29T21:07:43Z",
+          "subject": "OSC: Limit the nesting depth of received bundles"
+        },
+        {
+          "sha": "28432d8ed356",
+          "date": "2026-10-29T15:52:18Z",
+          "subject": "Component: Retarget mouse events to the nearest surviving ancestor when the original target is deleted before delivery"
+        },
+        {
+          "sha": "657712be233b",
+          "date": "2026-10-29T13:39:34Z",
+          "subject": "File: Resolve drive-relative paths against the parent in getChildFile on Windows"
+        },
+        {
+          "sha": "bf695ff98595",
+          "date": "2026-10-29T13:28:49Z",
+          "subject": "RectangleList: Avoid infinite loops when consolidating floating-point lists"
+        },
+        {
+          "sha": "41c6ae37cd40",
+          "date": "2026-10-29T12:24:04Z",
+          "subject": "CMake: Regenerate the Windows resources file when the target's version info changes"
+        },
+        {
+          "sha": "74c08c1e2140",
+          "date": "2026-10-29T09:50:39Z",
+          "subject": "ResizableWindow: Lay the content out again when the insets of a full-screen window change"
+        },
+        {
+          "sha": "c4cd4dd3e6d9",
+          "date": "2026-10-28T12:44:45Z",
+          "subject": "Resave all projects"
+        },
+        {
+          "sha": "ce08efc5c063",
+          "date": "2026-10-28T12:44:45Z",
+          "subject": "HarfBuzz: Fix build issues and update SBOM"
+        },
+        {
+          "sha": "237847ce2407",
+          "date": "2026-10-28T12:44:45Z",
+          "subject": "HarfBuzz: Remove stale duplicated source files left behind by an earlier update"
+        },
+        {
+          "sha": "5d64a193ae28",
+          "date": "2026-10-28T12:44:45Z",
+          "subject": "HarfBuzz: Import sources from version 15.0.0"
+        },
+        {
+          "sha": "51479709ccf0",
+          "date": "2026-10-28T12:44:45Z",
+          "subject": "Resave all projects"
+        },
+        {
+          "sha": "a6440029db08",
+          "date": "2026-10-28T12:44:44Z",
+          "subject": "HarfBuzz: Fix build issues and update SBOM"
+        },
+        {
+          "sha": "87a4cdcf982f",
+          "date": "2026-10-28T12:44:44Z",
+          "subject": "HarfBuzz: Import sources from version 14.6.0"
+        },
+        {
+          "sha": "8fb21a75d415",
+          "date": "2026-10-28T12:44:44Z",
+          "subject": "Projucer Android: Use compileOptions rather than a Java toolchain to target Java 8"
+        },
+        {
+          "sha": "973d04ce5569",
+          "date": "2026-10-28T12:44:44Z",
+          "subject": "Fix some LLVM 23.1 clang-tidy warnings"
+        },
+        {
+          "sha": "8bb18c42c6e1",
+          "date": "2026-10-28T12:44:44Z",
+          "subject": "iOS: Fix deprecation warnings when targeting iOS 26 and later"
+        },
+        {
+          "sha": "7a9a5eb88367",
+          "date": "2026-10-28T12:44:44Z",
+          "subject": "Projucer Xcode: Update generated project files for better compatibility with Xcode 27"
+        },
+        {
+          "sha": "af69a2354dd7",
+          "date": "2026-10-28T12:44:44Z",
+          "subject": "iOS: Remove uses of [UIScreen mainScreen]"
+        },
+        {
+          "sha": "dfb378a0617f",
+          "date": "2026-10-28T12:44:44Z",
+          "subject": "iOS: Report the correct safe area insets on devices with a side-mounted sensor housing"
+        },
+        {
+          "sha": "d9e2ca817fae",
+          "date": "2026-10-27T17:27:43Z",
+          "subject": "PopupMenu: Allow semi-transparent menus with a parent component when the desktop can't use semi-transparent windows"
+        }
+      ],
+      "last_commit": "2026-11-02T12:32:17Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 16
+      }
+    },
+    "steinbergmedia/vst3sdk": {
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    },
+    "microsoft/onnxruntime": {
+      "error": "HTTP 404",
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    },
+    "pyinstaller/pyinstaller": {
+      "commits": [
+        {
+          "sha": "db739d431f2e",
+          "date": "2026-11-17T13:09:45Z",
+          "subject": "Doc: Fix links to removed CI configs and dead pages (#9571)"
+        },
+        {
+          "sha": "e9022370dda9",
+          "date": "2026-11-17T11:03:48Z",
+          "subject": "bootloader: fix unused-function warning when compiling on Windows"
+        },
+        {
+          "sha": "fb6ef0488f6b",
+          "date": "2026-11-17T11:03:48Z",
+          "subject": "ci: replace msys2/mingw32 with clang64 and clangarm64"
+        },
+        {
+          "sha": "7e66014fea8c",
+          "date": "2026-11-15T15:57:37Z",
+          "subject": "Tests: Requirements: Scheduled weekly dependency update for week 46 (#9577)"
+        },
+        {
+          "sha": "78cf1b414587",
+          "date": "2026-11-08T20:56:16Z",
+          "subject": "Tests: Requirements: Scheduled weekly dependency update for week 45 (#9570)"
+        },
+        {
+          "sha": "0bc859418e9b",
+          "date": "2026-11-06T22:09:29Z",
+          "subject": "Docs: Fix typo: `--online` → `--oneline`."
+        },
+        {
+          "sha": "14adba9ef406",
+          "date": "2026-11-01T22:14:06Z",
+          "subject": "Tests: Requirements: Scheduled weekly dependency update for week 44 (#9566)"
+        },
+        {
+          "sha": "dede102361d5",
+          "date": "2026-11-01T15:54:23Z",
+          "subject": "hooks: Add hooks for GtkLayerShell & Gtk4LayerShell (#9565)"
+        },
+        {
+          "sha": "a6a971b37472",
+          "date": "2026-11-01T15:36:51Z",
+          "subject": "tests: run the collect_submodules traceback assertions (#9564)"
+        },
+        {
+          "sha": "dda9f641b3ba",
+          "date": "2026-10-31T18:37:59Z",
+          "subject": "building: fix collection of python3t.dll in non-free-threaded python 3.15"
+        },
+        {
+          "sha": "44697216a20c",
+          "date": "2026-10-25T16:21:40Z",
+          "subject": "Tests: Requirements: Scheduled weekly dependency update for week 43 (#9560)"
+        },
+        {
+          "sha": "287f7cf44ef2",
+          "date": "2026-10-25T00:00:42Z",
+          "subject": "tests: disable QtWebEngine sandbox for Qt6 < 6.10 on Windows"
+        },
+        {
+          "sha": "0d1af5d208a6",
+          "date": "2026-10-25T00:00:42Z",
+          "subject": "tests: skip forkserver variant of process-start-in-threads test on OpenBSD"
+        },
+        {
+          "sha": "c915b94a6ba5",
+          "date": "2026-10-25T00:00:42Z",
+          "subject": "tests: revise test program in test_Qt_QtWebEngineWidgets"
+        },
+        {
+          "sha": "7aa61205f8e9",
+          "date": "2026-10-25T00:00:42Z",
+          "subject": "tests: disable QtWebEngine sandbox for Qt5 on Windows"
+        },
+        {
+          "sha": "8234cae45d66",
+          "date": "2026-10-25T00:00:42Z",
+          "subject": "ci: attempt to fix msys2/mingw32 workflow"
+        },
+        {
+          "sha": "365bb4438fd7",
+          "date": "2026-10-25T00:00:42Z",
+          "subject": "ci: cygwin: install python312-alabaster and python312-sphinxcontrib-* packages"
+        },
+        {
+          "sha": "5c0688cf1beb",
+          "date": "2026-10-24T20:41:33Z",
+          "subject": "hooks: Add gi.repository.GdkWin32/GdkX11/GdkWayland (#9557)"
+        },
+        {
+          "sha": "4467f1d9c441",
+          "date": "2026-10-24T20:37:56Z",
+          "subject": "hooks: GLib: Collect gdbus.exe (#9556)"
+        },
+        {
+          "sha": "b206650681ec",
+          "date": "2026-10-22T13:08:13Z",
+          "subject": "bootloader: fix unused-function warning when compiling on Windows"
+        },
+        {
+          "sha": "f058da412513",
+          "date": "2026-10-22T13:08:13Z",
+          "subject": "bootloader: fix detection of arm64 platform when compiling with clang"
+        },
+        {
+          "sha": "4be552d10c6a",
+          "date": "2026-10-18T18:34:32Z",
+          "subject": "Tests: Requirements: Scheduled weekly dependency update for week 42 (#9551)"
+        },
+        {
+          "sha": "ad07220e0693",
+          "date": "2026-10-16T09:28:45Z",
+          "subject": "ci: promote python 3.15 to stable version"
+        },
+        {
+          "sha": "dd300ea98c79",
+          "date": "2026-10-16T09:28:45Z",
+          "subject": "ci: switch macos-14 runners to macos-15"
+        },
+        {
+          "sha": "c2836f7d1879",
+          "date": "2026-10-16T09:28:45Z",
+          "subject": "ci: remove the freethreading-specific check from main tests job"
+        },
+        {
+          "sha": "ce3d99c72a0a",
+          "date": "2026-10-16T09:24:25Z",
+          "subject": "ci: cygwin: switch to python 3.12"
+        },
+        {
+          "sha": "2763ed96d17e",
+          "date": "2026-10-16T09:24:25Z",
+          "subject": "tests: fix test_contents_directory for Cygwin python 3.12"
+        },
+        {
+          "sha": "1292f6b03e7e",
+          "date": "2026-10-16T09:24:25Z",
+          "subject": "tests: unbuffered stdio: fix for Cygwin python 3.12"
+        },
+        {
+          "sha": "a57ebf1967ec",
+          "date": "2026-10-16T09:24:02Z",
+          "subject": "ci: NetBSD: install and use python 3.14"
+        },
+        {
+          "sha": "e87034aa57c4",
+          "date": "2026-10-16T09:24:02Z",
+          "subject": "bootloader: do not unload python shared library on NetBSD + python >= 3.13"
+        }
+      ],
+      "last_commit": "2026-11-17T13:09:45Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 1
+      }
+    },
+    "obsproject/obs-studio": {
+      "commits": [
+        {
+          "sha": "717cfa8b7e63",
+          "date": "2026-11-18T03:35:14Z",
+          "subject": "libobs: Fix duplicated group names"
+        },
+        {
+          "sha": "77bb349ce77e",
+          "date": "2026-11-18T01:09:58Z",
+          "subject": "obs-browser: Update version to 2.27.6"
+        },
+        {
+          "sha": "501569e840aa",
+          "date": "2026-11-17T20:43:55Z",
+          "subject": "cmake, build-aux: Use v2 of CEF 150 to fix various issues"
+        },
+        {
+          "sha": "4a2c57cea5bb",
+          "date": "2026-11-17T20:39:10Z",
+          "subject": "win-asio: Rename id of input capture"
+        },
+        {
+          "sha": "7e3aa9981179",
+          "date": "2026-11-17T06:13:47Z",
+          "subject": "cmake: Set a global IDE folder for autogen targets"
+        },
+        {
+          "sha": "e8a9a13bfc9d",
+          "date": "2026-11-16T21:45:44Z",
+          "subject": "obs-vst3: Fix plugin folder"
+        },
+        {
+          "sha": "fe1ed7955f30",
+          "date": "2026-11-10T21:02:58Z",
+          "subject": "frontend: Show track label in advanced audio controls"
+        },
+        {
+          "sha": "9e614234fcef",
+          "date": "2026-11-10T20:52:34Z",
+          "subject": "cmake: Copy WebGPU DLLs for obs-browser"
+        },
+        {
+          "sha": "da03f160eeb0",
+          "date": "2026-11-10T20:51:15Z",
+          "subject": "frontend: Use vector for OBS source label signals"
+        },
+        {
+          "sha": "6e22cced3814",
+          "date": "2026-11-10T20:01:57Z",
+          "subject": "obs-scripting: Add methods for getting scene/hotkey from calldata"
+        },
+        {
+          "sha": "671e96105b94",
+          "date": "2026-11-10T19:07:12Z",
+          "subject": "win-capture: Initialize window capture immediately"
+        },
+        {
+          "sha": "427c6e5f05a5",
+          "date": "2026-11-10T17:07:49Z",
+          "subject": "virtualcam-module: Make placeholder initialization thread-safe"
+        },
+        {
+          "sha": "24db22cfdfc2",
+          "date": "2026-11-10T15:32:29Z",
+          "subject": "shared: Close child dialogs on properties refresh"
+        },
+        {
+          "sha": "9f5d1ccff9aa",
+          "date": "2026-11-10T15:31:47Z",
+          "subject": "libobs: Fix canvas private duplicated scenes"
+        },
+        {
+          "sha": "9533698f747c",
+          "date": "2026-11-10T15:30:20Z",
+          "subject": "virtualcam-module: Improve lock tracking for DLL unloading"
+        },
+        {
+          "sha": "ab5c0b9114ed",
+          "date": "2026-11-09T23:12:17Z",
+          "subject": "decklink: Fix frequent audio dropouts on output"
+        },
+        {
+          "sha": "1def7830fe58",
+          "date": "2026-11-09T23:05:31Z",
+          "subject": "libobs: Add obs_weak_canvas_references_canvas"
+        },
+        {
+          "sha": "fc2bce5e95a8",
+          "date": "2026-11-09T23:03:08Z",
+          "subject": "frontend: Fix repeated log entries"
+        },
+        {
+          "sha": "85d055175289",
+          "date": "2026-11-09T23:01:08Z",
+          "subject": "win-dshow: Close device dialogs during shutdown"
+        },
+        {
+          "sha": "b7ff6cc0624a",
+          "date": "2026-11-09T22:58:07Z",
+          "subject": "libobs,frontend: Load vertex and index buffers before drawing"
+        },
+        {
+          "sha": "07500e2e8217",
+          "date": "2026-11-09T22:58:07Z",
+          "subject": "libobs-d3d11: Fix crashes from stale vertex buffer data"
+        },
+        {
+          "sha": "e8dbf7b54902",
+          "date": "2026-11-09T22:57:43Z",
+          "subject": "frontend: Fix blank projectors on startup"
+        },
+        {
+          "sha": "48287d3d67aa",
+          "date": "2026-11-09T22:49:43Z",
+          "subject": "frontend: Fix YT AutoStop copying AutoStart value"
+        },
+        {
+          "sha": "991c3b19f9e1",
+          "date": "2026-11-09T22:25:25Z",
+          "subject": "frontend: Fix spinbox crash"
+        },
+        {
+          "sha": "f6cdbc2d179f",
+          "date": "2026-11-09T22:25:10Z",
+          "subject": "cmake: Populate Bluetooth usage Plist description"
+        },
+        {
+          "sha": "40d67805e296",
+          "date": "2026-11-09T20:51:58Z",
+          "subject": "mac-capture: Don't try to use 64RGBAHalf on Intel systems"
+        },
+        {
+          "sha": "9e0f5cf1a240",
+          "date": "2026-11-09T20:48:36Z",
+          "subject": "obs-outputs: Fix Hybrid MP4 not splitting by time"
+        },
+        {
+          "sha": "7a25c3fd8b5e",
+          "date": "2026-11-03T16:57:41Z",
+          "subject": "win-asio: Blacklist Yamaha Steinberg in Debug builds"
+        },
+        {
+          "sha": "f5741179573e",
+          "date": "2026-11-03T16:57:41Z",
+          "subject": "asio-output-ui: Support for new monitoring mixer"
+        },
+        {
+          "sha": "78ee8084799b",
+          "date": "2026-11-03T16:57:41Z",
+          "subject": "win-asio: Add monitoring mix to output"
+        }
+      ],
+      "last_commit": "2026-11-18T03:35:14Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 0
+      }
+    },
+    "falkTX/Carla": {
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    },
+    "DISTRHO/DPF": {
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    },
+    "muse-sequencer/muse": {
+      "commits": [
+        {
+          "sha": "a2b4960deb75",
+          "date": "2026-11-17T19:04:33Z",
+          "subject": "More Wayland fixes"
+        },
+        {
+          "sha": "12051bb36573",
+          "date": "2026-11-16T01:56:36Z",
+          "subject": "Merge branch 'master' of https://github.com/muse-sequencer/muse"
+        },
+        {
+          "sha": "e8c89435a51e",
+          "date": "2026-11-16T01:55:26Z",
+          "subject": "Wayland fixes. Also crash at main() end."
+        },
+        {
+          "sha": "8ba5d2dd33eb",
+          "date": "2026-11-03T07:37:05Z",
+          "subject": "IDFs submitted by manuematic"
+        },
+        {
+          "sha": "1d1133ac9f39",
+          "date": "2026-11-03T06:53:37Z",
+          "subject": "Couple of desktop file related changes"
+        },
+        {
+          "sha": "3a93dc68f3fa",
+          "date": "2026-10-27T23:20:58Z",
+          "subject": "Fix unmoveable transport panel under Wayland"
+        },
+        {
+          "sha": "523ac2fdbc00",
+          "date": "2026-10-27T04:25:19Z",
+          "subject": "Modernize some cmake files, update translations"
+        },
+        {
+          "sha": "9016258392d9",
+          "date": "2026-10-27T02:38:55Z",
+          "subject": "Merge branch 'master' of https://github.com/muse-sequencer/muse"
+        },
+        {
+          "sha": "da447d2a6a52",
+          "date": "2026-10-26T20:06:06Z",
+          "subject": "Merge pull request #1355 from snd1/patch-2"
+        },
+        {
+          "sha": "bf9e77a19737",
+          "date": "2026-10-26T19:08:24Z",
+          "subject": "Merge pull request #1351 from snd1/patch-1"
+        },
+        {
+          "sha": "f65adde8bc22",
+          "date": "2026-10-25T14:59:43Z",
+          "subject": "Fix SIGSEGV on startup on all non-amd64 architectures"
+        },
+        {
+          "sha": "fde0c88f2105",
+          "date": "2026-10-22T08:19:25Z",
+          "subject": "Add support for opening files in MusE application"
+        },
+        {
+          "sha": "3b76175dc5a3",
+          "date": "2026-10-21T03:22:42Z",
+          "subject": "Removed class PopupMenu's old side-scrolling feature"
+        },
+        {
+          "sha": "1ba918ffc0ba",
+          "date": "2026-10-20T05:15:15Z",
+          "subject": "Fix large popup menus not splitting up correctly"
+        },
+        {
+          "sha": "8d1030d2fe2c",
+          "date": "2026-10-19T05:14:23Z",
+          "subject": "Minor compiler fixes and update README"
+        },
+        {
+          "sha": "4500ab43ed0e",
+          "date": "2026-10-18T23:43:01Z",
+          "subject": "Merge branch 'master' of https://github.com/muse-sequencer/muse"
+        },
+        {
+          "sha": "24f0a3885cd9",
+          "date": "2026-10-18T23:42:21Z",
+          "subject": "Fix 1102 1310 1342. Compiler fixes. Improved stretching."
+        },
+        {
+          "sha": "db699fc8effc",
+          "date": "2026-10-17T05:02:55Z",
+          "subject": "Merge pull request #1349 from brynnjocelyn/fix-1310-simpledrums-multichannel"
+        },
+        {
+          "sha": "8f571a350ebe",
+          "date": "2026-10-17T04:56:44Z",
+          "subject": "Merge pull request #1348 from brynnjocelyn/fix-1102-wave-relative-path"
+        },
+        {
+          "sha": "9df2c031b65b",
+          "date": "2026-10-17T04:34:29Z",
+          "subject": "Merge branch 'master' of https://github.com/muse-sequencer/muse"
+        },
+        {
+          "sha": "fc46868cb0c7",
+          "date": "2026-10-17T04:32:54Z",
+          "subject": "Some compiler fixes and improved stretching"
+        },
+        {
+          "sha": "fb59f26f4063",
+          "date": "2026-10-17T03:42:30Z",
+          "subject": "Merge pull request #1347 from brynnjocelyn/fix-1342-autosave-backup"
+        },
+        {
+          "sha": "d9cb0531717d",
+          "date": "2026-10-11T20:32:05Z",
+          "subject": "Fix issue 1310: SimpleDrums plays samples with more than 2 channels slowed and pitched down"
+        },
+        {
+          "sha": "7a5242a445ce",
+          "date": "2026-10-11T20:20:30Z",
+          "subject": "Fix issue 1102: Mangled wave file paths in .med when project dir is a symlink"
+        },
+        {
+          "sha": "42f059e20ad6",
+          "date": "2026-10-11T20:13:32Z",
+          "subject": "Fix issue 1342: Project backup file never overwritten on save"
+        },
+        {
+          "sha": "732c5543e3dd",
+          "date": "2026-09-07T07:37:28Z",
+          "subject": "Update compatibility_build.yml"
+        },
+        {
+          "sha": "41faecd55faa",
+          "date": "2026-09-07T06:36:56Z",
+          "subject": "Update appimage_release.yml"
+        },
+        {
+          "sha": "36faa3f8dfe0",
+          "date": "2026-09-07T06:24:42Z",
+          "subject": "Update appimage_latest.yml"
+        },
+        {
+          "sha": "70aaa0574485",
+          "date": "2026-09-07T05:20:55Z",
+          "subject": "Fix a couple of font metric size vs. width"
+        },
+        {
+          "sha": "8dbb3115ba96",
+          "date": "2026-09-07T04:54:20Z",
+          "subject": "Merge branch 'master' of https://github.com/muse-sequencer/muse"
+        }
+      ],
+      "last_commit": "2026-11-17T19:04:33Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 1
+      }
+    },
+    "wwmm/easyeffects": {
+      "commits": [
+        {
+          "sha": "9d4d29668850",
+          "date": "2026-11-18T22:05:21Z",
+          "subject": "Merge pull request #5493 from weblate/weblate-easyeffects-main"
+        },
+        {
+          "sha": "6af0566c618d",
+          "date": "2026-11-18T06:51:45Z",
+          "subject": "Translated using Weblate (Italian)"
+        },
+        {
+          "sha": "ea72583f1e98",
+          "date": "2026-11-17T20:31:34Z",
+          "subject": "Merge pull request #5492 from weblate/weblate-easyeffects-main"
+        },
+        {
+          "sha": "cb2a7d158052",
+          "date": "2026-11-17T18:24:16Z",
+          "subject": "Merge remote-tracking branch 'origin/master'"
+        },
+        {
+          "sha": "d8488764cc51",
+          "date": "2026-11-17T18:24:11Z",
+          "subject": "Translated using Weblate (Italian)"
+        },
+        {
+          "sha": "81c7fcfa19ca",
+          "date": "2026-11-17T18:23:55Z",
+          "subject": "Merge pull request #5491 from easyeffects-bot/automatically-update-translation-templates"
+        },
+        {
+          "sha": "2fbd1886df21",
+          "date": "2026-11-17T18:09:31Z",
+          "subject": "Update translation templates"
+        },
+        {
+          "sha": "8426a1cdf0bb",
+          "date": "2026-11-17T18:08:48Z",
+          "subject": "Merge pull request #5489 from Digitalone1/master"
+        },
+        {
+          "sha": "117bc57e1c51",
+          "date": "2026-11-17T17:38:30Z",
+          "subject": "add missing loudness \"compensate\" control"
+        },
+        {
+          "sha": "6557773133c1",
+          "date": "2026-11-17T16:37:23Z",
+          "subject": "add missing LSP \"dry/wet balance\" control"
+        },
+        {
+          "sha": "416d80375388",
+          "date": "2026-11-17T15:11:14Z",
+          "subject": "Merge pull request #5488 from weblate/weblate-easyeffects-main"
+        },
+        {
+          "sha": "f16b59c6fd16",
+          "date": "2026-11-17T11:32:20Z",
+          "subject": "LSP 1.2.37: added new crossover slope control"
+        },
+        {
+          "sha": "0d814adc9e63",
+          "date": "2026-11-17T11:31:34Z",
+          "subject": "improve translations for band labels"
+        },
+        {
+          "sha": "c467b2f1038e",
+          "date": "2026-11-17T05:51:29Z",
+          "subject": "Translated using Weblate (Italian)"
+        },
+        {
+          "sha": "2491d2524450",
+          "date": "2026-11-17T05:51:28Z",
+          "subject": "Translated using Weblate (French)"
+        },
+        {
+          "sha": "196dd4afc8b4",
+          "date": "2026-11-16T15:38:59Z",
+          "subject": "EeChart.qml: Avoiding infinity loops"
+        },
+        {
+          "sha": "5f688fe7e1df",
+          "date": "2026-11-16T15:31:10Z",
+          "subject": "Merge pull request #5487 from easyeffects-bot/automatically-update-translation-templates"
+        },
+        {
+          "sha": "aa405b15eafd",
+          "date": "2026-11-16T15:15:08Z",
+          "subject": "Update translation templates"
+        },
+        {
+          "sha": "26a0d3a7e48a",
+          "date": "2026-11-16T15:14:27Z",
+          "subject": "Merge pull request #5485 from Digitalone1/master"
+        },
+        {
+          "sha": "28a7d2d437f5",
+          "date": "2026-11-16T14:58:06Z",
+          "subject": "Merge pull request #5486 from wwmm/dependabot/github_actions/peter-evans/create-pull-request-8.1.3"
+        },
+        {
+          "sha": "40b034355bb7",
+          "date": "2026-11-16T14:56:50Z",
+          "subject": "Merge pull request #5484 from weblate/weblate-easyeffects-main"
+        },
+        {
+          "sha": "83c22d7cdcb9",
+          "date": "2026-11-16T12:03:32Z",
+          "subject": "Bump peter-evans/create-pull-request from 8.1.2 to 8.1.3"
+        },
+        {
+          "sha": "39317e5fef61",
+          "date": "2026-11-16T10:03:11Z",
+          "subject": "UI: show -inf with unit suffix"
+        },
+        {
+          "sha": "3544abc9c02e",
+          "date": "2026-11-16T10:01:32Z",
+          "subject": "add missing LSP \"hold\" control"
+        },
+        {
+          "sha": "9862fb6ea496",
+          "date": "2026-11-16T04:53:25Z",
+          "subject": "Translated using Weblate (Chinese (Simplified Han script))"
+        },
+        {
+          "sha": "c8081b8df73a",
+          "date": "2026-11-15T21:17:48Z",
+          "subject": "Merge pull request #5483 from weblate/weblate-easyeffects-main"
+        },
+        {
+          "sha": "87f089aecc58",
+          "date": "2026-11-15T20:51:37Z",
+          "subject": "Translated using Weblate (Romanian)"
+        },
+        {
+          "sha": "aa6228002a3c",
+          "date": "2026-11-15T20:51:35Z",
+          "subject": "Translated using Weblate (Italian)"
+        },
+        {
+          "sha": "f5615cbde144",
+          "date": "2026-11-15T20:51:33Z",
+          "subject": "Translated using Weblate (French)"
+        },
+        {
+          "sha": "7e3e9fc28e0c",
+          "date": "2026-11-15T15:00:20Z",
+          "subject": "Merge pull request #5482 from weblate/weblate-easyeffects-main"
+        }
+      ],
+      "last_commit": "2026-11-18T22:05:21Z",
+      "windows": {
+        "in_30d": true,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 0
+      }
+    },
+    "bmc0/dsp": {
+      "commits": [
+        {
+          "sha": "2e7eac120f21",
+          "date": "2026-09-30T19:58:28Z",
+          "subject": "examples/matrix4_mb_direct_path*: Link delay modulation laterally."
+        },
+        {
+          "sha": "a6d740247d22",
+          "date": "2026-09-22T18:43:21Z",
+          "subject": "matrix4_common.[ch]: Remove unused event_config.min_hold_frames."
+        },
+        {
+          "sha": "fd962c5ab337",
+          "date": "2026-09-11T16:11:28Z",
+          "subject": "matrix4_filter_bank.c: Update thresholds."
+        },
+        {
+          "sha": "66c86a2c9927",
+          "date": "2026-09-05T19:32:26Z",
+          "subject": "matrix4_mb.c: Fix fade when toggling effect."
+        },
+        {
+          "sha": "a0637eccee30",
+          "date": "2026-08-26T17:56:02Z",
+          "subject": "matrix4_common.c: Use polynomial atan() approximation."
+        },
+        {
+          "sha": "2cbbb4265cef",
+          "date": "2026-08-26T17:56:02Z",
+          "subject": "matrix4_mb.c: Reorganize main loop."
+        },
+        {
+          "sha": "fd151936edf1",
+          "date": "2026-08-26T17:56:02Z",
+          "subject": "matrix4_mb.c: Delay event parameters for surr_direct_pan()."
+        },
+        {
+          "sha": "5ba13e463a57",
+          "date": "2026-08-26T17:56:02Z",
+          "subject": "matrix4{,_mb}: Add lowpass order suboption."
+        },
+        {
+          "sha": "a286f45201b5",
+          "date": "2026-08-26T17:56:02Z",
+          "subject": "matrix4_common.[ch]: Remove event.hold field."
+        },
+        {
+          "sha": "d5dff45d3a1b",
+          "date": "2026-08-26T17:56:02Z",
+          "subject": "matrix4_common.c: Scale pwrcmp rise with offset; tweak params."
+        },
+        {
+          "sha": "62b1b778a552",
+          "date": "2026-08-26T17:56:02Z",
+          "subject": "matrix4_mb: Use separate analysis and synthesis filter banks."
+        },
+        {
+          "sha": "281b32e1126c",
+          "date": "2026-08-26T17:56:02Z",
+          "subject": "capn.[ch]: Add cap3 functions."
+        },
+        {
+          "sha": "1d45e1ca7db5",
+          "date": "2026-08-26T17:40:02Z",
+          "subject": "effects_chain.c: Scale offsets as well."
+        }
+      ],
+      "last_commit": "2026-09-30T19:58:28Z",
+      "windows": {
+        "in_30d": false,
+        "in_90d": true,
+        "in_180d": true,
+        "days_since": 49
+      }
+    },
+    "Stazed/loopidity": {
+      "error": "HTTP 404",
+      "commits": [],
+      "last_commit": null,
+      "windows": {}
+    }
+  }
+}

@@ -86,7 +86,14 @@ class UpdateDialog(QDialog):
             self.status.setText('已是最新版本 ' + __version__)
             return
         self.release = data
-        self.status.setText('新版本 ' + data['version'] + ' · ' + data['published_at'])
+        # Trust transparency: show what will be downloaded before asking to continue.
+        try:
+            asset = updating.installer_asset(data)
+            size = f"安装包 {asset['size'] / 1024 / 1024:.1f} MiB · SHA-256 {asset['sha256'][:16]}…"
+        except (KeyError, ValueError) as exc:
+            size = str(exc)
+        self.status.setText('新版本 ' + data['version'] + ' · ' + data['published_at']
+                            + (' · ' + size if size else ''))
         self.action.setText('下载并校验更新')
 
     def downloaded(self, path):

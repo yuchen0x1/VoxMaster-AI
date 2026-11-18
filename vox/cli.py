@@ -24,15 +24,22 @@ def main(argv=None):
     commands = parser.add_subparsers(dest='command', required=True)
     analyze = commands.add_parser('analyze', help='读取音频，输出 JSON 测量')
     analyze.add_argument('input', type=Path)
+    analyze.add_argument('--report', type=Path, help='将完整 JSON 结果写入此文件')
     tune = commands.add_parser('tune', help='逐个调音，保留已有文件')
     tune.add_argument('inputs', nargs='+', type=Path)
     tune.add_argument('--output-dir', type=Path, required=True)
     tune.add_argument('--style', choices=list(PRESETS), default='经典喊麦')
     tune.add_argument('--format', choices=['wav', 'flac', 'mp3', 'aac'], default='wav')
+    tune.add_argument('--report', type=Path, help='将完整 JSON 结果写入此文件')
+    commands.add_parser('styles', help='列出可用风格并退出')
     args = parser.parse_args(argv)
     cancel = threading.Event()
     results = []
     failed = False
+    if args.command == 'styles':
+        print(json.dumps(dict(version=__version__, styles=list(PRESETS)),
+                         ensure_ascii=False))
+        return 0
     try:
         for path in ([args.input] if args.command == 'analyze' else args.inputs):
             try:
@@ -59,7 +66,13 @@ def main(argv=None):
     except KeyboardInterrupt:
         cancel.set()
         return 130
-    print(json.dumps(dict(version=__version__, results=results), ensure_ascii=False, allow_nan=False))
+    payload = dict(version=__version__, results=results)
+    printed = json.dumps(payload, ensure_ascii=False, allow_nan=False)
+    print(printed)
+    if args.report is not None:
+        # The report file is an automation artifact; stdout stays the live contract.
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_text(printed, 'utf-8')
     return int(failed)
 
 

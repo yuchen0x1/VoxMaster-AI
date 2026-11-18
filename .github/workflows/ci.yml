@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 30
     env:
       QT_QPA_PLATFORM: offscreen
-      VOXMASTER_DATA: ${{ runner.temp }}/voxmaster-test
+      VOXMASTER_DATA: ${{ github.workspace }}/.voxmaster-test-data
       PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -39,3 +39,20 @@ jobs:
         with:
           name: test-results-${{ matrix.os }}
           path: results.xml
+  workflows:
+    name: workflows (actionlint)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Download pinned actionlint and verify its published SHA-256
+        run: |
+          curl --retry 4 --fail --silent --show-error --location \
+            --output /tmp/actionlint.tar.gz \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  /tmp/actionlint.tar.gz' | sha256sum --check --strict -
+          tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint
+      - run: /tmp/actionlint -version
+      - run: /tmp/actionlint

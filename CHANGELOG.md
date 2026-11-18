@@ -1,5 +1,9 @@
 # VoxMaster AI 更新日志
 
+## 0.3.0 · 2026-11-19
+
+修复发布流水线启动失败根因并补齐质量门禁：CI 新增 actionlint 静态校验，Release 新增发布后清单与资产链接验证，月度维护新增上游近 90 天提交活动扫描。新增本地会话健康检查（异常退出识别、无遥测）、CLI `styles` 子命令与 `--report` 报告文件，更新窗口下载前展示包体大小与 SHA-256 前缀。原音频引擎、工程格式、品牌和授权状态保留。完整说明见 [版本记录](docs/releases/release-notes.md)，调研依据见 [RESEARCH-030](docs/RESEARCH-030.md)。
+
 ## 0.2.0 · 2026-11-18
 
 官方签名更新窗口、离线分析与批量调音、Linux/macOS 源码环境适配与四 runner 回归。原音频引擎、工程格式、品牌和授权状态保留。完整用户变更与边界见 [版本记录](docs/releases/release-notes.md)。
