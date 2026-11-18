@@ -1,0 +1,5 @@
+{"time": "2026-11-18T19:07:37.888962+08:00", "runtime": "1.24.4", "requested": "CUDA", "available": ["TensorrtExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider"]}
+{"time": "2026-11-18T19:07:40.224763+08:00", "fraction": 0.0, "message": "加载 CUDAExecutionProvider"}
+{"time": "2026-11-18T19:07:42.997107+08:00", "fraction": 0.0, "message": "CUDAExecutionProvider 不可用，已回退 · 加载 CPUExecutionProvider"}
+{"time": "2026-11-18T19:07:45.029886+08:00", "fraction": 1.0, "message": "CUDAExecutionProvider 不可用，已回退 · CPUExecutionProvider · 推理进程 504 MiB"}
+{"time": "2026-11-18T19:07:45.267988+08:00", "status": "FAIL", "frames": 352800, "elapsed": 5.112, "max_cpu_delta": 0.0, "max_reconstruction_error": 1.4901161193847656e-08, "sdr_gain_db": 10.372170448303223}

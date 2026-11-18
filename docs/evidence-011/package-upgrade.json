@@ -1,0 +1,106 @@
+{
+  "captured": "2026-11-18T19:24:35+08:00",
+  "os": "Windows 11 Pro x64 10.0.26300",
+  "from": "0.1.0",
+  "to": "0.1.1",
+  "scope": "candidate frozen application payload; original setup recipes with isolated AppId; existing production installation preserved",
+  "exe_sha256": "D53E5C4FC0EE5A44542E2C9490CD9DBF0323BDFFEDC062C538A30CDDD7480FF0",
+  "user_files_unchanged": {
+    "settings.json": "DAE64CBA1348EDC6CE005A8D519F0668EDBF8DA08D94D7AB9E15D4696DFE86F3",
+    ".voxproj": "C0C74B6FF3E4659B2DFBC0CACB1BB873D090012699121D76AD7A98EE1513C757",
+    ".wav": "A72C0B59FDBA80850552AF7991DE07F9F4940846D2D70F0890EEB153C40F164B"
+  },
+  "uninstall": "PASS",
+  "Installed": {
+    "version": "0.1.1",
+    "qt_platform": "windows",
+    "portaudio": [
+      1246976,
+      "PortAudio V19.7.0-devel, revision unknown"
+    ],
+    "runtimes": {
+      "av": "18.1.0",
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "sounddevice": "0.5.6",
+      "pyside6-essentials": "6.12.0",
+      "onnxruntime-directml": "1.24.4"
+    },
+    "providers": [
+      "DmlExecutionProvider",
+      "CPUExecutionProvider"
+    ],
+    "ffmpeg": "8.1.2",
+    "changed_rms": 0.05087067931890488,
+    "wav": {
+      "frames": 88200,
+      "bytes": 529338
+    },
+    "mp3": {
+      "frames": 88200,
+      "bytes": 82591
+    },
+    "flac": {
+      "frames": 88200,
+      "bytes": 149216
+    },
+    "aac": {
+      "frames": 90112,
+      "bytes": 54163
+    },
+    "recovery": {
+      "source": "upgrade.wav",
+      "frames": 457758,
+      "style": "经典喊麦",
+      "saved_import_directory_matched": true
+    },
+    "separation": "DmlExecutionProvider · 推理进程 331 MiB · NVIDIA GeForce RTX 5060 Laptop GPU · 进程显存 567 MiB / 预算 7131 MiB",
+    "status": "PASS"
+  },
+  "VoxMasterAI": {
+    "version": "0.1.1",
+    "qt_platform": "windows",
+    "portaudio": [
+      1246976,
+      "PortAudio V19.7.0-devel, revision unknown"
+    ],
+    "runtimes": {
+      "av": "18.1.0",
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "sounddevice": "0.5.6",
+      "pyside6-essentials": "6.12.0",
+      "onnxruntime-directml": "1.24.4"
+    },
+    "providers": [
+      "DmlExecutionProvider",
+      "CPUExecutionProvider"
+    ],
+    "ffmpeg": "8.1.2",
+    "changed_rms": 0.05087067931890488,
+    "wav": {
+      "frames": 88200,
+      "bytes": 529338
+    },
+    "mp3": {
+      "frames": 88200,
+      "bytes": 82591
+    },
+    "flac": {
+      "frames": 88200,
+      "bytes": 149216
+    },
+    "aac": {
+      "frames": 90112,
+      "bytes": 54163
+    },
+    "recovery": {
+      "source": "upgrade.wav",
+      "frames": 457758,
+      "style": "经典喊麦",
+      "saved_import_directory_matched": true
+    },
+    "separation": "DmlExecutionProvider · 推理进程 332 MiB · NVIDIA GeForce RTX 5060 Laptop GPU · 进程显存 567 MiB / 预算 7131 MiB",
+    "status": "PASS"
+  }
+}

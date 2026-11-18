@@ -1,0 +1,6 @@
+2026-11-18 19:22:15 +0800
+"C:\Users\lenmo\Desktop\VoxMaster AI\.venv\Scripts\python.exe" -m pytest -q tests/test_acoustics.py tests/test_audioio.py tests/test_engine.py tests/test_models.py tests/test_models_ui.py tests/test_studio.py tests/test_studio_monitor.py tests/test_workstation.py tests/test_workstation_devices.py
+......................................................................   [100%]
+70 passed in 28.67s
+
+exit 0

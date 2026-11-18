@@ -1,0 +1,4 @@
+{"time": "2026-11-18T19:11:10.918487+08:00", "runtime": "1.24.4", "requested": "CUDA", "available": ["TensorrtExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider"]}
+{"time": "2026-11-18T19:11:13.379611+08:00", "fraction": 0.0, "message": "加载 CUDAExecutionProvider"}
+{"time": "2026-11-18T19:11:15.912286+08:00", "fraction": 1.0, "message": "CUDAExecutionProvider · 推理进程 889 MiB · NVIDIA GeForce RTX 5060 Laptop GPU · 进程显存 398 MiB / 预算 7131 MiB"}
+{"time": "2026-11-18T19:11:16.249801+08:00", "status": "PASS", "frames": 352800, "elapsed": 2.954, "max_cpu_delta": 8.419156074523926e-06, "max_reconstruction_error": 1.4901161193847656e-08, "sdr_gain_db": 10.372161865234375}

@@ -1,0 +1,169 @@
+{
+  "time": "2026-11-18T19:10:21.553749+08:00",
+  "kind": "route",
+  "status": "PASS",
+  "events": [
+    {
+      "id": 7,
+      "host": "Windows DirectSound",
+      "selected": 7,
+      "playing": true,
+      "cursor": 0.4407,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 8,
+      "host": "Windows WASAPI",
+      "selected": 8,
+      "playing": true,
+      "cursor": 0.8007,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 3,
+      "host": "MME",
+      "selected": 3,
+      "playing": true,
+      "cursor": 0.4099,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 7,
+      "host": "Windows DirectSound",
+      "selected": 7,
+      "playing": true,
+      "cursor": 0.6906,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 8,
+      "host": "Windows WASAPI",
+      "selected": 8,
+      "playing": true,
+      "cursor": 0.3506,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 3,
+      "host": "MME",
+      "selected": 3,
+      "playing": true,
+      "cursor": 0.6597,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 7,
+      "host": "Windows DirectSound",
+      "selected": 7,
+      "playing": true,
+      "cursor": 0.2505,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 8,
+      "host": "Windows WASAPI",
+      "selected": 8,
+      "playing": true,
+      "cursor": 0.6205,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 3,
+      "host": "MME",
+      "selected": 3,
+      "playing": true,
+      "cursor": 0.2296,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 7,
+      "host": "Windows DirectSound",
+      "selected": 7,
+      "playing": true,
+      "cursor": 0.5203,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 8,
+      "host": "Windows WASAPI",
+      "selected": 8,
+      "playing": true,
+      "cursor": 0.1803,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 3,
+      "host": "MME",
+      "selected": 3,
+      "playing": true,
+      "cursor": 0.4895,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 7,
+      "host": "Windows DirectSound",
+      "selected": 7,
+      "playing": true,
+      "cursor": 0.7802,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 8,
+      "host": "Windows WASAPI",
+      "selected": 8,
+      "playing": true,
+      "cursor": 0.4502,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 3,
+      "host": "MME",
+      "selected": 3,
+      "playing": true,
+      "cursor": 0.7593,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 7,
+      "host": "Windows DirectSound",
+      "selected": 7,
+      "playing": true,
+      "cursor": 0.3601,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 8,
+      "host": "Windows WASAPI",
+      "selected": 8,
+      "playing": true,
+      "cursor": 0.7201,
+      "underflows": 0,
+      "notice": ""
+    },
+    {
+      "id": 3,
+      "host": "MME",
+      "selected": 3,
+      "playing": true,
+      "cursor": 0.3292,
+      "underflows": 0,
+      "notice": ""
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{"time": "2026-11-18T19:08:26.949714+08:00", "runtime": "1.24.4", "requested": "CUDA", "available": ["TensorrtExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider"]}
+{"time": "2026-11-18T19:08:29.461069+08:00", "fraction": 0.0, "message": "加载 CUDAExecutionProvider"}
+{"time": "2026-11-18T19:09:27.038505+08:00", "fraction": 1.0, "message": "CUDAExecutionProvider · 推理进程 988 MiB · NVIDIA 整卡显存 2456/8151 MiB"}
+{"time": "2026-11-18T19:09:27.504385+08:00", "status": "PASS", "frames": 352800, "elapsed": 58.131, "max_cpu_delta": 6.224215030670166e-05, "max_reconstruction_error": 1.4901161193847656e-08, "sdr_gain_db": 10.37243366241455}

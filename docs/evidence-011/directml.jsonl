@@ -1,0 +1,4 @@
+{"time": "2026-11-18T19:05:55.980549+08:00", "runtime": "1.24.4", "requested": "DirectML", "available": ["DmlExecutionProvider", "CPUExecutionProvider"]}
+{"time": "2026-11-18T19:05:58.560248+08:00", "fraction": 0.0, "message": "加载 DmlExecutionProvider"}
+{"time": "2026-11-18T19:06:00.635751+08:00", "fraction": 1.0, "message": "DmlExecutionProvider · 推理进程 333 MiB · NVIDIA GeForce RTX 5060 Laptop GPU · 进程显存 567 MiB / 预算 7131 MiB"}
+{"time": "2026-11-18T19:06:00.991808+08:00", "status": "PASS", "frames": 352800, "elapsed": 2.523, "max_cpu_delta": 2.384185791015625e-07, "max_reconstruction_error": 1.4901161193847656e-08, "sdr_gain_db": 10.372170448303223}

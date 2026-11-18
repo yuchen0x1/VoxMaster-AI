@@ -1,0 +1,26 @@
+{
+  "time": "2026-11-18T19:10:35.811190+08:00",
+  "kind": "dpi",
+  "status": "PASS",
+  "platform": "windows",
+  "dpr": 2.0,
+  "displays": 1,
+  "available": [
+    1280,
+    770
+  ],
+  "size": [
+    1280,
+    730
+  ],
+  "snapshot_pixels": [
+    2560,
+    1460
+  ],
+  "controls": {
+    "timeline": true,
+    "go": true,
+    "export_btn": true,
+    "play_btn": true
+  }
+}

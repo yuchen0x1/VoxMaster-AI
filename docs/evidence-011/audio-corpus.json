@@ -1,0 +1,1155 @@
+{
+  "day": "2026-11-18",
+  "processor": "AMD Ryzen 9 8945HX",
+  "os": "Windows 11 Pro x64",
+  "blind_calibration": {
+    "trials": 28,
+    "wav_count": 84,
+    "peak_dbtp": -3.3882266262971132,
+    "max_triplet_loudness_spread_lu": 0.0030000000000001137,
+    "source_count": 23,
+    "identical_render_pairs": [],
+    "date": "2026-11-18T19:20:12+08:00",
+    "listening_status": "待人工签字"
+  },
+  "inputs": [
+    {
+      "id": "FS207620",
+      "source_sha256": "cbea81309ecf7dc346d0f271f248c6ccdf35154163ecef726c8ec8f3c026d081",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 229.19721088435375,
+      "input_lufs": -16.32807276468979,
+      "baseline_output_lufs": -14.999999553866042,
+      "output_lufs": -15.00000032745358,
+      "output_short_term_max_lufs": -11.508957563872942,
+      "true_peak_dbtp": -2.8904450402723194,
+      "rms_dbfs": -18.241629820337614,
+      "crest_db": 15.1742061485884,
+      "dynamics_db": 9.74779400746737,
+      "centroid_hz": 793,
+      "bands_db": {
+        "rumble": -25.91,
+        "body": -7.31,
+        "mud": -3.93,
+        "mid": -4.98,
+        "presence": -11.3,
+        "sibilance": -19.31,
+        "air": -24.89
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.9714992536230846,
+      "quiet_frame_delta_db": 2.052666033873244,
+      "denoise_audit": {
+        "quiet_before_db": -44.785203511450185,
+        "quiet_after_db": -45.17358429192882,
+        "quiet_delta_db": -0.38838078047863434,
+        "windows": 25,
+        "strength": 0.21819079409755882
+      },
+      "compression_p95_db": 0.959,
+      "output_warnings": [],
+      "regions": 663,
+      "clips": [
+        {
+          "start_frame": 2601900,
+          "end_frame": 3131100,
+          "basis": "前半段内 12 秒平均 PCM 能量最高",
+          "id": "FS207620-1"
+        }
+      ]
+    },
+    {
+      "id": "FS319253",
+      "source_sha256": "927fc216bfcbb22102ed5291a952c55af51d0f29aae6e3a513fbee04b7fee81a",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 13.035510204081632,
+      "input_lufs": -20.567473402431887,
+      "baseline_output_lufs": -15.000000293708238,
+      "output_lufs": -14.999999543834782,
+      "output_short_term_max_lufs": -12.918403358245895,
+      "true_peak_dbtp": -3.0807492092255946,
+      "rms_dbfs": -18.824776505258477,
+      "crest_db": 15.738499909047635,
+      "dynamics_db": 14.022650242704257,
+      "centroid_hz": 412,
+      "bands_db": {
+        "rumble": -41.69,
+        "body": -12.1,
+        "mud": -0.67,
+        "mid": -11.66,
+        "presence": -19.76,
+        "sibilance": -26.5,
+        "air": -71.29
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.9855937071815306,
+      "quiet_frame_delta_db": 6.0506541470384505,
+      "denoise_audit": {
+        "quiet_before_db": -52.16361490627943,
+        "quiet_after_db": -53.25207258303437,
+        "quiet_delta_db": -1.0884576767549419,
+        "windows": 25,
+        "strength": 0.19003947907205332
+      },
+      "compression_p95_db": 1.06,
+      "output_warnings": [],
+      "regions": 27,
+      "clips": [
+        {
+          "start_frame": 0,
+          "end_frame": 529200,
+          "basis": "前半段内 12 秒平均 PCM 能量最高",
+          "id": "FS319253-1"
+        }
+      ]
+    },
+    {
+      "id": "FS353853",
+      "source_sha256": "62d74791e46e4dd689f661e1e9e4c817b2f6f0f101e01dd211e7451039095dd0",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 4.02,
+      "input_lufs": -18.188053780252524,
+      "baseline_output_lufs": -17.7005212013697,
+      "output_lufs": -17.452972839273674,
+      "output_short_term_max_lufs": -17.28319479520734,
+      "true_peak_dbtp": -1.1999995701314767,
+      "rms_dbfs": -19.482943698218374,
+      "crest_db": 18.00456153570369,
+      "dynamics_db": 14.1637703868044,
+      "centroid_hz": 525,
+      "bands_db": {
+        "rumble": -8.78,
+        "body": -1.85,
+        "mud": -8.61,
+        "mid": -14.96,
+        "presence": -18.91,
+        "sibilance": -19.81,
+        "air": -16.83
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.8784989014560591,
+      "quiet_frame_delta_db": 2.3533373866302725,
+      "denoise_audit": {
+        "quiet_before_db": -40.83455874292726,
+        "quiet_after_db": -42.19214740720609,
+        "quiet_delta_db": -1.3575886642788362,
+        "windows": 11,
+        "strength": 0.2485565574014623
+      },
+      "compression_p95_db": 1.14,
+      "output_warnings": [],
+      "regions": 32,
+      "clips": [
+        {
+          "start_frame": 0,
+          "end_frame": 177282,
+          "basis": "完整短样本",
+          "id": "FS353853-1"
+        }
+      ]
+    },
+    {
+      "id": "FS360702",
+      "source_sha256": "180cc85d41eab1e88a13367bd2cd840c631acd3d961c694470e5d38c32369357",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 11.435442176870747,
+      "input_lufs": -38.184151444855914,
+      "baseline_output_lufs": -14.99999975063156,
+      "output_lufs": -14.999999809637226,
+      "output_short_term_max_lufs": -14.780855629535054,
+      "true_peak_dbtp": -4.567085947514585,
+      "rms_dbfs": -18.039656548848825,
+      "crest_db": 13.466797455389045,
+      "dynamics_db": 2.290769594341352,
+      "centroid_hz": 814,
+      "bands_db": {
+        "rumble": -23.44,
+        "body": -10.41,
+        "mud": -5.04,
+        "mid": -3.0,
+        "presence": -10.55,
+        "sibilance": -29.57,
+        "air": -33.85
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.7679051275129487,
+      "quiet_frame_delta_db": 22.843288439434833,
+      "denoise_audit": {
+        "quiet_before_db": -42.26060084540833,
+        "quiet_after_db": -42.26060084540833,
+        "quiet_delta_db": 0.0,
+        "windows": 25,
+        "strength": 0
+      },
+      "compression_p95_db": 0.0,
+      "output_warnings": [],
+      "regions": 15,
+      "clips": [
+        {
+          "start_frame": 0,
+          "end_frame": 504303,
+          "basis": "完整短样本",
+          "id": "FS360702-1"
+        }
+      ]
+    },
+    {
+      "id": "FS393851",
+      "source_sha256": "ed895ca4395959e2cac27ef9a2cd7a9fb19d2be4c2ef074218c40d96aa653c70",
+      "preset": "旋律喊麦",
+      "mode": "旋律喊麦",
+      "duration_s": 29.611541950113377,
+      "input_lufs": -33.74098662121075,
+      "baseline_output_lufs": -15.069108712779533,
+      "output_lufs": -15.046036763573442,
+      "output_short_term_max_lufs": -12.814891567544072,
+      "true_peak_dbtp": -1.9901497609173648,
+      "rms_dbfs": -19.930753764773513,
+      "crest_db": 17.935076291248652,
+      "dynamics_db": 21.3448013725439,
+      "centroid_hz": 713,
+      "bands_db": {
+        "rumble": -45.1,
+        "body": -16.7,
+        "mud": -5.6,
+        "mid": -1.62,
+        "presence": -18.47,
+        "sibilance": -41.96,
+        "air": -64.37
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.22581495160364948,
+      "quiet_frame_delta_db": 18.697628303251477,
+      "denoise_audit": {
+        "quiet_before_db": -80.07237419653654,
+        "quiet_after_db": -80.07237419653654,
+        "quiet_delta_db": 0.0,
+        "windows": 25,
+        "strength": 0
+      },
+      "compression_p95_db": 0.072,
+      "output_warnings": [],
+      "regions": 39,
+      "clips": [
+        {
+          "start_frame": 88200,
+          "end_frame": 617400,
+          "basis": "前半段内 12 秒平均 PCM 能量最高",
+          "id": "FS393851-1"
+        }
+      ]
+    },
+    {
+      "id": "FS469039",
+      "source_sha256": "fb9805825cbf0116851df438900e81f30c013fa6aa52d737a22c7a4d7aa37fbf",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 51.0,
+      "input_lufs": -27.03462870624505,
+      "baseline_output_lufs": -16.95397421322136,
+      "output_lufs": -18.145533915849807,
+      "output_short_term_max_lufs": -16.712824767080292,
+      "true_peak_dbtp": -1.1999995701314767,
+      "rms_dbfs": -21.599798199268502,
+      "crest_db": 20.312733952049253,
+      "dynamics_db": 19.364442639940354,
+      "centroid_hz": 716,
+      "bands_db": {
+        "rumble": -36.96,
+        "body": -8.5,
+        "mud": -3.99,
+        "mid": -4.18,
+        "presence": -11.25,
+        "sibilance": -26.25,
+        "air": -31.59
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.9957826038228073,
+      "quiet_frame_delta_db": 11.20451363215954,
+      "denoise_audit": {
+        "quiet_before_db": -63.966367523710794,
+        "quiet_after_db": -64.41608912564817,
+        "quiet_delta_db": -0.44972160193737665,
+        "windows": 25,
+        "strength": 0.14394032969960416
+      },
+      "compression_p95_db": 1.365,
+      "output_warnings": [
+        "成品偏离响度目标 -3.1 LU，请结合真峰值余量试听。"
+      ],
+      "regions": 232,
+      "clips": [
+        {
+          "start_frame": 132300,
+          "end_frame": 661500,
+          "basis": "前半段内 12 秒平均 PCM 能量最高",
+          "id": "FS469039-1"
+        }
+      ]
+    },
+    {
+      "id": "FS738227",
+      "source_sha256": "bd11c90560045d869a89043be4d499fb9952a38d043a86e7ae7151ca81fd1f19",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 98.21428571428571,
+      "input_lufs": -17.081801380107517,
+      "baseline_output_lufs": -15.219657131007699,
+      "output_lufs": -15.263193752198855,
+      "output_short_term_max_lufs": -13.89315696618166,
+      "true_peak_dbtp": -1.2000001645528333,
+      "rms_dbfs": -22.042489125545277,
+      "crest_db": 20.663256244435416,
+      "dynamics_db": 19.421751904320423,
+      "centroid_hz": 1075,
+      "bands_db": {
+        "rumble": -39.71,
+        "body": -10.17,
+        "mud": -4.97,
+        "mid": -3.67,
+        "presence": -8.77,
+        "sibilance": -20.0,
+        "air": -18.96
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.9902361037966322,
+      "quiet_frame_delta_db": 4.321748807002081,
+      "denoise_audit": {
+        "quiet_before_db": -97.89271116299524,
+        "quiet_after_db": -97.89271116299524,
+        "quiet_delta_db": 0.0,
+        "windows": 25,
+        "strength": 0
+      },
+      "compression_p95_db": 2.558,
+      "output_warnings": [],
+      "regions": 153,
+      "clips": [
+        {
+          "start_frame": 1675800,
+          "end_frame": 2205000,
+          "basis": "前半段内 12 秒平均 PCM 能量最高",
+          "id": "FS738227-1"
+        }
+      ]
+    },
+    {
+      "id": "FS763804",
+      "source_sha256": "80e0432230cdd7baa702a8b04dc53f7f0839126af3c099f7c34dc7c41a8d1570",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 27.293514739229025,
+      "input_lufs": -35.575707452306965,
+      "baseline_output_lufs": -15.081502932830865,
+      "output_lufs": -15.120486716410372,
+      "output_short_term_max_lufs": -11.280159179547459,
+      "true_peak_dbtp": -1.1999995701314767,
+      "rms_dbfs": -21.133671234443973,
+      "crest_db": 19.8228421161026,
+      "dynamics_db": 14.278463374528117,
+      "centroid_hz": 2913,
+      "bands_db": {
+        "rumble": -28.08,
+        "body": -13.74,
+        "mud": -10.3,
+        "mid": -3.93,
+        "presence": -5.62,
+        "sibilance": -9.7,
+        "air": -11.11
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.46706679263610723,
+      "quiet_frame_delta_db": 18.471874226344,
+      "denoise_audit": {
+        "quiet_before_db": -60.429599876172595,
+        "quiet_after_db": -61.29148251895324,
+        "quiet_delta_db": -0.8618826427806425,
+        "windows": 25,
+        "strength": 0.24772163168105402
+      },
+      "compression_p95_db": 0.011,
+      "output_warnings": [],
+      "regions": 54,
+      "clips": [
+        {
+          "start_frame": 308700,
+          "end_frame": 837900,
+          "basis": "前半段内 12 秒平均 PCM 能量最高",
+          "id": "FS763804-1"
+        }
+      ]
+    },
+    {
+      "id": "MC01",
+      "source_sha256": "cf6f84d4578430142ab74ffbfcc0e05c6ae30b53e138701726db81a6721ed8c6",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 174.93913832199547,
+      "input_lufs": -3.2891074212853324,
+      "baseline_output_lufs": -14.999999972460417,
+      "output_lufs": -14.999999930596877,
+      "output_short_term_max_lufs": -13.771649696639836,
+      "true_peak_dbtp": -5.88810408557018,
+      "rms_dbfs": -19.0745597023491,
+      "crest_db": 12.911750877217532,
+      "dynamics_db": 4.026486684619805,
+      "centroid_hz": 1425,
+      "bands_db": {
+        "rumble": -15.95,
+        "body": -8.53,
+        "mud": -6.35,
+        "mid": -4.69,
+        "presence": -7.58,
+        "sibilance": -13.2,
+        "air": -13.95
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.7804318339225577,
+      "quiet_frame_delta_db": -11.172482479289439,
+      "denoise_audit": {
+        "quiet_before_db": -16.543154955051264,
+        "quiet_after_db": -16.543154955051264,
+        "quiet_delta_db": 0.0,
+        "windows": 25,
+        "strength": 0
+      },
+      "compression_p95_db": 2.686,
+      "output_warnings": [],
+      "regions": 225,
+      "clips": [
+        {
+          "start_frame": 2513700,
+          "end_frame": 3042900,
+          "basis": "前半段内 12 秒平均 PCM 能量最高",
+          "id": "MC01-1"
+        },
+        {
+          "start_frame": 5468400,
+          "end_frame": 5997600,
+          "basis": "全曲时长 71% 附近",
+          "id": "MC01-2"
+        }
+      ]
+    },
+    {
+      "id": "MC02",
+      "source_sha256": "92bc7d390af12954303c4409ef76e60436d2ad995904cf283cfc71824a0b5072",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 75.21154195011339,
+      "input_lufs": -9.330164950912428,
+      "baseline_output_lufs": -14.999999750033131,
+      "output_lufs": -14.99999961440073,
+      "output_short_term_max_lufs": -13.084475526046193,
+      "true_peak_dbtp": -3.2341119945018546,
+      "rms_dbfs": -19.086691684679863,
+      "crest_db": 15.570280160702708,
+      "dynamics_db": 8.106212990416047,
+      "centroid_hz": 1446,
+      "bands_db": {
+        "rumble": -13.96,
+        "body": -5.84,
+        "mud": -5.71,
+        "mid": -7.79,
+        "presence": -7.66,
+        "sibilance": -12.51,
+        "air": -14.36
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.6508819941837252,
+      "quiet_frame_delta_db": -5.4421492132326605,
+      "denoise_audit": {
+        "quiet_before_db": -29.495070975572098,
+        "quiet_after_db": -29.871256941601633,
+        "quiet_delta_db": -0.376185966029535,
+        "windows": 25,
+        "strength": 0.3165266046899542
+      },
+      "compression_p95_db": 2.037,
+      "output_warnings": [],
+      "regions": 104,
+      "clips": [
+        {
+          "start_frame": 1058400,
+          "end_frame": 1587600,
+          "basis": "前半段内 12 秒平均 PCM 能量最高",
+          "id": "MC02-1"
+        },
+        {
+          "start_frame": 2337300,
+          "end_frame": 2866500,
+          "basis": "全曲时长 71% 附近",
+          "id": "MC02-2"
+        }
+      ]
+    },
+    {
+      "id": "MC03",
+      "source_sha256": "9c9f3d373f9a81d91791b781947f79539b48edc1417d705c990d267522f3dfed",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 117.06965986394557,
+      "input_lufs": -4.64989510900807,
+      "baseline_output_lufs": -15.000000254929159,
+      "output_lufs": -15.000000234190464,
+      "output_short_term_max_lufs": -13.800927360162106,
+      "true_peak_dbtp": -5.457457803334829,
+      "rms_dbfs": -18.553114874986733,
+      "crest_db": 13.015207137949151,
+      "dynamics_db": 6.4018675170744,
+      "centroid_hz": 1570,
+      "bands_db": {
+        "rumble": -11.18,
+        "body": -6.43,
+        "mud": -6.41,
+        "mid": -5.72,
+        "presence": -9.52,
+        "sibilance": -13.18,
+        "air": -13.99
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.788123016480166,
+      "quiet_frame_delta_db": -9.04419728343682,
+      "denoise_audit": {
+        "quiet_before_db": -22.519360622523617,
+        "quiet_after_db": -23.029207757544448,
+        "quiet_delta_db": -0.5098471350208307,
+        "windows": 25,
+        "strength": 0.3466268421918762
+      },
+      "compression_p95_db": 2.803,
+      "output_warnings": [],
+      "regions": 174,
+      "clips": [
+        {
+          "start_frame": 2293200,
+          "end_frame": 2822400,
+          "basis": "前半段内 12 秒平均 PCM 能量最高",
+          "id": "MC03-1"
+        },
+        {
+          "start_frame": 3660300,
+          "end_frame": 4189500,
+          "basis": "全曲时长 71% 附近",
+          "id": "MC03-2"
+        }
+      ]
+    },
+    {
+      "id": "MC04",
+      "source_sha256": "6aa35a74193c02adadc5f2ef4102d82aea65483a25dbbb7ac9ef4ca090fa12d0",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 186.66666666666666,
+      "input_lufs": -7.201501885714883,
+      "baseline_output_lufs": -14.999999853392483,
+      "output_lufs": -15.000000055363177,
+      "output_short_term_max_lufs": -14.074586238326885,
+      "true_peak_dbtp": -4.043921128951681,
+      "rms_dbfs": -18.549315839908076,
+      "crest_db": 14.49090520797736,
+      "dynamics_db": 6.002862112781571,
+      "centroid_hz": 1529,
+      "bands_db": {
+        "rumble": -10.63,
+        "body": -5.73,
+        "mud": -6.65,
+        "mid": -7.59,
+        "presence": -7.64,
+        "sibilance": -13.57,
+        "air": -14.01
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.8399023486569543,
+      "quiet_frame_delta_db": -7.6649071007790575,
+      "denoise_audit": {
+        "quiet_before_db": -18.25976653771751,
+        "quiet_after_db": -18.25976653771751,
+        "quiet_delta_db": 0.0,
+        "windows": 25,
+        "strength": 0
+      },
+      "compression_p95_db": 2.566,
+      "output_warnings": [],
+      "regions": 251,
+      "clips": [
+        {
+          "start_frame": 2381400,
+          "end_frame": 2910600,
+          "basis": "前半段内 12 秒平均 PCM 能量最高",
+          "id": "MC04-1"
+        },
+        {
+          "start_frame": 5865300,
+          "end_frame": 6394500,
+          "basis": "全曲时长 71% 附近",
+          "id": "MC04-2"
+        }
+      ]
+    },
+    {
+      "id": "MC05",
+      "source_sha256": "bf83df46b604e536f8ced108349286f4ea6384cf64f96378ff84903f51fbc1f8",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 69.40444444444445,
+      "input_lufs": -4.913641757238193,
+      "baseline_output_lufs": -15.000000297300277,
+      "output_lufs": -14.999999969370448,
+      "output_short_term_max_lufs": -14.175481942573024,
+      "true_peak_dbtp": -4.815205631576356,
+      "rms_dbfs": -17.252516633348897,
+      "crest_db": 11.925717713586803,
+      "dynamics_db": 4.029342424689762,
+      "centroid_hz": 416,
+      "bands_db": {
+        "rumble": -11.7,
+        "body": -2.45,
+        "mud": -6.81,
+        "mid": -9.32,
+        "presence": -15.5,
+        "sibilance": -20.85,
+        "air": -26.96
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.9360006935048516,
+      "quiet_frame_delta_db": -11.274579401472636,
+      "denoise_audit": {
+        "quiet_before_db": -10.299076088106357,
+        "quiet_after_db": -10.299076088106357,
+        "quiet_delta_db": 0.0,
+        "windows": 25,
+        "strength": 0
+      },
+      "compression_p95_db": 2.317,
+      "output_warnings": [],
+      "regions": 88,
+      "clips": [
+        {
+          "start_frame": 0,
+          "end_frame": 529200,
+          "basis": "前半段内 12 秒平均 PCM 能量最高",
+          "id": "MC05-1"
+        },
+        {
+          "start_frame": 2160900,
+          "end_frame": 2690100,
+          "basis": "全曲时长 71% 附近",
+          "id": "MC05-2"
+        }
+      ]
+    },
+    {
+      "id": "RM01",
+      "source_sha256": "26c8bf03a206841c3b3d513fd5a5afd6fa8e9b3594c4085f2f8a99cfb601530b",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 12.0,
+      "input_lufs": -19.539966452034193,
+      "baseline_output_lufs": -15.81238063360856,
+      "output_lufs": -15.877516391122677,
+      "output_short_term_max_lufs": -14.5411550260338,
+      "true_peak_dbtp": -1.199998975710161,
+      "rms_dbfs": -18.523566175001207,
+      "crest_db": 17.008577184075957,
+      "dynamics_db": 11.341546995261393,
+      "centroid_hz": 661,
+      "bands_db": {
+        "rumble": -11.08,
+        "body": -3.3,
+        "mud": -6.38,
+        "mid": -8.58,
+        "presence": -12.48,
+        "sibilance": -19.3,
+        "air": -17.74
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.9330279598254343,
+      "quiet_frame_delta_db": 3.742978906198914,
+      "denoise_audit": {
+        "quiet_before_db": -41.89160191784427,
+        "quiet_after_db": -43.07621799858489,
+        "quiet_delta_db": -1.1846160807406179,
+        "windows": 25,
+        "strength": 0.26466452648809224
+      },
+      "compression_p95_db": 1.477,
+      "output_warnings": [],
+      "regions": 76,
+      "clips": [
+        {
+          "start_frame": 0,
+          "end_frame": 529200,
+          "basis": "完整短样本",
+          "id": "RM01-1"
+        }
+      ]
+    },
+    {
+      "id": "RM02",
+      "source_sha256": "e4f8e91211f01afcdc39682380aecdc7d2216b9583101635fd63e963ea35328f",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 12.0,
+      "input_lufs": -18.930096619899114,
+      "baseline_output_lufs": -15.204931671760521,
+      "output_lufs": -15.825081257201873,
+      "output_short_term_max_lufs": -13.296013846462253,
+      "true_peak_dbtp": -1.199998975710161,
+      "rms_dbfs": -19.16572259159731,
+      "crest_db": 17.763571058730356,
+      "dynamics_db": 9.421397604327286,
+      "centroid_hz": 951,
+      "bands_db": {
+        "rumble": -28.41,
+        "body": -7.76,
+        "mud": -4.67,
+        "mid": -4.79,
+        "presence": -8.87,
+        "sibilance": -18.11,
+        "air": -19.05
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.965132421989878,
+      "quiet_frame_delta_db": 4.646003358989656,
+      "denoise_audit": {
+        "quiet_before_db": -33.939194320477306,
+        "quiet_after_db": -34.87200850423719,
+        "quiet_delta_db": -0.9328141837598878,
+        "windows": 25,
+        "strength": 0.30072708511537605
+      },
+      "compression_p95_db": 1.116,
+      "output_warnings": [],
+      "regions": 81,
+      "clips": [
+        {
+          "start_frame": 0,
+          "end_frame": 529200,
+          "basis": "完整短样本",
+          "id": "RM02-1"
+        }
+      ]
+    },
+    {
+      "id": "VS01",
+      "source_sha256": "bae7f307b688af929a0140b5a3becb3894dfd2f3dbcb4e7e0c87e74a1067be07",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 8.499024943310658,
+      "input_lufs": -32.262051357069005,
+      "baseline_output_lufs": -14.999999872532118,
+      "output_lufs": -14.999999814999617,
+      "output_short_term_max_lufs": -13.018621908401284,
+      "true_peak_dbtp": -6.35903168169616,
+      "rms_dbfs": -18.739408407249652,
+      "crest_db": 12.36458564978236,
+      "dynamics_db": 8.84742593923065,
+      "centroid_hz": 943,
+      "bands_db": {
+        "rumble": -42.29,
+        "body": -39.29,
+        "mud": -10.55,
+        "mid": -0.43,
+        "presence": -23.59,
+        "sibilance": -35.02,
+        "air": -37.47
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.9895404397472527,
+      "quiet_frame_delta_db": 16.718227161295175,
+      "denoise_audit": {
+        "quiet_before_db": -54.48707131277977,
+        "quiet_after_db": -55.65485006046825,
+        "quiet_delta_db": -1.1677787476884802,
+        "windows": 24,
+        "strength": 0.31146373221269646
+      },
+      "compression_p95_db": 0.068,
+      "output_warnings": [],
+      "regions": 17,
+      "clips": [
+        {
+          "start_frame": 0,
+          "end_frame": 374807,
+          "basis": "完整短样本",
+          "id": "VS01-1"
+        }
+      ]
+    },
+    {
+      "id": "VS02",
+      "source_sha256": "b5f9f2c4bd2885333f218d3b7adc99c69f916c267ee948ea867fe90fdc971b72",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 6.157278911564626,
+      "input_lufs": -21.24991899047654,
+      "baseline_output_lufs": -15.00000016445397,
+      "output_lufs": -14.99999975652412,
+      "output_short_term_max_lufs": -13.910127257543522,
+      "true_peak_dbtp": -6.02714220755693,
+      "rms_dbfs": -18.92222582957648,
+      "crest_db": 12.88955622623364,
+      "dynamics_db": 6.555939089232286,
+      "centroid_hz": 1254,
+      "bands_db": {
+        "rumble": -48.51,
+        "body": -47.64,
+        "mud": -11.84,
+        "mid": -0.92,
+        "presence": -9.03,
+        "sibilance": -30.15,
+        "air": -38.96
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.9897505250761007,
+      "quiet_frame_delta_db": 6.8668597023261455,
+      "denoise_audit": {
+        "quiet_before_db": -61.86660886622751,
+        "quiet_after_db": -62.25810761424265,
+        "quiet_delta_db": -0.3914987480151382,
+        "windows": 17,
+        "strength": 0.28574793316357233
+      },
+      "compression_p95_db": 0.838,
+      "output_warnings": [],
+      "regions": 10,
+      "clips": [
+        {
+          "start_frame": 0,
+          "end_frame": 271536,
+          "basis": "完整短样本",
+          "id": "VS02-1"
+        }
+      ]
+    },
+    {
+      "id": "VS03",
+      "source_sha256": "96cf2db15083de86576e402d5681d2bb71a3cd3418219bf168edbbc5d8f29881",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 7.218843537414966,
+      "input_lufs": -48.775186918570526,
+      "baseline_output_lufs": -15.386146587314801,
+      "output_lufs": -15.485324699480712,
+      "output_short_term_max_lufs": -12.982954622210992,
+      "true_peak_dbtp": -1.199998975710161,
+      "rms_dbfs": -18.89902560306314,
+      "crest_db": 17.58398710336766,
+      "dynamics_db": 8.872225953594045,
+      "centroid_hz": 880,
+      "bands_db": {
+        "rumble": -25.11,
+        "body": -15.83,
+        "mud": -10.57,
+        "mid": -0.79,
+        "presence": -13.98,
+        "sibilance": -20.78,
+        "air": -27.68
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.9955403310088704,
+      "quiet_frame_delta_db": 33.163034631259194,
+      "denoise_audit": {
+        "quiet_before_db": -73.24576830913597,
+        "quiet_after_db": -74.65087543325933,
+        "quiet_delta_db": -1.4051071241233615,
+        "windows": 20,
+        "strength": 0.2963343533222954
+      },
+      "compression_p95_db": 0.013,
+      "output_warnings": [],
+      "regions": 19,
+      "clips": [
+        {
+          "start_frame": 0,
+          "end_frame": 318351,
+          "basis": "完整短样本",
+          "id": "VS03-1"
+        }
+      ]
+    },
+    {
+      "id": "VS04",
+      "source_sha256": "a1016229da31a9c77f73d2026e81b638b8bf3ced4f47f0cb6e634903a7cec0a0",
+      "preset": "旋律喊麦",
+      "mode": "旋律喊麦",
+      "duration_s": 9.352789115646258,
+      "input_lufs": -17.451136341362098,
+      "baseline_output_lufs": -14.999999847157767,
+      "output_lufs": -14.99999960617947,
+      "output_short_term_max_lufs": -13.218202147731558,
+      "true_peak_dbtp": -6.5769232240539335,
+      "rms_dbfs": -20.173035063205667,
+      "crest_db": 13.584802469458264,
+      "dynamics_db": 18.55830193400629,
+      "centroid_hz": 810,
+      "bands_db": {
+        "rumble": -47.36,
+        "body": -49.15,
+        "mud": -19.69,
+        "mid": -0.13,
+        "presence": -17.3,
+        "sibilance": -34.91,
+        "air": -44.93
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.9878663229793937,
+      "quiet_frame_delta_db": 10.348771538711503,
+      "denoise_audit": {
+        "quiet_before_db": -57.12137222514504,
+        "quiet_after_db": -58.099261829985295,
+        "quiet_delta_db": -0.9778896048402572,
+        "windows": 25,
+        "strength": 0.20140680132333577
+      },
+      "compression_p95_db": 8.12,
+      "output_warnings": [
+        "压缩器第 95 百分位增益衰减 8.1 dB，请等响试听爆发音和抽吸。"
+      ],
+      "regions": 22,
+      "clips": [
+        {
+          "start_frame": 0,
+          "end_frame": 412458,
+          "basis": "完整短样本",
+          "id": "VS04-1"
+        }
+      ]
+    },
+    {
+      "id": "VS05",
+      "source_sha256": "2b595a45b32ba29b4c02112c26973978b739bf9e5458a41946a783d89f39572d",
+      "preset": "旋律喊麦",
+      "mode": "旋律喊麦",
+      "duration_s": 3.7096825396825395,
+      "input_lufs": -32.925576928153845,
+      "baseline_output_lufs": -15.000000279455087,
+      "output_lufs": -14.999999821391327,
+      "output_short_term_max_lufs": -14.885215692373675,
+      "true_peak_dbtp": -5.626333016350569,
+      "rms_dbfs": -18.719482825019327,
+      "crest_db": 13.087622742794043,
+      "dynamics_db": 9.604280314655647,
+      "centroid_hz": 927,
+      "bands_db": {
+        "rumble": -42.85,
+        "body": -37.05,
+        "mud": -9.77,
+        "mid": -0.51,
+        "presence": -22.47,
+        "sibilance": -36.7,
+        "air": -41.58
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.964173568708106,
+      "quiet_frame_delta_db": 16.90954032108221,
+      "denoise_audit": {
+        "quiet_before_db": -54.45566150884427,
+        "quiet_after_db": -56.05827660269749,
+        "quiet_delta_db": -1.6026150938532169,
+        "windows": 10,
+        "strength": 0.28627766447091907
+      },
+      "compression_p95_db": 0.123,
+      "output_warnings": [],
+      "regions": 7,
+      "clips": [
+        {
+          "start_frame": 0,
+          "end_frame": 163597,
+          "basis": "完整短样本",
+          "id": "VS05-1"
+        }
+      ]
+    },
+    {
+      "id": "VS06",
+      "source_sha256": "98e566224850664d75539521f5ba36a1c9343c06ae8ef9ccbf1f161bd61895b7",
+      "preset": "旋律喊麦",
+      "mode": "旋律喊麦",
+      "duration_s": 10.048253968253968,
+      "input_lufs": -38.430306169143016,
+      "baseline_output_lufs": -15.000000151159256,
+      "output_lufs": -14.999999883231514,
+      "output_short_term_max_lufs": -13.257520684602872,
+      "true_peak_dbtp": -6.041334451942428,
+      "rms_dbfs": -18.710370069487233,
+      "crest_db": 12.66350800793301,
+      "dynamics_db": 10.856861818896588,
+      "centroid_hz": 729,
+      "bands_db": {
+        "rumble": -38.92,
+        "body": -17.43,
+        "mud": -2.17,
+        "mid": -5.06,
+        "presence": -11.98,
+        "sibilance": -38.37,
+        "air": -39.03
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.9747980690086183,
+      "quiet_frame_delta_db": 25.328067156605307,
+      "denoise_audit": {
+        "quiet_before_db": -75.41514885937669,
+        "quiet_after_db": -75.81377767573446,
+        "quiet_delta_db": -0.39862881635777114,
+        "windows": 25,
+        "strength": 0.07948946815323321
+      },
+      "compression_p95_db": 0.0,
+      "output_warnings": [],
+      "regions": 19,
+      "clips": [
+        {
+          "start_frame": 0,
+          "end_frame": 443128,
+          "basis": "完整短样本",
+          "id": "VS06-1"
+        }
+      ]
+    },
+    {
+      "id": "VS07",
+      "source_sha256": "cfda9ee64305dbd6feb1a606650104c7ef42072fe5e8574ce1aa3b23e90e121f",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 19.69716553287982,
+      "input_lufs": -30.666471096369445,
+      "baseline_output_lufs": -14.99999994325592,
+      "output_lufs": -15.000000205057122,
+      "output_short_term_max_lufs": -13.06969938394152,
+      "true_peak_dbtp": -2.606334587812374,
+      "rms_dbfs": -19.152693933540284,
+      "crest_db": 16.52538470199709,
+      "dynamics_db": 18.014933221782126,
+      "centroid_hz": 900,
+      "bands_db": {
+        "rumble": -43.72,
+        "body": -38.1,
+        "mud": -7.03,
+        "mid": -1.21,
+        "presence": -13.83,
+        "sibilance": -28.65,
+        "air": -27.79
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.9895813757053661,
+      "quiet_frame_delta_db": 16.333034363295063,
+      "denoise_audit": {
+        "quiet_before_db": -68.97935729595402,
+        "quiet_after_db": -69.41004419919685,
+        "quiet_delta_db": -0.43068690324282954,
+        "windows": 25,
+        "strength": 0.14289675340220642
+      },
+      "compression_p95_db": 0.356,
+      "output_warnings": [],
+      "regions": 41,
+      "clips": [
+        {
+          "start_frame": 88200,
+          "end_frame": 617400,
+          "basis": "前半段内 12 秒平均 PCM 能量最高",
+          "id": "VS07-1"
+        }
+      ]
+    },
+    {
+      "id": "ZH01",
+      "source_sha256": "a72c0b59fdba80850552af7991de07f9f4940846d2d70f0890eeb153c40f164b",
+      "preset": "经典喊麦",
+      "mode": "自动判断",
+      "duration_s": 10.38,
+      "input_lufs": -42.21787363995357,
+      "baseline_output_lufs": -15.63798669628673,
+      "output_lufs": -17.090897536318028,
+      "output_short_term_max_lufs": -16.623003017406486,
+      "true_peak_dbtp": -1.2000001645528333,
+      "rms_dbfs": -22.847288497431872,
+      "crest_db": 21.620359765410583,
+      "dynamics_db": 22.09374437948393,
+      "centroid_hz": 628,
+      "bands_db": {
+        "rumble": -32.69,
+        "body": -6.77,
+        "mud": -3.51,
+        "mid": -5.28,
+        "presence": -13.35,
+        "sibilance": -41.0,
+        "air": -96.28
+      },
+      "over_full_samples": 0,
+      "near_full_samples": 0,
+      "rail_plateau_runs": 0,
+      "stereo_correlation": 0.9956119450431838,
+      "quiet_frame_delta_db": 24.501481256283753,
+      "denoise_audit": {
+        "quiet_before_db": -82.45227593694088,
+        "quiet_after_db": -82.45227593694088,
+        "quiet_delta_db": 0.0,
+        "windows": 25,
+        "strength": 0
+      },
+      "compression_p95_db": 0.151,
+      "output_warnings": [],
+      "regions": 35,
+      "clips": [
+        {
+          "start_frame": 0,
+          "end_frame": 457758,
+          "basis": "完整短样本",
+          "id": "ZH01-1"
+        }
+      ]
+    }
+  ]
+}

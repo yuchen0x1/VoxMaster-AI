@@ -1,0 +1,29 @@
+{
+  "time": "2026-11-18T19:23:48.623041+08:00",
+  "kind": "virtual-screens",
+  "status": "FAIL",
+  "platform": "offscreen",
+  "transitions": [
+    {
+      "target": "A-primary",
+      "actual": "A-primary",
+      "dpr": 1.0,
+      "snapshot_dpr": 1.0,
+      "live": true
+    },
+    {
+      "target": "B-secondary",
+      "actual": "B-secondary",
+      "dpr": 1.5,
+      "snapshot_dpr": 1.0,
+      "live": true
+    },
+    {
+      "target": "A-primary",
+      "actual": "A-primary",
+      "dpr": 1.0,
+      "snapshot_dpr": 1.0,
+      "live": true
+    }
+  ]
+}

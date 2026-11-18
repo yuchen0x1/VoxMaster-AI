@@ -1,0 +1,84 @@
+[
+  {
+    "material": "FLEURS 真人普通话",
+    "seconds": 10.38,
+    "voiced_frames": 89,
+    "all_frames": 517,
+    "phrase_candidates": 3,
+    "voiced_frame_confidence_median": 0.882378339767456,
+    "auto_changed_peak": 0.03725379332900047,
+    "manual_pitch": {
+      "longest_voiced_run": {
+        "range_s": [
+          2.176034013605442,
+          2.354034013605442
+        ],
+        "semitones": 2,
+        "common_voiced_frames": 4,
+        "median_shift_semitones": 2.0272177626649186,
+        "outside_selection_max_delta": 0.0
+      },
+      "stable_register": {
+        "range_s": [
+          2.176034013605442,
+          2.354034013605442
+        ],
+        "semitones": 2,
+        "common_voiced_frames": 4,
+        "median_shift_semitones": 2.0272177626649186,
+        "outside_selection_max_delta": 0.0
+      }
+    },
+    "manual_tail": {
+      "range_s": [
+        3.06,
+        3.24
+      ],
+      "next_start": 3.98,
+      "interval_s": 0.74,
+      "stretch": 1.5,
+      "maximum_change_in_clip": 0.007118953391909599,
+      "first_150ms_of_next_phrase_max_delta": 0.0
+    }
+  },
+  {
+    "material": "本地喊麦成品 45–57 秒",
+    "seconds": 12.0,
+    "voiced_frames": 16,
+    "all_frames": 598,
+    "phrase_candidates": 0,
+    "voiced_frame_confidence_median": 0.7918040156364441,
+    "auto_changed_peak": 0.0
+  },
+  {
+    "material": "同一段成品的 Spleeter 估计人声轨",
+    "seconds": 12.0,
+    "voiced_frames": 132,
+    "all_frames": 598,
+    "phrase_candidates": 0,
+    "voiced_frame_confidence_median": 0.8421137928962708,
+    "auto_changed_peak": 0.5932402014732361,
+    "manual_pitch": {
+      "longest_voiced_run": {
+        "range_s": [
+          0.9360340136054421,
+          1.114034013605442
+        ],
+        "semitones": 2,
+        "common_voiced_frames": 6,
+        "median_shift_semitones": 0.0,
+        "outside_selection_max_delta": 0.0
+      },
+      "stable_register": {
+        "range_s": [
+          1.7560340136054422,
+          1.874034013605442
+        ],
+        "semitones": 2,
+        "common_voiced_frames": 3,
+        "median_shift_semitones": 1.6577417929293987,
+        "outside_selection_max_delta": 0.0
+      }
+    }
+  }
+]

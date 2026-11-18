@@ -1,0 +1,11 @@
+{
+  "time": "2026-11-18T19:15:31.281312+08:00",
+  "equal_size_corruption": true,
+  "restored_digest": true,
+  "gpu_cancel_seconds": 0.453,
+  "provider": "DmlExecutionProvider · 推理进程 333 MiB · NVIDIA GeForce RTX 5060 Laptop GPU · 进程显存 567 MiB / 预算 7131 MiB",
+  "live_children": 0,
+  "lock_released": true,
+  "dsp_cancel_seconds": 0.062,
+  "status": "PASS"
+}
