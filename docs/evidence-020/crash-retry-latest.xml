@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="5.779" timestamp="2026-11-18T23:55:07.763667+08:00" hostname="lenmo"><testcase classname="tests.test_compatibility_011" name="test_crash_recovery_with_relocated_audio" time="5.138" /></testsuite></testsuites>

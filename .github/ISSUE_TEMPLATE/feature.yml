@@ -1,0 +1,13 @@
+name: 功能建议
+description: 描述实际工作流程与受影响的平台。
+body:
+  - type: textarea
+    id: workflow
+    attributes:
+      label: 使用场景与期望结果
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: 目标平台与替代方案

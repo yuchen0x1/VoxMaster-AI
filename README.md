@@ -1,4 +1,10 @@
-# VoxMaster AI 0.1.1
+# VoxMaster AI 0.3.0
+
+[![CI](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml) · [官方下载](https://github.com/yuchen0x1/VoxMaster-AI/releases/latest) · [反馈](https://github.com/yuchen0x1/VoxMaster-AI/issues)
+
+## 最新更新
+
+0.3.0 修复发布流水线启动失败根因并补齐质量门禁：CI 增加 actionlint 工作流校验，Release 增加发布后链接验证。新增本地会话健康检查（异常退出识别、无遥测）、CLI `styles` 与 `--report` 自动化接口，更新窗口下载前展示包体大小与 SHA-256 前缀。Windows 继续提供安装和便携形式；Linux/macOS 保持源码与 CI 试验支持。[完整版本记录](docs/releases/release-notes.md) · [本轮调研与候选](docs/RESEARCH-030.md)
 
 Windows 本地喊麦调音工作站。导入录音后可查看波形、响度、动态与音高，选择风格执行一键调音，再做等响 A/B 试听。基础调音使用测量值驱动的 DSP。人声分离使用可选的 Spleeter 神经网络，音频与模型推理都在本机。
 
@@ -25,7 +31,25 @@ Windows x64 安装版为 `dist/VoxMasterAI-Setup.exe`，按当前用户安装，
 | 旋律与尾音 | 按音高曲线选区移调、调节响应速度、撤销与试听。可伸缩局部尾音，编辑延迟重复次数、空间发送，试听下一句的起音 |
 | 分离与混音 | 双轨分离、人声与伴奏自动平衡、宽带侧链、冲突频带避让、人声居中、单声道折叠检查、轨道与总线效果链、分轨导出 |
 | 工程 | 本地工程引用、自动保存、保存前版本备份、最近工程、丢失文件重新定位、当前会话内撤销与重做 |
-| 本地运行 | 默认离线调音，显卡推理失败可回退 CPU。官方软件更新源待发布，可手动检查用户指定的 HTTPS 版本清单 |
+| 本地运行 | 默认离线调音，显卡推理失败可回退 CPU；官方更新校验 Ed25519 清单、下载大小与 SHA-256，再由用户启动安装器；本机记录会话健康标记，异常退出下次启动提示 |
+
+## 平台与批处理
+
+| 形式 | 状态 | 更新方式 |
+|---|---|---|
+| Windows 11 x64 桌面 | 主要交付；Windows 10 仍待实机验收 | 官方更新窗口或 Release；无 Authenticode、自动安装回滚 |
+| Linux / macOS Intel / Apple Silicon 源码 | 原生 CI 试验支持；实体监听和安装包未验收 | 新建独立 Python 环境升级，可保留旧环境回退 |
+| CLI | 与桌面共享同一音频引擎，多文件串行且保护已有文件 | 随产品版本更新 |
+| 手机、Web、PWA、扩展、Docker/NAS | 暂不开发 | [逐平台评估与原因](docs/PLATFORMS.md) |
+
+```powershell
+python app.py --cli analyze tests/fixtures/fleurs-mandarin.wav --report analysis.json
+python app.py --cli tune recording.wav second.wav --output-dir outputs --format flac
+python app.py --cli styles
+# Windows 包中亦可用控制台启动器 VoxMasterAI-CLI.exe --cli ...
+```
+
+结果为 JSON；批量中某文件失败会继续其他文件并以非零码退出。禁止覆盖成品；同名输入使用不同输出目录。Linux 需 PortAudio/EGL 和中文字体，macOS 需 PortAudio。用户数据分别使用 LocalAppData、XDG_DATA_HOME、Application Support；可用 VOXMASTER_DATA 指定隔离目录。[更新机制与恢复](docs/UPDATING.md)
 
 ## 开发和构建
 

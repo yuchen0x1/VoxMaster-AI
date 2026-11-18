@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 私密漏洞报告
+    url: https://github.com/yuchen0x1/VoxMaster-AI/security/advisories/new
+    about: 请勿通过公开 Issue 披露漏洞细节、密钥或私人录音。

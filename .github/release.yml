@@ -1,0 +1,4 @@
+changelog:
+  categories:
+    - title: 改进与修复
+      labels: ['*']

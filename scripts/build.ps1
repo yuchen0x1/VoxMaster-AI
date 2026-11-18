@@ -49,7 +49,7 @@ try {
     }
     & $InnoCompiler /Qp packaging\VoxMasterAI.iss
     if ($LASTEXITCODE) {throw 'Inno Setup failed'}
-    & "$env:SystemRoot\System32\tar.exe" -a -cf "$outdir\VoxMasterAI-Source.zip" --exclude "__pycache__" --exclude "*.pyc" --exclude ".pytest_cache" app.py vox scripts packaging tests docs requirements.txt README.md CHANGELOG.md .gitignore
+    & "$env:SystemRoot\System32\tar.exe" -a -cf "$outdir\VoxMasterAI-Source.zip" --exclude "__pycache__" --exclude "*.pyc" --exclude ".pytest_cache" app.py vox scripts packaging tests docs .github requirements.txt README.md CHANGELOG.md CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md .gitignore
     if ($LASTEXITCODE) {throw 'Source zip failed'}
     Get-FileHash "$outdir\VoxMasterAI-Portable.zip","$outdir\VoxMasterAI-Setup.exe","$outdir\VoxMasterAI-Source.zip","$outdir\Qt-6.12.0-Corresponding-Sources.zip" |
         ForEach-Object { $_.Hash.ToLower() + '  ' + (Split-Path $_.Path -Leaf) } |

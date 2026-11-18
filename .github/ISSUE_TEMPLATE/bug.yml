@@ -1,0 +1,26 @@
+name: 故障、兼容性或更新失败
+description: 提供可复现的环境与操作；不要上传私人录音或凭据。
+body:
+  - type: input
+    id: version
+    attributes:
+      label: 版本与安装方式
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: 操作系统、架构及音频设备
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤、预期与实际结果
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 错误消息与脱敏日志
+      description: 更新失败请注明发生在检查、下载、校验还是安装阶段。

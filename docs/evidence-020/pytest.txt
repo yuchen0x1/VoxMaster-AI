@@ -1,0 +1,101 @@
+.....................................F.................................. [ 59%]
+.................................................                        [100%]
+================================== FAILURES ===================================
+__________________ test_crash_recovery_with_relocated_audio ___________________
+
+tmp_path = WindowsPath('C:/Users/lenmo/AppData/Local/Temp/pytest-of-lenmo/pytest-149/test_crash_recovery_with_reloc0')
+
+    def test_crash_recovery_with_relocated_audio(tmp_path):
+        from vox.service import prepare
+    
+        fixture = Path(__file__).parent / "fixtures/fleurs-mandarin.wav"
+        relocated = tmp_path / "����.wav"
+        relocated.write_bytes(fixture.read_bytes())
+        original = tmp_path / "����.wav"
+        relocated.rename(original)
+        child = textwrap.dedent("""
+            import ctypes, hashlib, os, sys, time
+            from pathlib import Path
+            from PySide6.QtWidgets import QApplication
+            from vox.interface import MainWindow
+            app = QApplication([])
+            MainWindow.detect = lambda self: None
+            window = MainWindow()
+            def wait():
+                deadline = time.monotonic() + 40
+                while window.worker and time.monotonic() < deadline:
+                    app.processEvents()
+                    time.sleep(.01)
+                if window.worker: raise TimeoutError()
+            window.open_path(sys.argv[1])
+            wait()
+            window.go.click()
+            wait()
+            if window.s.output is None: raise ValueError("missing render")
+            Path(sys.argv[2]).write_text(hashlib.sha256(window.s.output.tobytes()).hexdigest())
+            if os.name == "nt":
+                ctypes.windll.kernel32.TerminateProcess(ctypes.c_void_p(-1), 91)
+            else:
+                os._exit(91)
+        """)
+        digest = tmp_path / "render.sha"
+        env = dict(
+            os.environ,
+            VOXMASTER_DATA=str(tmp_path / "isolated"),
+            QT_QPA_PLATFORM="offscreen",
+            PYTHONFAULTHANDLER="1",
+        )
+>       completed = subprocess.run(
+            [sys.executable, "-c", child, str(original), str(digest)],
+            env=env,
+            timeout=75,
+            capture_output=True,
+        )
+
+tests\test_compatibility_011.py:130: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\lenmo\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:550: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\lenmo\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1209: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: 1 args: ['E:\\�ƶ�����ͬ����\\AI �����������վ\\.venv\\Scripts\\pytho...>
+input = None, endtime = 9371.343, orig_timeout = 75
+
+    def _communicate(self, input, endtime, orig_timeout):
+        # Start reader threads feeding into a list hanging off of this
+        # object, unless they've already been started.
+        if self.stdout and not hasattr(self, "_stdout_buff"):
+            self._stdout_buff = []
+            self.stdout_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stdout, self._stdout_buff))
+            self.stdout_thread.daemon = True
+            self.stdout_thread.start()
+        if self.stderr and not hasattr(self, "_stderr_buff"):
+            self._stderr_buff = []
+            self.stderr_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stderr, self._stderr_buff))
+            self.stderr_thread.daemon = True
+            self.stderr_thread.start()
+    
+        if self.stdin:
+            self._stdin_write(input)
+    
+        # Wait for the reader threads, or time out.  If we time out, the
+        # threads remain reading and the fds left open in case the user
+        # calls communicate again.
+        if self.stdout is not None:
+            self.stdout_thread.join(self._remaining_time(endtime))
+            if self.stdout_thread.is_alive():
+>               raise TimeoutExpired(self.args, orig_timeout)
+E               subprocess.TimeoutExpired: Command '['E:\\�ƶ�����ͬ����\\AI �����������վ\\.venv\\Scripts\\python.exe', '-c', '\nimport ctypes, hashlib, os, sys, time\nfrom pathlib import Path\nfrom PySide6.QtWidgets import QApplication\nfrom vox.interface import MainWindow\napp = QApplication([])\nMainWindow.detect = lambda self: None\nwindow = MainWindow()\ndef wait():\n    deadline = time.monotonic() + 40\n    while window.worker and time.monotonic() < deadline:\n        app.processEvents()\n        time.sleep(.01)\n    if window.worker: raise TimeoutError()\nwindow.open_path(sys.argv[1])\nwait()\nwindow.go.click()\nwait()\nif window.s.output is None: raise ValueError("missing render")\nPath(sys.argv[2]).write_text(hashlib.sha256(window.s.output.tobytes()).hexdigest())\nif os.name == "nt":\n    ctypes.windll.kernel32.TerminateProcess(ctypes.c_void_p(-1), 91)\nelse:\n    os._exit(91)\n', 'C:\\Users\\lenmo\\AppData\\Local\\Temp\\pytest-of-lenmo\\pytest-149\\test_crash_recovery_with_reloc0\\����.wav', 'C:\\Users\\lenmo\\AppData\\Local\\Temp\\pytest-of-lenmo\\pytest-149\\test_crash_recovery_with_reloc0\\render.sha']' timed out after 75 seconds
+
+C:\Users\lenmo\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1630: TimeoutExpired
+=========================== short test summary info ===========================
+FAILED tests/test_compatibility_011.py::test_crash_recovery_with_relocated_audio
+1 failed, 120 passed in 481.45s (0:08:01)
