@@ -110,7 +110,8 @@ class ModelControlsTest(unittest.TestCase):
                 with patch("vox.models.QFileDialog.getExistingDirectory", return_value=new_dir):
                     click(dlg.migrate)
                     wait(lambda: dlg.task is None)
-                self.assertEqual(store.directory().parent, Path(new_dir))
+                # Runners may hand out 8.3 short temp paths; migrate records the long form.
+                self.assertEqual(store.directory().parent, Path(new_dir).resolve())
                 store.verify()
                 dlg.mode.setCurrentIndex(dlg.mode.findData("CPU"))
                 dlg.close()
