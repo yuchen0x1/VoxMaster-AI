@@ -34,7 +34,7 @@ jobs:
       - run: python -m compileall -q vox app.py
       - run: python -X faulthandler -m pytest -q --junitxml=results.xml
       - run: python app.py --cli analyze tests/fixtures/fleurs-mandarin.wav
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: test-results-${{ matrix.os }}
