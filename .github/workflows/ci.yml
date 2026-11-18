@@ -32,7 +32,7 @@ jobs:
       - run: python scripts/version.py
       - run: ruff check --select F --ignore F841 vox app.py scripts/version.py scripts/release_assets.py
       - run: python -m compileall -q vox app.py
-      - run: python -m pytest -q --junitxml=results.xml
+      - run: python -X faulthandler -m pytest -q --junitxml=results.xml
       - run: python app.py --cli analyze tests/fixtures/fleurs-mandarin.wav
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
