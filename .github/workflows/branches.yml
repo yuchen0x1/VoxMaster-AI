@@ -1,0 +1,58 @@
+name: Branch governance
+on:
+  schedule:
+    - cron: '43 2 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: write
+  issues: write
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.11'
+      - run: python -m pip install requests==2.34.2
+      - name: Scan, report and safely clean up remote branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/branch_governance.py --output branch-report.md --cleanup --min-age-days 7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: branch-governance-report
+          path: |
+            branch-report.md
+            branch-report.json
+          retention-days: 90
+      - name: Open an issue when work needs a human decision
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Findings that are not auto-cleaned need a human: B (unmerged commits)
+          # and C (diverged) branches. Reuse one long-lived issue as the ledger.
+          findings=$(python - <<'EOF'
+          import json
+          rows = json.load(open('branch-report.json'))['rows']
+          flagged = [r for r in rows if r['klass'] in ('B', 'C') or r['open_pr']]
+          print(len(flagged))
+          EOF
+          )
+          if [ "$findings" -eq 0 ]; then
+            echo "No branches need a human decision."; exit 0
+          fi
+          existing=$(gh issue list --label branch-governance --state open --json number --jq 'length')
+          body=$(cat branch-report.md; echo; cat <<'EOF'
+          本期存在需要人工决定的分支（B/C 类或含开放 PR）。按 RESEARCH 与本报告核实后再处理；本工作流不会自动合并或删除它们。
+          EOF
+          )
+          if [ "$existing" -eq 0 ]; then
+            gh issue create --label branch-governance --title "分支治理：需要人工决定的分支" --body "$body"
+          else
+            gh issue comment $(gh issue list --label branch-governance --state open --json number --jq '.[0].number') --body "$body"
+          fi
