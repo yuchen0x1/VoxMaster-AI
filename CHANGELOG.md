@@ -1,5 +1,9 @@
 # VoxMaster AI 更新日志
 
+## 0.3.1 · 2026-11-19
+
+工程维护版本，产品代码与 0.3.0 完全一致：CI 的四个 GitHub Actions（checkout/upload-artifact/setup-python/dependency-review）完成主版本升级并通过四平台回归验证；新增每周分支治理工作流与 `scripts/branch_governance.py`（自动分类远程分支、报告需人工决定的分支、只清理完全包含于 main 的分支）；Dependabot 加入 numpy/scipy/mpmath 的 ignore 规则（需要 Python 3.12+ 或受上游 sympy 约束，当前不可安装）。本次发布同时经真实流水线验证升级后的 Actions 配置。无用户功能变化，0.3.0 用户可自行决定是否更新。
+
 ## 0.3.0 · 2026-11-19
 
 修复发布流水线启动失败根因并补齐质量门禁：CI 新增 actionlint 静态校验，Release 新增发布后清单与资产链接验证，月度维护新增上游近 90 天提交活动扫描。新增本地会话健康检查（异常退出识别、无遥测）、CLI `styles` 子命令与 `--report` 报告文件，更新窗口下载前展示包体大小与 SHA-256 前缀。原音频引擎、工程格式、品牌和授权状态保留。完整说明见 [版本记录](docs/releases/release-notes.md)，调研依据见 [RESEARCH-030](docs/RESEARCH-030.md)。

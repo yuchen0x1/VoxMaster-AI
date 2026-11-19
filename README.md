@@ -1,10 +1,10 @@
-# VoxMaster AI 0.3.0
+# VoxMaster AI 0.3.1
 
 [![CI](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml) · [官方下载](https://github.com/yuchen0x1/VoxMaster-AI/releases/latest) · [反馈](https://github.com/yuchen0x1/VoxMaster-AI/issues)
 
 ## 最新更新
 
-0.3.0 修复发布流水线启动失败根因并补齐质量门禁：CI 增加 actionlint 工作流校验，Release 增加发布后链接验证。新增本地会话健康检查（异常退出识别、无遥测）、CLI `styles` 与 `--report` 自动化接口，更新窗口下载前展示包体大小与 SHA-256 前缀。Windows 继续提供安装和便携形式；Linux/macOS 保持源码与 CI 试验支持。[完整版本记录](docs/releases/release-notes.md) · [本轮调研与候选](docs/RESEARCH-030.md)
+0.3.1 为工程维护版本：产品代码与 0.3.0 完全一致。CI 的四个 GitHub Actions 完成主版本升级并经真实发布流水线验证；新增每周分支治理工作流（自动分类远程分支、只清理完全包含于 main 的分支）；Dependabot 加入 Python 3.11 基线下不可安装依赖的 ignore 规则。0.3.0 用户可自行决定是否更新。[完整版本记录](docs/releases/release-notes.md) · [分支治理](.github/workflows/branches.yml)
 
 Windows 本地喊麦调音工作站。导入录音后可查看波形、响度、动态与音高，选择风格执行一键调音，再做等响 A/B 试听。基础调音使用测量值驱动的 DSP。人声分离使用可选的 Spleeter 神经网络，音频与模型推理都在本机。
 

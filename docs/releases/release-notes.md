@@ -1,5 +1,15 @@
 # VoxMaster AI 版本记录
 
+## 0.3.1 · 2026-11-19
+
+工程维护版本：产品代码与 0.3.0 完全一致，无用户功能变化。
+
+- CI 的四个 GitHub Actions（checkout 7.0.1、upload-artifact 7.0.2、setup-python 7.1.0、dependency-review 5.0.0）完成主版本升级；本次发布即经真实流水线验证新配置。
+- 新增每周分支治理工作流（`scripts/branch_governance.py`）：自动分类远程分支、报告需要人工决定的分支，只清理完全包含于 main 的分支；自动合并明确排除在外。
+- Dependabot 加入 numpy≥2.5、scipy≥1.18、mpmath≥1.4 的 ignore 规则（需要 Python 3.12+ 或受上游 sympy 约束）。
+
+更新说明：0.3.0 用户可以跳过此版本；更新后产品行为与 0.3.0 完全一致。
+
 ## 0.3.0 · 2026-11-19
 
 - 修复 GitHub Actions 工作流配置错误（`runner` 上下文在作业级环境不可用），此前推送会触发全部工作流无日志启动失败；CI 现包含 actionlint 工作流静态校验，防止配置回归。
