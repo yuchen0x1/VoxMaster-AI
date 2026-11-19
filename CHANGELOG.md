@@ -1,5 +1,11 @@
 # VoxMaster AI 更新日志
 
+## Unreleased
+
+- 分支治理改为完整分页读取分支和开放 PR，删除前二次检查开放 PR；API 失败按安全路径保留分支。
+- 分支治理工作流幂等创建人工告警标签；Release 打包前确认标签提交属于 `main` 历史。
+- 更新 Windows 10 验收清单到 v0.3.1，新增审计快照和竞品/技术参考记录。
+
 ## 0.3.1 · 2026-11-19
 
 工程维护版本，产品代码与 0.3.0 完全一致：CI 的四个 GitHub Actions（checkout/upload-artifact/setup-python/dependency-review）完成主版本升级并通过四平台回归验证；新增每周分支治理工作流与 `scripts/branch_governance.py`（自动分类远程分支、报告需人工决定的分支、只清理完全包含于 main 的分支）；Dependabot 加入 numpy/scipy/mpmath 的 ignore 规则（需要 Python 3.12+ 或受上游 sympy 约束，当前不可安装）。本次发布同时经真实流水线验证升级后的 Actions 配置。无用户功能变化，0.3.0 用户可自行决定是否更新。
