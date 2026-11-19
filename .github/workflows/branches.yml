@@ -54,5 +54,6 @@ jobs:
           if [ "$existing" -eq 0 ]; then
             gh issue create --label branch-governance --title "分支治理：需要人工决定的分支" --body "$body"
           else
-            gh issue comment $(gh issue list --label branch-governance --state open --json number --jq '.[0].number') --body "$body"
+            issue_number=$(gh issue list --label branch-governance --state open --json number --jq '.[0].number')
+            gh issue comment "$issue_number" --body "$body"
           fi
