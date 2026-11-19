@@ -8,7 +8,7 @@ main 为稳定分支；功能分支经 PR 与四种原生 runner 回归后合并
 
 所有发布必须保留 Qt 对应源码、FFmpeg/LAME 来源及动态库通知。项目未新增开源许可，源码附件不等于授予复用授权。运行依赖与构建工具仍共用一个固定版本清单，后续可拆分，但须检查许可证通知收集范围。
 
-本地构建 `./scripts/build.ps1`。签名 `python scripts/release_assets.py --key-file <工作区外私钥路径>`；不要在日志或命令行直接写私钥内容。正式发布将新版本提交到 main，随后 `git tag -a vX.Y.Z -m ...`、`git push origin vX.Y.Z`。标签工作流会创建 Release。已有版本不可覆盖，失败修复用新版本标签，遗留草稿由维护者检查后处理，不自动删除。
+本地构建 `./scripts/build.ps1`。签名 `python scripts/release_assets.py --key-file <工作区外私钥路径>`；不要在日志或命令行直接写私钥内容。正式发布将新版本提交到 main，随后 `git tag -a vX.Y.Z -m ...`、`git push origin vX.Y.Z`。标签工作流会先用 GitHub compare API 确认标签提交属于 main 历史，再创建 Release；标签工作流随后创建 Release。已有版本不可覆盖，失败修复用新版本标签，遗留草稿由维护者检查后处理，不自动删除。
 
 ## GitHub 设置与权限
 
@@ -16,6 +16,7 @@ main 为稳定分支；功能分支经 PR 与四种原生 runner 回归后合并
 
 仓库权限、Secret Scanning、私密漏洞报告和保护规则是否已成功配置以 docs/DELIVERY-020.md 的实际 API 结果为准，不因文档存在就算成功。
 
+分支治理任务是唯一另需 `contents:write` 与 `issues:write` 的定时例外；运行前幂等创建 `branch-governance` 标签，脚本分页读取分支/开放 PR，并在删除前二次检查开放 PR。
 ## 故障与发布后检查
 
 构建、CI、签名失败时禁止公开正式版本。资产上传失败保留草稿，不用 clobber 覆盖已公开版本。发布后核对资产数量/文件名/下载长度，读取官方签名清单并完整下载验签后的安装器。正式安装、卸载、跨版本更新及失败回滚是独立验收，不由包自检替代。

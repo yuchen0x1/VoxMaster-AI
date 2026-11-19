@@ -1,11 +1,11 @@
 # Windows 10 实机验收清单
 
-状态：**待执行**。此清单在拿到真实 Windows 10 x64 设备（或全新虚拟机）后逐项执行；未执行的项必须保持"未测"，不得由其他系统结果推断。0.3.0 交付记录中对应的缺口见 [DELIVERY-030](DELIVERY-030.md)，本机 Win11 的既有验证方法见 [PACKAGING](PACKAGING.md)。
+状态：**待执行**。此清单在拿到真实 Windows 10 x64 设备（或全新虚拟机）后逐项执行；未执行的项必须保持"未测"，不得由其他系统结果推断。0.3.1 交付记录中对应的缺口见 [AUDIT-2026-11-19](AUDIT-2026-11-19.md)，本机 Win11 的既有验证方法见 [PACKAGING](PACKAGING.md)。
 
 ## 环境要求
 
 - Windows 10 x64，建议 21H2 或 22H2，无开发运行时（不装 Python/Git/MSYS2）。
-- 下载 v0.3.0 发布资产：`VoxMasterAI-0.3.0-Windows-x64-Setup.exe`、`VoxMasterAI-0.3.0-Windows-x64-Portable.zip`、`SHA256SUMS.txt`（发布页：`releases/tag/v0.3.0`）。
+- 下载 v0.3.1 发布资产：`VoxMasterAI-0.3.1-Windows-x64-Setup.exe`、`VoxMasterAI-0.3.1-Windows-x64-Portable.zip`、`SHA256SUMS.txt`（发布页：`releases/tag/v0.3.1`）。
 - 可选：含 `vocals.onnx` 与 `accompaniment.onnx` 的模型目录（测分离时使用；没有则跳过第 7 项，其余照常）。
 - 一份真实普通话/喊麦录音（WAV 优先），以及正常连接的输出设备。
 
@@ -20,7 +20,7 @@
 | 5 | 编解码链 | 导出 MP3 与 FLAC 各一次并重新导入播放（验证发布包内 FFmpeg 动态库在 Win10 正常加载） | 未测 |
 | 6 | 会话健康标记 | 正常关闭后重启：**不**出现异常提示；再启动后用任务管理器强制结束进程，重启应出现"上次会话未正常退出"提示 | 未测 |
 | 7 | 分离（可选） | 「AI 模型中心」载入本地模型或下载官方权重；执行分离。有 NVIDIA GPU 且驱动较新时记录 DirectML 是否生效，并验证失败时回退 CPU | 未测 |
-| 8 | 更新通道 | 「软件更新 → 检查官方更新」应显示"已是最新版本 0.3.0"（v0.3.0 已含签名清单）；记录网络异常时的报错文案 | 未测 |
+| 8 | 更新通道 | 「软件更新 → 检查官方更新」应显示"已是最新版本 0.3.1"（v0.3.1 已含签名清单）；记录网络异常时的报错文案 | 未测 |
 | 9 | 卸载 | Windows 设置 → 应用 → 卸载 VoxMaster AI；安装目录与卸载注册项消失；`%LOCALAPPDATA%\VoxMasterAI` 用户数据与工程保留 | 未测 |
 | 10 | 便携版 | 解压 Portable.zip 到独立目录，启动 `VoxMasterAI.exe`，重复第 4、5 项 | 未测 |
 | 11 | 非常规路径 | 把便携目录放在含中文/空格的深层路径下运行一次（如同步盘目录），确认无路径类错误 | 未测 |

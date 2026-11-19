@@ -32,6 +32,34 @@ def api(route, method='GET'):
         return {'error': type(exc).__name__}
 
 
+def paginate(route):
+    """Return every page from a GitHub list endpoint.
+
+    GitHub defaults to 30 entries and caps a page at 100.  Governance must not
+    silently miss a branch or an open PR before making a destructive decision.
+    """
+    page = 1
+    rows = []
+    while True:
+        separator = '&' if '?' in route else '?'
+        payload = api(f'{route}{separator}per_page=100&page={page}')
+        if isinstance(payload, dict):
+            raise SystemExit(f'list failed ({route}): {payload}')
+        if not isinstance(payload, list):
+            raise SystemExit(f'list failed ({route}): unexpected response')
+        rows.extend(payload)
+        if len(payload) < 100:
+            return rows
+        page += 1
+
+
+def branch_has_open_pr(name):
+    """Re-check a candidate immediately before deletion to avoid a race."""
+    owner = OWNER_REPO.split('/', 1)[0]
+    result = api(f'repos/{OWNER_REPO}/pulls?state=open&head={owner}:{name}&per_page=100')
+    return bool(result) if isinstance(result, list) else True
+
+
 def classify(compare):
     """GitHub compare status -> governance class."""
     status = compare.get('status')
@@ -51,11 +79,9 @@ def main():
                         help='grace period before an auto-cleanup may touch a branch')
     args = parser.parse_args()
     now = dt.datetime.now(dt.timezone.utc)
-    branches = api(f'repos/{OWNER_REPO}/branches?per_page=100')
-    if isinstance(branches, dict):
-        raise SystemExit('branch list failed: ' + str(branches))
-    pulls = api(f'repos/{OWNER_REPO}/pulls?state=open&per_page=100')
-    open_heads = {p['head']['ref'] for p in pulls} if isinstance(pulls, list) else set()
+    branches = paginate(f'repos/{OWNER_REPO}/branches')
+    pulls = paginate(f'repos/{OWNER_REPO}/pulls?state=open')
+    open_heads = {p['head']['ref'] for p in pulls}
 
     rows, deleted = [], []
     for item in branches:
@@ -74,6 +100,11 @@ def main():
             status = compare.get('status')
         has_pr = name in open_heads
         deleted_flag = False
+        if (args.cleanup and klass == 'D' and not has_pr and not name.startswith('dependabot/')
+                and age_days >= args.min_age_days):
+            # Re-check the remote immediately before deleting: the initial
+            # paginated snapshot can race with a newly opened pull request.
+            has_pr = branch_has_open_pr(name)
         if (args.cleanup and klass == 'D' and not has_pr and not name.startswith('dependabot/')
                 and age_days >= args.min_age_days):
             result = api(f'repos/{OWNER_REPO}/git/refs/heads/{name}', 'DELETE')

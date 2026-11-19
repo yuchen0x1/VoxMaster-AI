@@ -25,6 +25,16 @@ jobs:
       VOXMASTER_DATA: ${{ github.workspace }}/.voxmaster-package-test-data
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Verify tag commit is reachable from main
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $status = gh api "repos/$env:GITHUB_REPOSITORY/compare/main...$env:GITHUB_SHA" --jq .status
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to compare tag commit with main' }
+          if ($status -notin @('behind', 'identical')) {
+            throw "Release tag is not contained in main (compare status: $status)"
+          }
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.11'

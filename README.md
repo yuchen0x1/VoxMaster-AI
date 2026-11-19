@@ -87,6 +87,6 @@ py -3.11 -m venv .venv
 
 [使用手册](docs/MANUAL.md) · [多轨编辑手册](docs/MULTITRACK.md) · [技术架构](docs/ARCHITECTURE.md) · [工程基线与开源调研](docs/RESEARCH.md) · [音频验收记录](docs/ACCEPTANCE.md)
 
-[阶段验收与剩余限制](docs/PROGRESS.md) · [构建、安装与卸载验证](docs/PACKAGING.md)
+[阶段验收与剩余限制](docs/PROGRESS.md) · [构建、安装与卸载验证](docs/PACKAGING.md) · [本轮项目审计](docs/AUDIT-2026-11-19.md)
 
-[自动化测试](docs/TESTS-011.md) · [压力测试与资源占用](docs/PERFORMANCE-011.md) · [音高和尾音操作](docs/PITCH-TAIL-011.md)
+[自动化测试](docs/TESTS-011.md) · [压力测试与资源占用](docs/PERFORMANCE-011.md) · [音高和尾音操作](docs/PITCH-TAIL-011.md) · [竞品与技术参考快照](docs/RESEARCH-2026-11-19.md)
