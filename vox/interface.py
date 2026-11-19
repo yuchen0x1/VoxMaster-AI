@@ -41,7 +41,7 @@ from .storage import (
     save_project,
     write_json,
 )
-from .dialogs import choices, label, ParameterDialog, ExportDialog
+from .dialogs import choices, label, ParameterDialog, ExportDialog, managed_dialog
 from .jobs import Worker
 from .service import prepare, tuning_plan, SR
 from .reference import comparison, describe_match, space_notes
@@ -685,8 +685,9 @@ class MainWindow(QMainWindow):
             sr=SR,
             cursor=self.cursor,
         )
-        if dlg.exec():
-            self.apply_params(dlg.value(), "应用效果器参数")
+        with managed_dialog(dlg):
+            if dlg.exec():
+                self.apply_params(dlg.value(), "应用效果器参数")
 
     def switch(self, wet):
         if not self.s or (wet and self.s.output is None):
@@ -790,7 +791,8 @@ class MainWindow(QMainWindow):
             ("重做", lambda: self.travel(True)),
         ]:
             menu.addAction(title, fn)
-        menu.exec(self.timeline.mapToGlobal(pos))
+        with managed_dialog(menu):
+            menu.exec(self.timeline.mapToGlobal(pos))
 
     def clear_region(self):
         self.timeline.region = None
@@ -851,7 +853,8 @@ class MainWindow(QMainWindow):
         row.addWidget(button("从磁盘打开", lambda: (d.accept(), self.open_project())))
         row.addStretch()
         row.addWidget(button("打开所选版本", choose))
-        d.exec()
+        with managed_dialog(d):
+            d.exec()
 
     def report_text(self, title, content):
         d = QDialog(self)
@@ -863,7 +866,8 @@ class MainWindow(QMainWindow):
         box.setReadOnly(True)
         lay.addWidget(box)
         lay.addWidget(button("关闭", d.accept))
-        d.exec()
+        with managed_dialog(d):
+            d.exec()
 
     def report_view(self):
         if not self.s:
@@ -892,14 +896,15 @@ class MainWindow(QMainWindow):
         lines += [f"{bands.get(k, k)}    {v:.1f} dB" for k, v in r["bands_db"].items()]
         lines += ["", *report_lines(r), "", "工程处理历史", *self.s.document.get("history", [])]
         dialog = ReportDialog(self.s, r, "\n".join(lines), self)
-        if dialog.exec() and dialog.stage:
-            start, end = self.timeline.region or (self.cursor, self.cursor + 6.0)
-            self.preview_reference(start, end, stage=dialog.stage)
-        elif dialog.result() and dialog.interval:
-            self.timeline.region = dialog.interval
-            self.player.stop()
-            self.seek(dialog.interval[0])
-            self.start_playback()
+        with managed_dialog(dialog):
+            if dialog.exec() and dialog.stage:
+                start, end = self.timeline.region or (self.cursor, self.cursor + 6.0)
+                self.preview_reference(start, end, stage=dialog.stage)
+            elif dialog.result() and dialog.interval:
+                self.timeline.region = dialog.interval
+                self.player.stop()
+                self.seek(dialog.interval[0])
+                self.start_playback()
 
     def reference(self):
         if not self.available():
@@ -987,7 +992,8 @@ class MainWindow(QMainWindow):
             box.addWidget(button("恢复匹配前参数并移除参考", restore))
         if ref:
             box.addWidget(button("移除参考", lambda: change(True)))
-        d.exec()
+        with managed_dialog(d):
+            d.exec()
 
     def preview_reference(self, start, end, stage=None):
         from .analysis import loudness
@@ -1021,16 +1027,18 @@ class MainWindow(QMainWindow):
 
         def ready(result):
             buffers, levels = result
-            PreviewDialog(
+            with managed_dialog(PreviewDialog(
                 buffers, levels, SR, self.player.device, self.monitor_volume, self, stage
-            ).exec()
+            )) as dialog:
+                dialog.exec()
 
         self.run_job("渲染模块试听片段" if stage else "渲染参考匹配试听片段", render, ready)
 
     def models(self):
         from .models import ModelDialog
 
-        ModelDialog(self).exec()
+        with managed_dialog(ModelDialog(self)) as dialog:
+            dialog.exec()
 
     def separate(self):
         if not self.available():
@@ -1100,13 +1108,14 @@ class MainWindow(QMainWindow):
             tracks["Vocal"] = self.s.tuned_vocal
         try:
             d = StudioDialog(tracks, SR, self, state=copy.deepcopy(self.s.document.get("studio")))
-            d.player.device = self.player.device
-            d.player.volume = self.monitor_volume
-            if d.exec():
-                doc = copy.deepcopy(self.s.document)
-                doc["studio"] = d.state
-                doc["history"].append(clockstr() + "  应用多轨编辑")
-                self.rebuild(doc, "应用多轨混音")
+            with managed_dialog(d):
+                d.player.device = self.player.device
+                d.player.volume = self.monitor_volume
+                if d.exec():
+                    doc = copy.deepcopy(self.s.document)
+                    doc["studio"] = d.state
+                    doc["history"].append(clockstr() + "  应用多轨编辑")
+                    self.rebuild(doc, "应用多轨混音")
         except Exception as exc:
             self.failed(str(exc))
 
@@ -1215,7 +1224,8 @@ class MainWindow(QMainWindow):
                     self.tune()
 
         lst.itemDoubleClicked.connect(lambda _: activate())
-        d.exec()
+        with managed_dialog(d):
+            d.exec()
 
     def export(self):
         if not self.available():
@@ -1224,9 +1234,10 @@ class MainWindow(QMainWindow):
             return self.notice("请先执行一次调音，或在专业混音台应用混音。")
         source = self.s.output
         dlg = ExportDialog(len(source) / SR, self.s.measured, self)
-        if not dlg.exec():
-            return
-        fmt, rate, bits, ch = dlg.value()
+        with managed_dialog(dlg):
+            if not dlg.exec():
+                return
+            fmt, rate, bits, ch = dlg.value()
         base = Path(self.settings.get("export_dir") or Path.home() / "Music")
         target = base / (Path(self.s.document["source"]).stem + " - 调音." + fmt)
         path, _ = QFileDialog.getSaveFileName(
@@ -1246,16 +1257,17 @@ class MainWindow(QMainWindow):
         from .settings_dialog import SettingsDialog
 
         d = SettingsDialog(self.settings, self.device_report, self)
-        if d.exec():
-            try:
-                new = d.value()
-                audioio.set_cache_directory(new.get("cache_dir"))
-                self.player.device = hardware.resolve_output(new, self.device_report)
-                self.settings = new
-                self.show_device_names()
-                self.save_settings()
-            except Exception as exc:
-                self.failed(str(exc))
+        with managed_dialog(d):
+            if d.exec():
+                try:
+                    new = d.value()
+                    audioio.set_cache_directory(new.get("cache_dir"))
+                    self.player.device = hardware.resolve_output(new, self.device_report)
+                    self.settings = new
+                    self.show_device_names()
+                    self.save_settings()
+                except Exception as exc:
+                    self.failed(str(exc))
 
     def closeEvent(self, event):
         if self.worker:

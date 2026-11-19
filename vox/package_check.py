@@ -33,7 +33,8 @@ def main(args):
         from .models_runtime import separate
 
         app = QApplication.instance() or QApplication([])
-        assert not app_icon().isNull()
+        if app_icon().isNull():
+            raise RuntimeError("应用图标资源为空")
         evidence["qt_platform"] = app.platformName()
         evidence["portaudio"] = sounddevice.get_portaudio_version()
         from importlib.metadata import version
@@ -49,13 +50,21 @@ def main(args):
         analysis = analyze(audio, sr)
         tuned = process(audio, sr, recommend(analysis))
         evidence["changed_rms"] = float(np.sqrt(np.mean((audio - tuned[: len(audio)]) ** 2)))
-        assert evidence["changed_rms"] > 0.0001
+        if not evidence["changed_rms"] > 0.0001:
+            raise RuntimeError(
+                f"DSP 验收失败：处理前后 RMS 差异 {evidence['changed_rms']:.8g} 不大于 0.0001"
+            )
         with tempfile.TemporaryDirectory() as folder:
             for ext in ["wav", "mp3", "flac", "aac"]:
                 path = Path(folder) / ("render." + ext)
                 encode(path, tuned, sr)
                 decoded, meta = decode(path)
-                assert len(decoded) >= len(tuned) - 2048 and np.isfinite(decoded).all()
+                if len(decoded) < len(tuned) - 2048:
+                    raise RuntimeError(
+                        f"{ext} 解码验收失败：帧数 {len(decoded)} 小于预期 {len(tuned) - 2048}"
+                    )
+                if not np.isfinite(decoded).all():
+                    raise RuntimeError(f"{ext} 解码验收失败：输出包含非有限采样值")
                 evidence[ext] = {"frames": len(decoded), "bytes": path.stat().st_size}
         if parsed.recover_project:
             from threading import Event
@@ -82,8 +91,11 @@ def main(args):
                 mode="DirectML",
                 progress=lambda fraction, msg: messages.append(msg),
             )
-            assert np.isfinite(voice).all() and np.isfinite(music).all()
-            assert np.allclose(voice + music, audio, atol=1e-6)
+            if not np.isfinite(voice).all() or not np.isfinite(music).all():
+                raise RuntimeError("分离验收失败：人声或伴奏包含非有限采样值")
+            if not np.allclose(voice + music, audio, atol=1e-6):
+                error = float(np.max(np.abs(voice + music - audio)))
+                raise RuntimeError(f"分离验收失败：人声与伴奏未守恒，最大误差 {error:.8g}")
             evidence["separation"] = messages[-1]
         evidence["status"] = "PASS"
     except Exception:

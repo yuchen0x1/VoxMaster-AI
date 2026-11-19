@@ -74,12 +74,46 @@ def project(source="", name="未命名工程"):
     )
 
 
+def _string_mapping(value, field):
+    if not isinstance(value, dict):
+        raise ValueError(f"工程字段 {field} 必须是对象。")
+    for key, item in value.items():
+        if not isinstance(key, str) or not isinstance(item, str):
+            raise ValueError(f"工程字段 {field} 必须是字符串到字符串映射。")
+    return value
+
+
+def _validate_project_data(data):
+    # Optional legacy fields remain supplied by project(); validate only their
+    # established types so version-1 files with omitted fields stay compatible.
+    for field in ("name", "source", "reference", "style", "kind"):
+        if not isinstance(data[field], str):
+            raise ValueError(f"工程字段 {field} 必须是字符串。")
+    if not isinstance(data["params"], dict):
+        raise ValueError("工程字段 params 必须是对象。")
+    if not isinstance(data["applied"], bool):
+        raise ValueError("工程字段 applied 必须是布尔值。")
+    if not isinstance(data["history"], list) or any(
+        not isinstance(item, str) for item in data["history"]
+    ):
+        raise ValueError("工程字段 history 必须是字符串数组。")
+    _string_mapping(data["stems"], "stems")
+    if data["studio"] is not None:
+        if not isinstance(data["studio"], dict):
+            raise ValueError("工程字段 studio 必须是对象或 null。")
+        external = data["studio"].get("external_sources", {})
+        _string_mapping(external, "studio.external_sources")
+    if "before_reference" in data and not isinstance(data["before_reference"], dict):
+        raise ValueError("工程字段 before_reference 必须是对象。")
+
+
 def load_project(path):
     raw = read_json(path)
     if not isinstance(raw, dict) or raw.get("version") != 1 or not isinstance(raw.get("source"), str):
         raise ValueError("无法读取该工程版本。")
     data = project()
     data.update(raw)
+    _validate_project_data(data)
     for field in ("source", "reference"):
         if data[field]:
             data[field] = str((Path(path).parent / data[field]).resolve())

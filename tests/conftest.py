@@ -59,8 +59,20 @@ def qt_session_app():
     gc.collect()
 
 
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_sessionfinish(session, exitstatus):
+    # Config has no public exitstatus. Capture the final Session status after
+    # other session-finish hooks (including JUnit) have completed.
+    yield
+    session.config._vox_exitstatus = int(session.exitstatus)
+
+
 def pytest_unconfigure(config):
-    status = int(getattr(config, 'exitstatus', 0) or 0)
+    status = getattr(config, '_vox_exitstatus', None)
+    if status is None:
+        # Argument/configuration errors can occur before a Session exists.
+        # No test workers have started, so let pytest preserve its own status.
+        return
     try:
         sys.stdout.flush()
         sys.stderr.flush()

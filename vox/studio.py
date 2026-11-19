@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .dialogs import managed_dialog
 from .studio_session import Session, TRACKS, load_sources
 from .studio_timeline import Timeline, TRACK_LABELS, clock_text
 
@@ -589,7 +590,8 @@ class StudioDialog(QDialog):
         ):
             act = menu.addAction(name + ("\t" + key if key else ""))
             act.triggered.connect(lambda checked=False, name=name: self._edit(name))
-        menu.exec(point)
+        with managed_dialog(menu):
+            menu.exec(point)
 
     def _set_region(self):
         if self.future is not None or not self._loaded:
@@ -732,8 +734,9 @@ class StudioDialog(QDialog):
         from .studio_mix_dialogs import BalanceDialog
 
         def ready(report):
-            if BalanceDialog(self.session, report, self).exec():
-                self._changed("已应用混音设置")
+            with managed_dialog(BalanceDialog(self.session, report, self)) as dialog:
+                if dialog.exec():
+                    self._changed("已应用混音设置")
 
         self._job(
             "正在测量多轨响度、相位和频谱重叠",
@@ -744,8 +747,9 @@ class StudioDialog(QDialog):
     def _rack(self):
         from .studio_mix_dialogs import RackDialog
 
-        if RackDialog(self.session, self.wave.lane, self).exec():
-            self._changed("已更新效果器链", live=True)
+        with managed_dialog(RackDialog(self.session, self.wave.lane, self)) as dialog:
+            if dialog.exec():
+                self._changed("已更新效果器链", live=True)
 
     def done(self, result):
         self._cancel_monitor()

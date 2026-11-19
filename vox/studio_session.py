@@ -216,22 +216,24 @@ class Session:
     def select(self, track, a, b):
         return [p for c in self.strip(track)["clips"] if (p := portion(c, a, b)) is not None]
 
-    def replace(self, track, a, b, pieces):
-        row = self.strip(track)
-        old = row["clips"]
-        if not 0 <= a <= b <= self.sr * 86400:
-            raise ValueError("编辑超出时间轴范围")
+    def _replacement(self, old, a, b, pieces):
         keep = []
-        for c in old:
-            if c["at"] + duration(c) <= a or c["at"] >= b:
-                keep.append(c)
+        for clip in old:
+            if clip["at"] + duration(clip) <= a or clip["at"] >= b:
+                keep.append(clip)
                 continue
-            for lo, hi in ((0, a), (b, c["at"] + duration(c))):
-                section = portion(c, lo, hi)
+            for lo, hi in ((0, a), (b, clip["at"] + duration(clip))):
+                section = portion(clip, lo, hi)
                 if section:
                     keep.append(section)
-        changed = sorted(keep + pieces, key=lambda c: c["at"])
-        if changed != old:
+        return sorted(keep + pieces, key=lambda clip: clip["at"])
+
+    def replace(self, track, a, b, pieces):
+        row = self.strip(track)
+        if not 0 <= a <= b <= self.sr * 86400:
+            raise ValueError("编辑超出时间轴范围")
+        changed = self._replacement(row["clips"], a, b, pieces)
+        if changed != row["clips"]:
             self.checkpoint()
             row["clips"] = changed
 
@@ -260,20 +262,38 @@ class Session:
         return False
 
     def move(self, track, a, b, start):
-        """Lift a selection and replace its destination as one undoable edit."""
-        pieces = self.select(track, a, b)
-        if not pieces or start == a:
+        """Move a selection and replace its destination as one undoable edit."""
+        limit = self.sr * 86400
+        if any(isinstance(value, bool) or not isinstance(value, int) for value in (a, b, start)):
+            raise ValueError("移动位置须为整数采样帧")
+        if not 0 <= a <= b <= limit or not 0 <= start <= limit:
+            raise ValueError("移动位置超出时间轴")
+        if a == b or start == a:
             return
         end = start + b - a
-        if start < 0 or end > self.sr * 86400:
+        if end > limit:
             raise ValueError("移动位置超出时间轴")
-        before = copy.deepcopy(self.state)
+
+        row = self.strip(track)
+        original = row["clips"]
+        pieces = self.select(track, a, b)
+        if not pieces:
+            return
+
+        offset = start - a
+        moved = []
         for clip in pieces:
-            clip["at"] += start - a
-        self.replace(track, a, b, [])
-        self.replace(track, start, end, pieces)
-        # The two internal replacements form one undo step, even at the history limit.
-        self.undo_stack[-2:] = [before]
+            clip["at"] += offset
+            moved.append(clip)
+
+        # Compute both edits against local clip lists. Do not mutate the session
+        # until the final state is known, and record the compound move once.
+        without_source = self._replacement(original, a, b, [])
+        changed = self._replacement(without_source, start, end, moved)
+        if changed == original:
+            return
+        self.checkpoint()
+        row["clips"] = changed
 
     def join(self, track, frame):
         clips = self.strip(track)["clips"]

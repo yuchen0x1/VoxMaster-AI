@@ -143,7 +143,7 @@ def test_processor_tap_uses_actual_stage_order():
 
 def test_native_reference_and_stage_previews(monkeypatch, tmp_path):
     from pathlib import Path
-    from PySide6.QtWidgets import QApplication, QComboBox, QPushButton, QTabWidget
+    from PySide6.QtWidgets import QApplication, QComboBox, QDialog, QPushButton, QTabWidget
     from vox import interface, storage
     from vox.review import ReportDialog
 
@@ -168,8 +168,9 @@ def test_native_reference_and_stage_previews(monkeypatch, tmp_path):
     assert report.stage == "eq"
     recorded = []
 
-    class Preview:
+    class Preview(QDialog):
         def __init__(self, buffers, levels, *args):
+            super().__init__()
             recorded.append((buffers, levels))
 
         def exec(self):

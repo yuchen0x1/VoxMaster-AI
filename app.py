@@ -30,10 +30,10 @@ def main():
     app.setFont(QFont(ui_font(), 10))
     app.setWindowIcon(app_icon())
     app.setStyleSheet(STYLES)
+    ungraceful = health.startup_notice()
     health.mark_open()
     window = MainWindow()
     window.show()
-    ungraceful = health.startup_notice()
     if ungraceful:
         window.progress_text.setText(ungraceful)
     if len(sys.argv) > 1 and Path(sys.argv[1]).is_file():

@@ -16,7 +16,7 @@ main 为稳定分支；功能分支经 PR 与四种原生 runner 回归后合并
 
 仓库权限、Secret Scanning、私密漏洞报告和保护规则是否已成功配置以 docs/DELIVERY-020.md 的实际 API 结果为准，不因文档存在就算成功。
 
-分支治理任务是唯一另需 `contents:write` 与 `issues:write` 的定时例外；运行前幂等创建 `branch-governance` 标签，脚本分页读取分支/开放 PR，并在删除前二次检查开放 PR。
+分支治理任务是唯一另需 `contents:write` 与 `issues:write` 的定时例外；运行前幂等创建 `branch-governance` 标签，脚本分页读取分支/开放 PR，并在删除前二次检查开放 PR；比较绑定确切提交 SHA，删除使用 expected-SHA 租约，分支变化即跳过。
 ## 故障与发布后检查
 
 构建、CI、签名失败时禁止公开正式版本。资产上传失败保留草稿，不用 clobber 覆盖已公开版本。发布后核对资产数量/文件名/下载长度，读取官方签名清单并完整下载验签后的安装器。正式安装、卸载、跨版本更新及失败回滚是独立验收，不由包自检替代。
