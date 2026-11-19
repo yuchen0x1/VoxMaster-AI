@@ -1,4 +1,5 @@
 import copy
+from contextlib import contextmanager
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -33,6 +34,15 @@ STAGES = {
     "stereo": "立体声",
     "master": "母带",
 }
+
+
+@contextmanager
+def managed_dialog(dialog):
+    """Dispose a transient native widget after its modal results have been read."""
+    try:
+        yield dialog
+    finally:
+        dialog.deleteLater()
 
 
 def confirm(layout, dialog):

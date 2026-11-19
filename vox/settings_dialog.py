@@ -279,9 +279,11 @@ class SettingsDialog(QDialog):
         return page
 
     def _official_update(self):
+        from .dialogs import managed_dialog
         from .update_dialog import UpdateDialog
 
-        UpdateDialog(self.parent()).exec()
+        with managed_dialog(UpdateDialog(self.parent())) as dialog:
+            dialog.exec()
 
     def _check(self):
         url = self.url.text().strip()

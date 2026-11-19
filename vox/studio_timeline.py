@@ -15,8 +15,10 @@ COLORS = {"Vocal": "#AB93FE", "Instrumental": "#65BCDE", "FX": "#D5A963", "Maste
 
 
 def clock_text(frame, rate):
-    seconds = max(0, int(frame)) / rate
-    return f"{int(seconds // 60):02d}:{seconds % 60:05.2f}"
+    hundredths = round(max(0, int(frame)) * 100 / rate)
+    minutes, remainder = divmod(hundredths, 6000)
+    seconds, fraction = divmod(remainder, 100)
+    return f"{minutes:02d}:{seconds:02d}.{fraction:02d}"
 
 
 class Timeline(QWidget):

@@ -1,18 +1,24 @@
 """Branch governance: scan, classify and (optionally) clean up remote branches.
 
-Read-only by default. --cleanup deletes remote branches that are provably fully
-contained in main (GitHub compare status 'behind' or 'identical'), have no open
-pull request and have not been touched for --min-age days. Branches that are
-ahead or diverged are always reported, never deleted or merged automatically.
+Read-only by default. --cleanup deletes only the exact branch tip that was
+classified as fully contained in main (GitHub compare status 'behind' or
+'identical'), has no open pull request and has not been touched for --min-age
+days. The remote ref deletion uses an expected-SHA lease, so a branch that moves
+after classification is preserved. Branches that are ahead or diverged are
+always reported, never deleted or merged automatically.
 """
 import argparse
+import base64
 import datetime as dt
 import json
 import os
+import re
+import subprocess
 import requests
 
 OWNER_REPO = os.getenv('GITHUB_REPOSITORY', 'yuchen0x1/VoxMaster-AI')
 PROTECTED = {'main', 'master', 'develop'}
+_SHA_RE = re.compile(r'(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})')
 
 
 def api(route, method='GET'):
@@ -60,6 +66,53 @@ def branch_has_open_pr(name):
     return bool(result) if isinstance(result, list) else True
 
 
+def delete_branch(name, expected_sha, *, remote=None, cwd=None):
+    """Delete only the branch tip that was classified and approved for cleanup.
+
+    GitHub's REST delete-ref endpoint has no expected-old-SHA precondition. A
+    Git push with an explicit force-with-lease does: if the branch moves after
+    classification (or the PR check), the server rejects the stale deletion.
+    """
+    if not isinstance(expected_sha, str) or not _SHA_RE.fullmatch(expected_sha):
+        return {'error': 'invalid expected branch SHA'}
+
+    token = os.getenv('GH_TOKEN') or os.getenv('GITHUB_TOKEN')
+    destination = remote or f'https://github.com/{OWNER_REPO}.git'
+    env = os.environ.copy()
+    env['GIT_TERMINAL_PROMPT'] = '0'
+    if remote is None:
+        if not token:
+            return {'error': 'missing GitHub token; lease-protected deletion skipped'}
+        # Pass credentials through the child environment instead of argv or
+        # persistent git configuration. Actions/checkout and local callers use
+        # the same short-lived token exposed to the governance step.
+        credential = base64.b64encode(f'x-access-token:{token}'.encode()).decode('ascii')
+        header_key = 'http.https://github.com/.extraheader'
+        env.update(
+            GIT_CONFIG_COUNT='2',
+            GIT_CONFIG_KEY_0=header_key,
+            GIT_CONFIG_VALUE_0='',  # Reset checkout's inherited auth header.
+            GIT_CONFIG_KEY_1=header_key,
+            GIT_CONFIG_VALUE_1='AUTHORIZATION: basic ' + credential,
+        )
+
+    ref = 'refs/heads/' + name
+    command = [
+        'git', 'push', f'--force-with-lease={ref}:{expected_sha}',
+        destination, ':' + ref,
+    ]
+    try:
+        result = subprocess.run(
+            command, cwd=cwd, env=env, text=True, capture_output=True, timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return {'error': type(exc).__name__}
+    if result.returncode:
+        detail = result.stderr.strip() or result.stdout.strip()
+        return {'error': 'lease-protected git push failed', 'body': detail[-300:]}
+    return {}
+
+
 def classify(compare):
     """GitHub compare status -> governance class."""
     status = compare.get('status')
@@ -86,31 +139,50 @@ def main():
     rows, deleted = [], []
     for item in branches:
         name = item['name']
+        branch_sha = item.get('commit', {}).get('sha')
         if name in PROTECTED:
             continue
-        commit_date = api(f"repos/{OWNER_REPO}/commits/{item['commit']['sha']}")
-        committed = (commit_date.get('commit', {}).get('committer', {}).get('date'))
+        if not isinstance(branch_sha, str) or not _SHA_RE.fullmatch(branch_sha):
+            branch_sha = None
+        commit_date = api(f"repos/{OWNER_REPO}/commits/{branch_sha}") if branch_sha else {}
+        committed = (commit_date.get('commit', {}).get('committer', {}).get('date')
+                     if isinstance(commit_date, dict) else None)
         age_days = ((now - dt.datetime.fromisoformat(committed.replace('Z', '+00:00'))).days
                     if committed else -1)
-        compare = api(f'repos/{OWNER_REPO}/compare/main...{name}')
-        if 'error' in compare:
-            klass, note, status = '?', 'compare failed: ' + str(compare['error']), 'unknown'
+        # Classify the exact tip observed in the branch listing, not a branch
+        # name that may already have moved by the time compare is requested.
+        if branch_sha:
+            compare = api(f'repos/{OWNER_REPO}/compare/main...{branch_sha}')
+        else:
+            compare = {'error': 'missing branch tip SHA'}
+        if not isinstance(compare, dict) or 'error' in compare:
+            error = (
+                compare.get('error', 'unexpected response')
+                if isinstance(compare, dict)
+                else 'unexpected response'
+            )
+            klass, note, status = '?', 'compare failed: ' + str(error), 'unknown'
         else:
             klass, note = classify(compare)
             status = compare.get('status')
         has_pr = name in open_heads
         deleted_flag = False
-        if (args.cleanup and klass == 'D' and not has_pr and not name.startswith('dependabot/')
-                and age_days >= args.min_age_days):
-            # Re-check the remote immediately before deleting: the initial
-            # paginated snapshot can race with a newly opened pull request.
+        cleanup_note = None
+        if (args.cleanup and klass == 'D' and branch_sha and not has_pr
+                and not name.startswith('dependabot/') and age_days >= args.min_age_days):
+            # Keep the PR recheck and make deletion conditional on the precise
+            # SHA already measured above. A newly pushed tip loses the lease.
             has_pr = branch_has_open_pr(name)
-        if (args.cleanup and klass == 'D' and not has_pr and not name.startswith('dependabot/')
-                and age_days >= args.min_age_days):
-            result = api(f'repos/{OWNER_REPO}/git/refs/heads/{name}', 'DELETE')
+        if (args.cleanup and klass == 'D' and branch_sha and not has_pr
+                and not name.startswith('dependabot/') and age_days >= args.min_age_days):
+            result = delete_branch(name, branch_sha)
             deleted_flag = 'error' not in result
             if deleted_flag:
                 deleted.append(name)
+            else:
+                cleanup_note = '清理未执行（SHA 租约不匹配或远程推送失败）'
+        if cleanup_note:
+            note = cleanup_note
         rows.append(dict(branch=name, status=status, klass=klass, age_days=age_days,
                          open_pr=has_pr, deleted=deleted_flag, note=note))
 
