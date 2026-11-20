@@ -175,17 +175,20 @@ def test_tab_bars_keep_every_caption_reachable(appearance):
         assert dialog.tabs.usesScrollButtons()
         assert bar.count() == 7
         # Every caption keeps its full requested width; overflow scrolls, never clips.
-        for index in range(bar.count()):
-            assert bar.tabRect(index).width() >= bar.fontMetrics().horizontalAdvance(
-                bar.tabText(index)) + 16
-        buttons = [b for b in bar.findChildren(QPushButton) if b.isVisible()]
-        del buttons
+        widths = [bar.tabRect(index).width() for index in range(bar.count())]
+        for index, width in enumerate(widths):
+            assert width >= bar.fontMetrics().horizontalAdvance(bar.tabText(index)) + 16
         scrollers = [w for w in bar.children() if w.isVisible() and w.width() <= 30]
-        assert scrollers
-        dialog.tabs.setCurrentIndex(6)
-        appearance.app.processEvents()
-        last = bar.tabRect(6)
-        assert last.left() >= 0 and last.right() <= bar.width()
+        if sum(widths) > bar.width():
+            assert scrollers
+            dialog.tabs.setCurrentIndex(6)
+            appearance.app.processEvents()
+            last = bar.tabRect(6)
+            assert last.left() >= 0 and last.right() <= bar.width()
+        else:
+            # Narrow system fonts fit all captions: Qt then creates no scroller,
+            # and every tab must be fully visible inside the bar.
+            assert all(bar.tabRect(i).right() <= bar.width() for i in range(bar.count()))
     finally:
         dialog.reject()
         dialog.deleteLater()
