@@ -16,7 +16,9 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QFont
 from vox import health
 from vox.interface import MainWindow
-from vox.visual import STYLES, app_icon
+from vox.visual import app_icon
+from vox.storage import preferences
+from vox.theme import install_theme
 
 
 def main():
@@ -29,7 +31,7 @@ def main():
         app.setStyle("Fusion")
     app.setFont(QFont(ui_font(), 10))
     app.setWindowIcon(app_icon())
-    app.setStyleSheet(STYLES)
+    install_theme(app, preferences().get("theme", "system"))
     ungraceful = health.startup_notice()
     health.mark_open()
     window = MainWindow()

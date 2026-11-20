@@ -64,9 +64,26 @@ def choices(items, current=None):
 
 def label(text, role=None):
     widget = QLabel(text)
+    widget.setTextFormat(Qt.PlainText)
+    if role == "sub":
+        widget.setWordWrap(True)
     if role:
         widget.setObjectName(role)
     return widget
+
+
+def field_label(text, widget):
+    caption = QLabel(text)
+    caption.setBuddy(widget)
+    widget.setAccessibleName(text)
+    return caption
+
+
+def scroll_page(widget):
+    area = QScrollArea()
+    area.setWidgetResizable(True)
+    area.setWidget(widget)
+    return area
 
 
 class ParameterDialog(QDialog):
@@ -80,11 +97,17 @@ class ParameterDialog(QDialog):
         self.base = copy.deepcopy(params)
         layout = QVBoxLayout(self)
         self.tabs = QTabWidget()
+        self.tabs.setAccessibleName("效果器工作室页面")
+        self.tabs.setUsesScrollButtons(True)
+        # Keep full tab captions and let the tab bar scroll instead of clipping/eliding them.
+        self.tabs.tabBar().setElideMode(Qt.TextElideMode.ElideNone)
         layout.addWidget(self.tabs)
         scroll = QScrollArea()
+        scroll.setAccessibleName("全部效果器处理参数")
         scroll.setWidgetResizable(True)
         content = QWidget()
         form = QFormLayout(content)
+        form.setRowWrapPolicy(QFormLayout.WrapLongRows)
         self.inputs = {}
         self.enums = {}
         families = {
@@ -135,7 +158,7 @@ class ParameterDialog(QDialog):
             for value, name in options:
                 enum.addItem(name, value)
             enum.setCurrentIndex(max(0, enum.findData(params.get(key))))
-            form.addRow(caption, enum)
+            form.addRow(field_label(caption, enum), enum)
             self.enums[key] = enum
         for key, (caption, lo, hi, step) in PARAMS.items():
             if key not in params:
@@ -145,7 +168,7 @@ class ParameterDialog(QDialog):
             val.setDecimals(3 if step < 0.01 else 2)
             val.setSingleStep(step)
             val.setValue(params[key])
-            form.addRow(caption, val)
+            form.addRow(field_label(caption, val), val)
             self.inputs[key] = val
         noise_choice = QComboBox()
         for name, amount in (
@@ -158,7 +181,7 @@ class ParameterDialog(QDialog):
         noise_choice.activated.connect(
             lambda i: self.inputs["denoise"].setValue(noise_choice.itemData(i))
         )
-        form.insertRow(0, "降噪力度预选", noise_choice)
+        form.insertRow(0, field_label("降噪力度预选", noise_choice), noise_choice)
         target = QComboBox()
         for caption, lufs in (
             ("当前方案", params["target_lufs"]),
@@ -170,13 +193,18 @@ class ParameterDialog(QDialog):
             target.addItem(caption, lufs)
         target.setToolTip("工作室建议起点，可在目标 LUFS 参数中自定义。")
         target.activated.connect(lambda i: self.inputs["target_lufs"].setValue(target.itemData(i)))
-        form.insertRow(1, "母带目标", target)
+        form.insertRow(1, field_label("母带目标", target), target)
+        focus_order = [noise_choice, target, *self.enums.values(), *self.inputs.values()]
+        for first, second in zip(focus_order, focus_order[1:]):
+            QWidget.setTabOrder(first, second)
         scroll.setWidget(content)
         self.tabs.addTab(scroll, "处理参数")
         chain = QWidget()
         box = QVBoxLayout(chain)
-        box.addWidget(label("拖动调整处理顺序，勾选启用效果器。", "sub"))
+        box.addWidget(label("拖动或用下方按钮调整顺序；空格勾选启用效果器。", "sub"))
         self.chain = QListWidget()
+        self.chain.setAccessibleName("效果器处理链")
+        self.chain.setAccessibleDescription("方向键选择效果器，空格切换启用；Tab 到上移、下移按钮可调整顺序。")
         self.chain.setDragDropMode(QAbstractItemView.InternalMove)
         for stage in params.get("order", STAGES):
             item = QListWidgetItem(STAGES.get(stage, stage), self.chain)
@@ -184,11 +212,20 @@ class ParameterDialog(QDialog):
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
             item.setCheckState(Qt.Unchecked if stage in params.get("disabled", []) else Qt.Checked)
         box.addWidget(self.chain)
+        self.chain.setCurrentRow(0)
+        moves = QHBoxLayout()
+        for title, delta in (("上移", -1), ("下移", 1)):
+            move = QPushButton(title)
+            move.setAccessibleName("将所选效果器" + title)
+            move.clicked.connect(lambda _, d=delta: self.move_stage(d))
+            moves.addWidget(move)
+        box.addLayout(moves)
         self.tabs.addTab(chain, "链路")
         tail = QWidget()
         box = QVBoxLayout(tail)
         box.addWidget(label("在句末发送延迟。混响范围可在参数页切换为仅句尾。", "sub"))
         self.times = QListWidget()
+        self.times.setAccessibleName("尾音时间标记")
         self.times.setSelectionMode(QAbstractItemView.ExtendedSelection)
         for t in params.get("tail_times", []):
             self.add_time(float(t))
@@ -197,7 +234,9 @@ class ParameterDialog(QDialog):
         self.time = QDoubleSpinBox()
         self.time.setRange(0, duration)
         self.time.setSuffix(" s")
-        row.addWidget(self.time)
+        time_form = QFormLayout()
+        time_form.addRow(field_label("新增尾音位置", self.time), self.time)
+        box.addLayout(time_form)
         add = QPushButton("添加位置")
         add.clicked.connect(lambda: self.add_time(self.time.value()))
         row.addWidget(add)
@@ -210,13 +249,13 @@ class ParameterDialog(QDialog):
         eq_layout = QVBoxLayout(eq_page)
         eq_layout.addWidget(label("拖动频段控制点调整频率与增益，或在处理参数页输入数值。", "sub"))
         eq_layout.addWidget(EqEditor(self.inputs, sr), 1)
-        self.tabs.addTab(eq_page, "EQ 曲线")
+        self.tabs.addTab(scroll_page(eq_page), "EQ 曲线")
         self.meters = None
         self.automation_page = None
         self.phrase_editor = None
         if audio is not None and report is not None:
             self.meters = MeterPanel(audio, sr, report, cursor, self.value)
-            self.tabs.addTab(self.meters, "音高与压缩")
+            self.tabs.addTab(scroll_page(self.meters), "音高与压缩")
             for box in self.inputs.values():
                 box.valueChanged.connect(lambda _: self.meters.schedule())
             for enum in self.enums.values():
@@ -231,9 +270,20 @@ class ParameterDialog(QDialog):
                 self.automation_page = AutomationPage(
                     params["automation"], report.get("segments", [])
                 )
-                self.tabs.addTab(self.automation_page, "分段参数")
+                self.tabs.addTab(scroll_page(self.automation_page), "分段参数")
         self.tabs.setCurrentIndex(tab)
+        for button in self.tabs.findChildren(QPushButton):
+            button.setAutoDefault(False)
         confirm(layout, self)
+
+    def move_stage(self, delta):
+        row = self.chain.currentRow()
+        if 0 <= row < self.chain.count() and 0 <= row + delta < self.chain.count():
+            item = self.chain.takeItem(row)
+            self.chain.insertItem(row + delta, item)
+            self.chain.setCurrentRow(row + delta)
+            if self.meters:
+                self.meters.schedule()
 
     def add_time(self, t):
         item = QListWidgetItem(f"{timecode(t)}     {t:.3f} s", self.times)
@@ -264,10 +314,13 @@ class ExportDialog(QDialog):
     def __init__(self, seconds, report, parent):
         super().__init__(parent)
         self.setWindowTitle("导出成品")
-        self.setMinimumWidth(430)
+        self.resize(430, 390)
         layout = QVBoxLayout(self)
+        content = QWidget()
+        body = QVBoxLayout(content)
         form = QFormLayout()
-        layout.addLayout(form)
+        form.setRowWrapPolicy(QFormLayout.WrapLongRows)
+        body.addLayout(form)
         self.format = choices(["WAV", "FLAC", "MP3", "AAC"])
         self.rate = choices([44100, 48000, 88200, 96000])
         self.bits = choices([16, 24, "32 Float"], 24)
@@ -278,10 +331,12 @@ class ExportDialog(QDialog):
             ("PCM 位深", self.bits),
             ("声道", self.channels),
         ]:
-            form.addRow(name, w)
+            form.addRow(field_label(name, w), w)
         self.info = label("")
         self.info.setWordWrap(True)
-        layout.addWidget(self.info)
+        body.addWidget(self.info)
+        body.addStretch()
+        layout.addWidget(scroll_page(content), 1)
         self.seconds = seconds
         self.report = report
         self.format.currentTextChanged.connect(self.update_format)

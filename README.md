@@ -1,20 +1,34 @@
-# VoxMaster AI 0.3.2
+# VoxMaster AI 0.5.0
+
+**AI-Powered Vocal Production & Music Mixing Workstation** · 本地优先的人声制作与歌曲混音工作站
 
 [![CI](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml) · [官方下载](https://github.com/yuchen0x1/VoxMaster-AI/releases/latest) · [反馈](https://github.com/yuchen0x1/VoxMaster-AI/issues)
 
-## 最新更新
+## 0.5.0 更新
 
-0.3.2 为错误修复版本：保护 CLI 报告路径以避免覆盖录音或成品，修复多轨移动后的撤销历史、启动异常提示和关闭窗口后的旧音频保留；同时恢复测试失败退出码，收紧分支清理的 SHA 保护，并修正工程校验、优化模式包验收与时间显示。建议 0.3.0/0.3.1 用户更新。[完整版本记录](docs/releases/release-notes.md) · [修复与验证](docs/BUGFIX-2026-11-19.md)
+0.5.0 是首个公开发布版本：包含 0.4.0 的完整歌曲工作流与本轮双主题界面改造。候选与发布状态、听审门禁见 [发布说明](docs/releases/release-notes.md)。
 
-Windows 本地喊麦调音工作站。导入录音后可查看波形、响度、动态与音高，选择风格执行一键调音，再做等响 A/B 试听。基础调音使用测量值驱动的 DSP。人声分离使用可选的 Spleeter 神经网络，音频与模型推理都在本机。
+0.4.0 将处理路径显式分为 **独立人声、完整歌曲、专业多轨** 三种模式，共用本地音频分析、DSP 与现有多轨混音引擎。完整歌曲模式复用本地按需下载的 Spleeter 双轨模型，提供人声/伴奏独立处理、可编辑混音目标、峰值受限的最终母带及质量报告；分轨与处理在工程提交前完成，取消或失败保留原工程。保守方案不会默认对已含空间效果的人声再次降噪、修音、加混响或做音高修正。原 `v1` 工程继续读取，新增方案作为可选字段保存。**分离重建误差不能证明分离质量**；两首指定参考歌曲的主观听审仍待制作人完成。[项目审计](docs/AUDIT-040.md) · [DSP/模型审计](docs/AUDIT-AUDIO-040.md) · [竞品研究](docs/RESEARCH-040.md) · [38 项取舍](docs/UPGRADE-040.md) · [测试与素材报告](docs/TESTS-040.md)
 
-![VoxMaster AI 工作台，原始普通话录音与调音后波形](docs/workstation.png)
+Windows 本地喊麦与歌曲制作工作站。人声处理继续使用测量驱动 DSP；模式选择和音频角色需要用户确认，自动声学线索仅作参考。媒体与模型均不上传服务器。完整版本记录见 [CHANGELOG](CHANGELOG.md)。
 
-0.1.1 的一键调音会分别处理快速咬字、爆发音和拖腔。在「完整分析报告」中可以选一句看判断依据，比较均衡器前后的频谱、压缩器的实际衰减，再等响试听某个效果器。支持在音高曲线上框选、手动移调和编辑尾音，保存后可重新打开工程。[版本变更](CHANGELOG.md) · [专项验收](docs/UPGRADE-011.md)
+![0.4.0 独立人声工作台，授权普通话夹具实际渲染](docs/evidence-040/workstation.png)
+
+![0.4.0 整曲流程与可复核方案](docs/evidence-040/song-workstation.png)
+
+截图来自 Windows 原生 Qt 运行；整曲界面使用 **CC BY 4.0 FLEURS 真人语音 + 合成伴奏** 演示，不是两首私有参考歌曲，也不作真人歌曲音质验收证据。[参数复核](docs/evidence-040/song-review.png) · [现有多轨工作室](docs/evidence-040/studio.png)。
+
+现有喊麦人声链会按信号证据分别处理快速咬字、爆发音和拖腔。在「完整分析报告」中可以选一句看判断依据，比较均衡器前后的频谱、压缩器的实际衰减，再等响试听某个效果器。支持在音高曲线上框选、手动移调和编辑尾音，保存后可重新打开工程。[版本变更](CHANGELOG.md) · [专项验收](docs/UPGRADE-011.md)
+
+## 双主题与界面验收
+
+「设备与设置 → 外观」支持 **跟随系统 / 浅色 / 深色**，切换立即预览，取消恢复原主题，保存后下次启动继续使用。原生 Qt 控件、菜单与自绘波形/图表共用语义颜色；系统标题栏及 OS 原生文件选择器仍由系统管理。较小窗口可滚动访问全部操作，时间轴增加键盘定位与选区，原音频引擎、工程格式和导出规格不变。
+
+完整界面清单、前后截图、双主题与有效 DPI 验收、独立二审和未验边界见 [UI/UX 专项报告](docs/UIUX-040.md)。上面的 0.4.0 旧截图早于新主题，不代表当前外观。
 
 ## 安装和首次使用
 
-Windows x64 安装版为 `dist/VoxMasterAI-Setup.exe`，按当前用户安装，支持从 Windows 应用列表卸载。便携版为 `dist/VoxMasterAI-Portable.zip`，请解压整个目录后启动 `VoxMasterAI.exe`。两种发行物包含 Python、Qt、音频编解码器和本地推理运行库。软件设置、自动保存与默认模型放在当前用户的 LocalAppData 中。便携版也使用这个位置。
+标准构建输出的 Windows x64 安装版为 `dist/VoxMasterAI-Setup.exe`，按当前用户安装，支持从 Windows 应用列表卸载。便携版为 `dist/VoxMasterAI-Portable.zip`，请解压整个目录后启动 `VoxMasterAI.exe`。发布流水线在隔离注册表环境完成安装/卸载验收后才允许公开发布。两种发行物包含 Python、Qt、音频编解码器和本地推理运行库。软件设置、自动保存与默认模型放在当前用户的 LocalAppData 中。便携版也使用这个位置。
 
 1. 启动后进入「设备与设置」查看自动生成的硬件报告，选择监听设备。
 2. 将 WAV、MP3、FLAC、M4A、AAC、OGG 或 AIFF 拖入窗口。分析完成后，在时间轴下方选择喊麦风格。
@@ -29,7 +43,9 @@ Windows x64 安装版为 `dist/VoxMasterAI-Setup.exe`，按当前用户安装，
 | 人声调音 | 18 种可编辑风格，降噪、参数 EQ、压缩、齿音抑制、饱和、音高修正、空间、立体声和母带。支持调整效果器顺序与旁通，保存个人预设和导入导出 |
 | 参考匹配 | 比较开头、普通发声、高能量、拖腔、尾音和结束段。可等响试听同一风格加入参考建议前后的差异，或恢复匹配前参数 |
 | 旋律与尾音 | 按音高曲线选区移调、调节响应速度、撤销与试听。可伸缩局部尾音，编辑延迟重复次数、空间发送，试听下一句的起音 |
-| 分离与混音 | 双轨分离、人声与伴奏自动平衡、宽带侧链、冲突频带避让、人声居中、单声道折叠检查、轨道与总线效果链、分轨导出 |
+| 工作模式 | 独立人声调音；完整歌曲本地双轨分离、人声/伴奏分开处理、混音与最终母带；已有分轨及多轨时间线编辑。混音目标与母带参数可调、可撤销 |
+| 分离与混音 | 双轨分离、宽带侧链、冲突频带避让、人声居中、单声道折叠检查、轨道与总线效果链、分轨导出；立体声分类不确定时需要用户确认 |
+| 完整歌曲质检 | 分别测量两轨与成品的 LUFS、真峰值、频带、动态、声道相关性及母带前后变化；重建误差只表示相加守恒，须另行试听判断分离质量 |
 | 工程 | 本地工程引用、自动保存、保存前版本备份、最近工程、丢失文件重新定位、当前会话内撤销与重做 |
 | 本地运行 | 默认离线调音，显卡推理失败可回退 CPU；官方更新校验 Ed25519 清单、下载大小与 SHA-256，再由用户启动安装器；本机记录会话健康标记，异常退出下次启动提示 |
 
@@ -39,14 +55,16 @@ Windows x64 安装版为 `dist/VoxMasterAI-Setup.exe`，按当前用户安装，
 |---|---|---|
 | Windows 11 x64 桌面 | 主要交付；Windows 10 仍待实机验收 | 官方更新窗口或 Release；无 Authenticode、自动安装回滚 |
 | Linux / macOS Intel / Apple Silicon 源码 | 原生 CI 试验支持；实体监听和安装包未验收 | 新建独立 Python 环境升级，可保留旧环境回退 |
-| CLI | 与桌面共享同一音频引擎，多文件串行且保护已有文件 | 随产品版本更新 |
+| CLI | analyze / tune / song / styles；整曲处理在本机执行，使用已安装模型并拒绝覆盖素材 | 随产品版本更新 |
 | 手机、Web、PWA、扩展、Docker/NAS | 暂不开发 | [逐平台评估与原因](docs/PLATFORMS.md) |
 
 ```powershell
 python app.py --cli analyze tests/fixtures/fleurs-mandarin.wav --report analysis.json
 python app.py --cli tune recording.wav second.wav --output-dir outputs --format flac
+python app.py --cli song full-song.mp3 --output-dir outputs --target natural --master conservative --report outputs/song-report.json
 python app.py --cli styles
-# Windows 包中亦可用控制台启动器 VoxMasterAI-CLI.exe --cli ...
+# Windows 专用控制台启动器不带 --cli 前缀：
+# VoxMasterAI-CLI.exe song full-song.mp3 --output-dir outputs --format flac
 ```
 
 结果为 JSON；批量中某文件失败会继续其他文件并以非零码退出。禁止覆盖成品；同名输入使用不同输出目录。Linux 需 PortAudio/EGL 和中文字体，macOS 需 PortAudio。用户数据分别使用 LocalAppData、XDG_DATA_HOME、Application Support；可用 VOXMASTER_DATA 指定隔离目录。[更新机制与恢复](docs/UPDATING.md)
@@ -68,9 +86,15 @@ py -3.11 -m venv .venv
 .\scripts\build.ps1
 ```
 
+## 硬件与兼容边界
+
+需要 Windows 10/11 x64（Inno 目标下限为 Windows 10 1809；**本轮只实测 Windows 11 Build 26300**）。不使用分离模型时，基础人声 DSP 可离线运行，不要求 GPU；分离支持 CPU，Windows 包可用 DirectML，驱动/推理失败按现有顺序回退 CPU。CUDA 不在本轮 Windows 安装包中，未声称新 CUDA 验收。模型约 75 MiB，由用户确认后按需获取，不随包附带。
+
+本轮实测主机为 Ryzen 9 8945HX、系统报告 79.2 GiB RAM、RTX 5060 Laptop 8 GiB。本轮没有低内存机器或大于 30 分钟音频的资源测试，因此不提供“已验证的最低内存/显存”承诺。解码可使用磁盘映射，但完整渲染仍需要与音轨时长和数量相关的内存；长工程应预留本地缓存/成品磁盘空间。[本轮性能数据与缺测](docs/PERFORMANCE-040.md)。
+
 ## 模型与许可
 
-模型管理器提供约 75 MiB 的 Spleeter 双模型，支持暂停、续传、校验与迁移。完成下载后可离线使用。权重发布渠道、校验值与适用范围见[模型说明](docs/MODELS.md)。代码及产品标识的授权由作者决定，工程当前没有指定整仓对外开源许可证。Qt、编解码库、推理库及测试录音的许可分别保留。[第三方清单](docs/THIRD_PARTY.md) · [测试录音署名](tests/fixtures/README.md)
+模型管理器提供约 75 MiB 的 Spleeter 双模型，支持暂停、续传、校验与迁移。完成下载后可离线使用。权重发布渠道、校验值与适用范围见[模型说明](docs/MODELS.md)。本项目源代码按 [MIT LICENSE](LICENSE) 授权；Qt、编解码库、推理库、第三方模型权重及测试录音各自的许可仍分别适用，模型权重不因此自动变为 MIT。[第三方清单](docs/THIRD_PARTY.md) · [测试录音署名](tests/fixtures/README.md)。
 
 ## 使用边界和常见问题
 

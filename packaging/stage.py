@@ -92,9 +92,10 @@ def copy_documents():
             target = DIST / doc.relative_to(ROOT)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(doc, target)
-    for name in ["README.md", "CHANGELOG.md"]:
+    for name in ["README.md", "CHANGELOG.md", "LICENSE"]:
         shutil.copy2(ROOT / name, DIST)
     shutil.copy2(ROOT / "docs/THIRD_PARTY.md", INFO)
+    shutil.copy2(ROOT / "LICENSE", INFO / "VoxMaster-AI-LICENSE.txt")
 
 
 

@@ -8,10 +8,23 @@ from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget
 
 from .studio_session import TRACKS, duration, new_clip
+from .theme import color, watch_theme
 
 
 TRACK_LABELS = {"Vocal": "人声", "Instrumental": "伴奏", "FX": "效果", "Master": "主总线"}
-COLORS = {"Vocal": "#AB93FE", "Instrumental": "#65BCDE", "FX": "#D5A963", "Master": "#A3D5C2"}
+# Retained for callers that imported the original, dark-theme palette.
+COLORS = {
+    "Vocal": "#AB93FE",
+    "Instrumental": "#65BCDE",
+    "FX": "#D5A963",
+    "Master": "#A3D5C2",
+}
+TRACK_COLOR_TOKENS = {
+    "Vocal": "track_vocal",
+    "Instrumental": "track_music",
+    "FX": "track_fx",
+    "Master": "accent",
+}
 
 
 def clock_text(frame, rate):
@@ -45,7 +58,14 @@ class Timeline(QWidget):
         self.setMinimumSize(360, 208)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setAccessibleName("多轨时间轴")
-        self.setToolTip("单击定位，拖动选区，右键编辑")
+        self.setAccessibleDescription(
+            "左右方向键移动光标，按住 Shift 快速移动；Home 和 End 跳到开头和结尾。"
+            "单击定位，拖动选区，右键编辑。"
+        )
+        self.setToolTip(
+            "单击定位，拖动选区，右键编辑；←/→ 移动，Shift+←/→ 快进，Home/End 跳转"
+        )
+        watch_theme(self)
 
     @property
     def total(self):
@@ -103,6 +123,34 @@ class Timeline(QWidget):
             self.selection_changed.emit()
             self.update()
 
+    def keyPressEvent(self, e):
+        if e.key() not in (Qt.Key_Left, Qt.Key_Right, Qt.Key_Home, Qt.Key_End):
+            super().keyPressEvent(e)
+            return
+        if e.modifiers() & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier):
+            super().keyPressEvent(e)
+            return
+
+        self.seek_requested.emit()
+        if e.key() == Qt.Key_Home:
+            target = 0
+        elif e.key() == Qt.Key_End:
+            target = self.total
+        else:
+            seconds = 1.0 if e.modifiers() & Qt.ShiftModifier else 0.1
+            step = max(1, round(self.session.sr * seconds))
+            direction = -1 if e.key() == Qt.Key_Left else 1
+            target = int(np.clip(self.cursor + direction * step, 0, self.total))
+        self.cursor = self.first = self.last = target
+        offset = int(np.clip(target - self.span if target > self.offset + self.span
+                             else min(self.offset, target), 0, self.total - self.span))
+        if offset != self.offset:
+            self.offset = offset
+            self.view_changed.emit()
+        self.selection_changed.emit()
+        self.update()
+        e.accept()
+
     def mouseReleaseEvent(self, e):
         self._dragging = False
 
@@ -150,7 +198,7 @@ class Timeline(QWidget):
 
     def paintEvent(self, e):
         p = QPainter(self)
-        p.fillRect(self.rect(), QColor("#13151D"))
+        p.fillRect(self.rect(), color("canvas"))
         row_h = self.row_height()
         sr = self.session.sr
         sec_step = self.span / sr / max(2, (self.width() - self.left) // 94)
@@ -163,25 +211,35 @@ class Timeline(QWidget):
             x = self.x_for(t)
             if x < self.left:
                 continue
-            p.setPen(QColor("#323641"))
+            p.setPen(color("grid"))
             p.drawLine(QPointF(x, self.top - 4), QPointF(x, self.height()))
-            p.setPen(QColor("#ACB0C2"))
+            p.setPen(color("muted"))
             label = clock_text(t, sr)
             if x + p.fontMetrics().horizontalAdvance(label) + 5 < self.width():
                 p.drawText(QPointF(x + 3, self.top - 9), label)
+        selection_bounds = None
+        if self.last > self.first:
+            row = TRACKS.index(self.lane)
+            left = max(self.left, self.x_for(self.first))
+            right = min(self.width(), self.x_for(self.last))
+            if right > left:
+                selection_bounds = QRectF(left, self.top + row * row_h, right - left, row_h)
+                selection = color("selected")
+                selection.setAlpha(110)
+                p.fillRect(selection_bounds, selection)
         for i, name in enumerate((*TRACKS, "Master")):
             y = self.top + i * row_h
             mid = y + row_h / 2
-            col = QColor(COLORS[name])
+            col = color(TRACK_COLOR_TOKENS[name])
             p.fillRect(
                 QRectF(0, y, self.left - 1, row_h - 1),
-                QColor("#282634" if name == self.lane else "#1B1E27"),
+                color("selected" if name == self.lane else "panel"),
             )
             if self.lane == name:
                 p.fillRect(QRectF(0, y, 3, row_h - 1), col)
-            p.setPen(col)
+            p.setPen(color("on_selected") if self.lane == name else col)
             p.drawText(QPointF(12, mid - 2), TRACK_LABELS[name])
-            p.setPen(QColor("#A7ACBA"))
+            p.setPen(color("muted"))
             if name == "Master":
                 clips = (
                     []
@@ -194,7 +252,7 @@ class Timeline(QWidget):
                 clips = strip["clips"]
                 gain = strip["gain"]
             p.drawText(QPointF(12, mid + 17), f"{gain:+.1f} dB")
-            p.setPen(QColor("#363A48"))
+            p.setPen(color("border"))
             p.drawLine(QPointF(self.left, y), QPointF(self.width(), y))
             for c in clips:
                 a = max(self.offset, c["at"])
@@ -220,7 +278,7 @@ class Timeline(QWidget):
                 if c["env"]:
                     p.save()
                     p.setClipRect(QRectF(left, y, right - left, row_h))
-                    p.setPen(QPen(QColor("#F4C275"), 1.5))
+                    p.setPen(QPen(color("band_low"), 1.5))
                     curve = QPainterPath()
                     for n, (offset, value) in enumerate(c["env"]):
                         x = self.x_for(c["at"] + offset)
@@ -231,17 +289,17 @@ class Timeline(QWidget):
                             curve.lineTo(x, h)
                     p.drawPath(curve)
                     p.restore()
-        if self.last > self.first:
-            row = TRACKS.index(self.lane)
-            left = max(self.left, self.x_for(self.first))
-            right = min(self.width(), self.x_for(self.last))
-            if right > left:
-                p.fillRect(
-                    QRectF(left, self.top + row * row_h, right - left, row_h),
-                    QColor(195, 182, 255, 56),
-                )
+        if selection_bounds is not None:
+            p.setPen(QPen(color("focus"), 1.5, Qt.DashLine))
+            p.setBrush(Qt.NoBrush)
+            p.drawRect(selection_bounds)
         cursor_x = self.x_for(self.cursor)
         if self.left <= cursor_x <= self.width():
-            p.setPen(QPen(QColor("#FCF1B9"), 2))
+            cursor_x = min(cursor_x, self.width() - 1)
+            p.setPen(QPen(color("cursor"), 2))
             p.drawLine(QPointF(cursor_x, self.top - 2), QPointF(cursor_x, self.height()))
+        if self.hasFocus():
+            p.setPen(QPen(color("focus"), 2))
+            p.setBrush(Qt.NoBrush)
+            p.drawRect(self.rect().adjusted(1, 1, -2, -2))
         p.end()

@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 
 from . import __version__
 from .hardware import resolve_output
+from .theme import manager as theme_manager, normalize_mode, set_status
 
 
 def _valid_url(url):
@@ -84,6 +85,7 @@ class SettingsDialog(QDialog):
         self._settings = settings.copy()
         self._report = report or {}
         self.setWindowTitle("设备与设置")
+        self.setMinimumSize(600, 460)
         self.resize(715, 536)
         self._paths = {}
         layout = QVBoxLayout(self)
@@ -93,7 +95,14 @@ class SettingsDialog(QDialog):
         self.tabs.addTab(self._inventory(), "设备报告")
         self.tabs.addTab(self._preferences(), "音频与目录")
         self.tabs.addTab(self._updates(), "软件更新")
+        self._theme_preview = theme_manager()
+        self._theme_before = self._theme_preview.mode
+        self._preview_mode = None
+        self.finished.connect(self._restore_theme_preview)
+        self.tabs.addTab(self._appearance(), "外观")
         self.error = _label("")
+        self.error.setAccessibleName("设置状态")
+        self.error.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.error.hide()
         layout.addWidget(self.error)
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -181,6 +190,7 @@ class SettingsDialog(QDialog):
         layout = QVBoxLayout(page)
         layout.addWidget(_label("试听输出", "section"))
         self.output = QComboBox()
+        self.output.setAccessibleName("试听音频输出设备")
         self.output.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
         self.output.setMinimumContentsLength(20)
         output_row = QHBoxLayout()
@@ -203,6 +213,7 @@ class SettingsDialog(QDialog):
             editor.setClearButtonEnabled(True)
             editor.setAccessibleName(label + "目录")
             select = QPushButton("浏览…")
+            select.setAccessibleName(f"浏览{label}目录")
             select.clicked.connect(lambda _, e=editor, title=label: self._browse(e, title))
             row = QHBoxLayout()
             row.addWidget(editor, 1)
@@ -240,8 +251,10 @@ class SettingsDialog(QDialog):
             self.tabs.insertTab(0, self._inventory(), "设备报告")
             old.deleteLater()
             self.error.setText(f"已重新检测到 {len(self._outputs)} 个输出端点。")
+            set_status(self.error, "info")
         except Exception as exc:
             self.error.setText(str(exc))
+            set_status(self.error, "error")
         self.error.show()
 
     def _browse(self, editor, title):
@@ -250,6 +263,38 @@ class SettingsDialog(QDialog):
         )
         if path:
             editor.setText(path)
+
+    def _appearance(self):
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        heading = _label("外观主题", "section")
+        layout.addWidget(heading)
+        layout.addWidget(_label(
+            "选择浅色、深色，或跟随操作系统的外观设置。更改会立即预览；取消或关闭时恢复进入设置前的外观。"
+        ))
+        self.theme_choice = QComboBox()
+        self.theme_choice.setAccessibleName("外观主题")
+        self.theme_choice.addItem("跟随系统", "system")
+        self.theme_choice.addItem("浅色", "light")
+        self.theme_choice.addItem("深色", "dark")
+        current = normalize_mode(self._settings.get("theme", "system"))
+        self.theme_choice.setCurrentIndex(self.theme_choice.findData(current))
+        self.theme_choice.currentIndexChanged.connect(self._preview_theme)
+        layout.addWidget(self.theme_choice)
+        self._theme_preview_hint = _label("外观主题会应用于工作台、自绘图形、混音台与对话框。")
+        layout.addWidget(self._theme_preview_hint)
+        layout.addStretch()
+        return page
+
+    def _preview_theme(self, _index):
+        if not hasattr(self, "theme_choice"):
+            return
+        self._preview_mode = self.theme_choice.currentData()
+        self._theme_preview.set_mode(self._preview_mode)
+
+    def _restore_theme_preview(self, result):
+        if not result and self._preview_mode is not None:
+            self._theme_preview.set_mode(self._theme_before)
 
     def _updates(self):
         page = QWidget()
@@ -326,6 +371,8 @@ class SettingsDialog(QDialog):
             values["output_device_name"] = device.get("name")
             values["output_device_host"] = device.get("host")
         values["update_url"] = self.url.text().strip()
+        if hasattr(self, "theme_choice"):
+            values["theme"] = self.theme_choice.currentData()
         return values
 
     def accept(self):
@@ -341,6 +388,7 @@ class SettingsDialog(QDialog):
                         pass
         except (OSError, ValueError, RuntimeError) as exc:
             self.error.setText(f"设置未保存。{exc}")
+            set_status(self.error, "error")
             self.error.show()
             return
         super().accept()

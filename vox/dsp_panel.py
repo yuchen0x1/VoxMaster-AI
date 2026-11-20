@@ -5,16 +5,19 @@ from threading import Event
 import numpy as np
 from scipy import signal
 from PySide6.QtCore import Qt, Signal, QObject, QRunnable, QThreadPool, QRectF, QPointF, QTimer
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QDoubleSpinBox, QHBoxLayout
 from . import engine
+from .theme import color as theme_color, watch_theme
 
+# Legacy public metadata; painting resolves semantic tokens, never these colors.
 BANDS = (
     ("body", "厚度", "#b29aff"),
     ("mud", "低中频", "#9675ff"),
     ("presence", "清晰", "#6ca4ff"),
     ("air", "空气", "#72d0e5"),
 )
+BAND_TOKENS = {"body": "band_low", "mud": "band_mid", "presence": "band_high", "air": "band_high"}
 
 
 class EqEditor(QWidget):
@@ -26,7 +29,12 @@ class EqEditor(QWidget):
         self.drag_band = None
         self.setMinimumHeight(215)
         self.setMouseTracking(True)
-        self.setAccessibleName("均衡器频响曲线，参数页支持键盘调整")
+        self.setAccessibleName("均衡器频响曲线")
+        self.setAccessibleDescription(
+            "横轴为频率 Hz，纵轴为增益 dB。控制点标有频段名称；"
+            "可拖动控制点，或在处理参数页用键盘编辑对应频率和增益。"
+        )
+        watch_theme(self)
         for k in inputs:
             if k in ("eq_q", "highpass_hz") or any(k.startswith(b[0] + "_") for b in BANDS):
                 inputs[k].valueChanged.connect(self.update)
@@ -80,20 +88,21 @@ class EqEditor(QWidget):
 
     def paintEvent(self, _event):
         painter = QPainter(self)
+        painter.setFont(self.font())
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.fillRect(self.rect(), QColor("#14161e"))
+        painter.fillRect(self.rect(), theme_color("canvas"))
         r = self.plot()
         for gain in (-12, -6, 0, 6, 12):
             y = self.ycoord(gain)
-            painter.setPen(QColor("#373c4a" if gain == 0 else "#272b38"))
+            painter.setPen(theme_color("grid_strong" if gain == 0 else "grid"))
             painter.drawLine(QPointF(r.left(), y), QPointF(r.right(), y))
-            painter.setPen(QColor("#a0a8bb"))
+            painter.setPen(theme_color("muted"))
             painter.drawText(QPointF(4, y + 4), str(gain))
         for f in (50, 100, 300, 1000, 3000, 10000):
             x = self.xcoord(f)
-            painter.setPen(QColor("#272b38"))
+            painter.setPen(theme_color("grid"))
             painter.drawLine(QPointF(x, r.top()), QPointF(x, r.bottom()))
-            painter.setPen(QColor("#a0a8bb"))
+            painter.setPen(theme_color("muted"))
             painter.drawText(
                 QPointF(x - 9, r.bottom() + 20), str(f) if f < 1000 else str(f // 1000) + "k"
             )
@@ -107,24 +116,33 @@ class EqEditor(QWidget):
                 path.lineTo(point)
             else:
                 path.moveTo(point)
-        painter.setPen(QPen(QColor("#a48aff"), 2.5))
+        painter.setPen(QPen(theme_color("accent"), 2.5))
         painter.drawPath(path)
-        for point, (_, name, color) in zip(self.points(), BANDS):
-            painter.setBrush(QColor(color))
-            painter.setPen(QColor("#161721"))
+        painter.setPen(theme_color("accent"))
+        painter.drawLine(QPointF(r.left(), r.top() - 8), QPointF(r.left() + 18, r.top() - 8))
+        painter.setPen(theme_color("text"))
+        painter.drawText(QPointF(r.left() + 24, r.top() - 4), "EQ 总响应")
+        for point, (key, name, _) in zip(self.points(), BANDS):
+            band_color = theme_color(BAND_TOKENS[key])
+            painter.setBrush(band_color)
+            painter.setPen(theme_color("canvas"))
             painter.drawEllipse(point, 6, 6)
-            painter.setPen(QColor(color))
+            painter.setPen(band_color)
             painter.drawText(point + QPointF(7, -8), name)
 
 
 class Trace(QWidget):
-    def __init__(self, caption):
+    def __init__(self, caption, color_token="wave_a"):
         super().__init__()
         self.caption = caption
+        self.color_token = color_token
         self.points = np.empty((0, 2))
         self.xspan = (0, 1)
         self.yspan = (0, 1)
         self.setMinimumHeight(90)
+        self.setAccessibleName(caption)
+        self.setAccessibleDescription("横轴为时间（秒）；纵轴单位见图表标题。")
+        watch_theme(self)
 
     def show_data(self, t, v, xspan, yspan):
         self.points = np.column_stack((t, v))
@@ -134,15 +152,17 @@ class Trace(QWidget):
 
     def paintEvent(self, _event):
         painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor("#151720"))
+        painter.setFont(self.font())
+        painter.fillRect(self.rect(), theme_color("canvas"))
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(QColor("#a7afc1"))
+        painter.setPen(theme_color("text"))
         painter.drawText(QPointF(8, 16), self.caption)
         left, top = 9, 24
         width = max(1, self.width() - 20)
         height = max(1, self.height() - 45)
-        painter.setPen(QColor("#2e3140"))
+        painter.setPen(theme_color("grid_strong"))
         painter.drawLine(left, top, left + width, top)
+        painter.setPen(theme_color("grid"))
         painter.drawLine(left, top + height, left + width, top + height)
         path = QPainterPath()
         connected = False
@@ -161,9 +181,9 @@ class Trace(QWidget):
             else:
                 path.moveTo(pos)
             connected = True
-        painter.setPen(QPen(QColor("#8cb8ff"), 1.5))
+        painter.setPen(QPen(theme_color(self.color_token), 1.5))
         painter.drawPath(path)
-        painter.setPen(QColor("#a7afc1"))
+        painter.setPen(theme_color("muted"))
         painter.drawText(QPointF(left, self.height() - 5), f"{a:.2f} s")
         painter.drawText(QPointF(left + width - 54, self.height() - 5), f"{b:.2f} s")
 
@@ -212,17 +232,20 @@ class MeterPanel(QWidget):
         self.task_cancel = None
         layout = QVBoxLayout(self)
         row = QHBoxLayout()
-        row.addWidget(QLabel("分析区域起点"))
+        start_label = QLabel("分析区域起点")
         self.start = QDoubleSpinBox()
+        start_label.setBuddy(self.start)
+        self.start.setAccessibleName("分析区域起点")
         self.start.setRange(0, max(0, len(audio) / sr - 0.02))
         self.start.setSuffix(" s")
         self.start.setValue(cursor)
+        row.addWidget(start_label)
         self.start.valueChanged.connect(lambda _: self.schedule())
         row.addWidget(self.start)
         row.addStretch()
         layout.addLayout(row)
-        self.pitch = Trace("原音基频 · Hz")
-        self.gr = Trace("当前链路的压缩增益变化 · dB")
+        self.pitch = Trace("原音基频 · Hz", "wave_a")
+        self.gr = Trace("当前链路的压缩增益变化 · dB", "warning")
         self.info = QLabel()
         layout.addWidget(self.pitch, 1)
         layout.addWidget(self.gr, 1)

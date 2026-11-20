@@ -32,6 +32,8 @@ from PySide6.QtWidgets import (
 )
 
 from .dialogs import managed_dialog
+from .theme import set_status
+from .visual import TransportShortcutGuard
 from .studio_session import Session, TRACKS, load_sources
 from .studio_timeline import Timeline, TRACK_LABELS, clock_text
 
@@ -78,6 +80,11 @@ class StudioDialog(QDialog):
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setFrameShape(QScrollArea.NoFrame)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setAccessibleName("多轨混音工作区")
+        scroll_area.setAccessibleDescription(
+            "工作区内容较长时可滚动查看，所有混音与传输控件均保留。"
+        )
         shell.addWidget(scroll_area)
         contents = QWidget()
         scroll_area.setWidget(contents)
@@ -86,7 +93,8 @@ class StudioDialog(QDialog):
         root.setContentsMargins(20, 15, 20, 14)
         header = QHBoxLayout()
         title = QLabel("多轨混音")
-        title.setStyleSheet("font-size: 23px; font-weight: 650;")
+        title.setObjectName("title")
+        title.setAccessibleName("多轨混音")
         header.addWidget(title)
         header.addStretch()
         self.balance_button = self._button(header, "自动平衡与响度…", self._balance)
@@ -121,23 +129,33 @@ class StudioDialog(QDialog):
             lambda _: self._set_wave_gain(wave_gain.currentData())
         )
         toolbar.addWidget(wave_gain)
-        self._button(toolbar, "−", lambda: self.wave.change_zoom(0.5), "缩小时间轴")
-        self._button(toolbar, "＋", lambda: self.wave.change_zoom(2), "放大时间轴")
+        zoom_out = self._button(
+            toolbar, "−", lambda: self.wave.change_zoom(0.5), "缩小时间轴"
+        )
+        zoom_out.setAccessibleName("缩小时间轴")
+        zoom_in = self._button(
+            toolbar, "＋", lambda: self.wave.change_zoom(2), "放大时间轴"
+        )
+        zoom_in.setAccessibleName("放大时间轴")
         root.addWidget(self.tools)
         self.wave = Timeline(self.session)
-        self.wave.lane_changed.connect(lambda t: self.track_box.setCurrentIndex(TRACKS.index(t)))
+        self.wave.lane_changed.connect(
+            lambda t: self.track_box.setCurrentIndex(TRACKS.index(t))
+        )
         self.wave.selection_changed.connect(self._selection)
         self.wave.seek_requested.connect(self._stop)
         self.wave.menu_requested.connect(self._menu_at)
         self.wave.view_changed.connect(self._view)
         root.addWidget(self.wave, 1)
         self.scroll = QScrollBar(Qt.Horizontal)
-        self.scroll.setStyleSheet(
-            "QScrollBar:horizontal{background:#1d2029;height:9px;border:0px;} QScrollBar::handle:horizontal{background:#666079;min-width:24px;border-radius:3px;} QScrollBar::add-line:horizontal,QScrollBar::sub-line:horizontal{width:0;} QScrollBar::add-page:horizontal,QScrollBar::sub-page:horizontal{background:transparent;}"
+        self.scroll.setAccessibleName("时间轴水平滚动条")
+        self.scroll.setAccessibleDescription(
+            "缩放时间轴后，用此滚动条查看不同时间范围。"
         )
         self.scroll.valueChanged.connect(self._scroll)
         root.addWidget(self.scroll)
         self.region = QLabel()
+        self.region.setAccessibleName("选区信息")
         root.addWidget(self.region)
         self.strips = QWidget()
         mixer = QGridLayout(self.strips)
@@ -150,9 +168,6 @@ class StudioDialog(QDialog):
             controls = {}
             for col, key, label in [(1, "mute", "静音"), (2, "solo", "独奏")]:
                 ctl = QCheckBox()
-                ctl.setStyleSheet(
-                    "QCheckBox::indicator{width:16px;height:16px;border:1px solid #646779;border-radius:3px;background:#191b23;} QCheckBox::indicator:checked{background:#aa8deb;border-color:#ded2ff;}"
-                )
                 ctl.setAccessibleName(TRACK_LABELS[t] + label)
                 ctl.toggled.connect(lambda val, t=t, key=key: self._param(t, key, val))
                 mixer.addWidget(ctl, i, col)
@@ -171,36 +186,50 @@ class StudioDialog(QDialog):
             self.controls[t] = controls
         root.addWidget(self.strips)
         aux = QHBoxLayout()
-        aux.addWidget(QLabel("主总线"))
+        master_label = QLabel("主总线")
         self.master = self._spin(-60, 12, 0.5, " dB")
+        master_label.setBuddy(self.master)
+        self.master.setAccessibleName("主总线电平")
         self.master.valueChanged.connect(lambda v: self._param(None, "master_db", v))
+        aux.addWidget(master_label)
         aux.addWidget(self.master)
         self.meter = QLabel("峰值   —  dBFS")
+        self.meter.setAccessibleName("当前试听峰值")
         self.meter.setMinimumWidth(130)
         aux.addWidget(self.meter)
         self.headroom = QLabel()
+        self.headroom.setAccessibleName("主总线峰值与保护衰减")
+        self.headroom.setWordWrap(True)
         self.headroom.setToolTip("主总线全曲采样峰值，以及超限保护产生的整体增益衰减")
-        aux.addWidget(self.headroom)
-        aux.addStretch()
+        aux.addWidget(self.headroom, 1)
         self.export_button = self._button(aux, "导出轨道 WAV…", self._export)
         root.addLayout(aux)
-        transport = QHBoxLayout()
-        self.play_button = self._button(transport, "播放", self._play)
-        self._button(transport, "停止", self._rewind)
+        transport = QVBoxLayout()
+        transport_controls = QHBoxLayout()
+        self.play_button = self._button(transport_controls, "播放", self._play)
+        self._button(transport_controls, "停止", self._rewind)
         self.loop = QCheckBox("循环")
-        transport.addWidget(self.loop)
+        transport_controls.addWidget(self.loop)
         self.mono = QCheckBox("单声道监听")
         self.mono.toggled.connect(self._switch_monitor)
-        transport.addWidget(self.mono)
+        transport_controls.addWidget(self.mono)
         self.clock = QLabel("00:00.00")
-        self.clock.setStyleSheet("color: #c4b0ff; font: bold 17px 'Consolas';")
-        transport.addWidget(self.clock)
-        transport.addStretch()
-        self.cancel_button = self._button(transport, "取消任务", self._cancel)
-        self.apply_button = self._button(transport, "应用混音", self.accept)
-        self._button(transport, "关闭", self.reject)
+        self.clock.setObjectName("clock")
+        self.clock.setAccessibleName("播放位置")
+        self.clock.setAccessibleDescription("当前时间轴光标的位置。")
+        transport_controls.addWidget(self.clock)
+        transport_controls.addStretch()
+        transport_actions = QHBoxLayout()
+        transport_actions.addStretch()
+        self.cancel_button = self._button(transport_actions, "取消任务", self._cancel)
+        self.apply_button = self._button(transport_actions, "应用混音", self.accept)
+        self._button(transport_actions, "关闭", self.reject)
+        transport.addLayout(transport_controls)
+        transport.addLayout(transport_actions)
         root.addLayout(transport)
         self.status = QLabel()
+        self.status.setAccessibleName("混音工作状态")
+        self.status.setWordWrap(True)
         root.addWidget(self.status)
         self.shortcuts = []
         for key, func in (
@@ -217,6 +246,8 @@ class StudioDialog(QDialog):
             shortcut = QShortcut(QKeySequence(key), self)
             shortcut.activated.connect(func)
             self.shortcuts.append(shortcut)
+            if key == "Space":
+                self.transport_guard = TransportShortcutGuard(self, shortcut)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._tick)
         self.timer.start(50)
@@ -348,7 +379,7 @@ class StudioDialog(QDialog):
             self._mix_metrics = metrics
             self.wave.set_master(mix)
             reduction = metrics["reduction_db"]
-            self.headroom.setStyleSheet("color:#edb56d" if reduction > 0.01 else "color:#a5c4b7")
+            set_status(self.headroom, "warning" if reduction > 0.01 else "success")
             if reduction > 0.01:
                 self.headroom.setText(
                     f"峰值 {metrics['pre_peak_db']:+.1f} dBFS  ·  已衰减 {reduction:.1f} dB"
@@ -465,6 +496,7 @@ class StudioDialog(QDialog):
         self._mix_metrics = None
         self.wave.set_master(None)
         self.headroom.clear()
+        set_status(self.headroom, "info")
         self.wave.cursor = min(self.wave.cursor, self.wave.total)
         self.wave.first = min(self.wave.first, self.wave.total)
         self.wave.last = min(self.wave.last, self.wave.total)

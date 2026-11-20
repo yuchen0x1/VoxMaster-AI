@@ -4,15 +4,17 @@ from copy import deepcopy
 
 import numpy as np
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QFormLayout,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QListWidget,
     QPushButton,
+    QScrollArea,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -24,6 +26,7 @@ from .analysis import loudness, pitch_track
 from .jobs import Worker
 from .playback import Playback
 from .tail011 import guard_end, slice_params, validate_edits
+from .theme import color as theme_color, watch_theme
 
 
 class PitchCanvas(QWidget):
@@ -37,8 +40,13 @@ class PitchCanvas(QWidget):
         self.view = (0.0, duration)
         self.range = (0.0, min(duration, 0.5))
         self.anchor = None
-        self.setMinimumHeight(98)
-        self.setAccessibleName("音高曲线。拖动选择时间区间，或使用下方数值输入。")
+        self.setMinimumHeight(110)
+        self.setAccessibleName("音高曲线与选区")
+        self.setAccessibleDescription(
+            "横轴为时间（秒），纵轴为音高（Hz）。可用鼠标拖动选择区间，"
+            "也可用下方起点和终点数值控件键盘编辑；曲线图本身没有键盘操作。"
+        )
+        watch_theme(self)
 
     def xpos(self, t):
         a, b = self.view
@@ -69,28 +77,36 @@ class PitchCanvas(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor("#131621"))
+        painter.setFont(self.font())
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.fillRect(self.rect(), theme_color("canvas"))
         low, high = self.view
-        h = self.height() - 20
+        plot_top = 29
+        plot_bottom = max(plot_top + 24, self.height() - 21)
+        plot_height = plot_bottom - plot_top
 
         def y(freq):
-            return h - 5 - (h - 10) * np.clip(np.log2(freq / 64) / 3.45, 0, 1)
+            return plot_bottom - plot_height * np.clip(np.log2(freq / 64) / 3.45, 0, 1)
 
-        painter.setPen(QPen(QColor("#333a48")))
+        painter.setPen(theme_color("grid"))
         for hz in (100, 200, 400):
             line = int(y(hz))
             painter.drawLine(35, line, self.width() - 8, line)
+            painter.setPen(theme_color("muted"))
             painter.drawText(3, line + 3, str(hz))
-        painter.fillRect(
-            QRectF(
-                self.xpos(self.range[0]),
-                0,
-                self.xpos(self.range[1]) - self.xpos(self.range[0]),
-                h,
-            ),
-            QColor(137, 92, 228, 55),
-        )
-        for curve, colour in ((self.original, "#8bb7fc"), (self.after, "#df98ef")):
+            painter.setPen(theme_color("grid"))
+
+        selection = QRectF(
+            self.xpos(self.range[0]), plot_top,
+            self.xpos(self.range[1]) - self.xpos(self.range[0]), plot_height,
+        ).intersected(QRectF(self.xpos(low), plot_top, self.xpos(high) - self.xpos(low), plot_height))
+        if not selection.isEmpty():
+            selected = theme_color("selected")
+            selected.setAlpha(90)
+            painter.fillRect(selection, selected)
+            painter.setPen(QPen(theme_color("focus"), 1.5, Qt.DashLine))
+            painter.drawRect(selection)
+        for curve, token in ((self.original, "wave_a"), (self.after, "wave_b")):
             first, last = np.searchsorted(curve[:, 0], [low, high])
             chunk = curve[first:last]
             path = QPainterPath()
@@ -105,9 +121,19 @@ class PitchCanvas(QWidget):
                 else:
                     path.moveTo(point)
                 linked = True
-            painter.setPen(QPen(QColor(colour), 1.6))
+            painter.setPen(QPen(theme_color(token), 1.6))
             painter.drawPath(path)
-        painter.setPen(QColor("#a9b2c7"))
+
+        legend_x = 40
+        for token, caption in (("wave_a", "原音"), ("wave_b", "试听结果")):
+            curve_color = theme_color(token)
+            painter.setPen(QPen(curve_color, 2.0))
+            painter.drawLine(legend_x, 16, legend_x + 15, 16)
+            painter.setPen(theme_color("text"))
+            painter.drawText(legend_x + 20, 20, caption)
+            legend_x += 56 if caption == "原音" else 84
+
+        painter.setPen(theme_color("muted"))
         painter.drawText(37, self.height() - 3, f"{low:.2f} s")
         painter.drawText(self.width() - 80, self.height() - 3, f"{high:.2f} s")
 
@@ -136,21 +162,37 @@ class PitchTailEditor(QWidget):
         self.player = Playback()
         self.closing = False
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("拖动选择音高区间   ·   蓝色原音 / 紫色试听结果"))
+        self.scroll = QScrollArea(self)
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setAccessibleName("音高与尾音编辑内容")
+        self.scroll.setAccessibleDescription("滚动查看音高曲线、数值参数、已写入编辑和试听控制。")
+        content = QWidget()
+        column = QVBoxLayout(content)
+        heading = QLabel("拖动选择音高区间；也可在下方用键盘调整起点、终点及效果参数。")
+        heading.setWordWrap(True)
+        column.addWidget(heading)
         self.plot = PitchCanvas(report.get("pitch_curve", []), self.duration)
         self.plot.selection.connect(self.select)
-        layout.addWidget(self.plot, 1)
-        row = QHBoxLayout()
+        column.addWidget(self.plot)
+
+        selection_form = QFormLayout()
         self.begin = number(0, self.duration, 0, 0.001, " s")
         self.end = number(0, self.duration, min(0.5, self.duration), 0.001, " s")
-        for label, box in (("起点", self.begin), ("终点", self.end)):
-            row.addWidget(QLabel(label))
-            row.addWidget(box)
+        for caption, box in (("起点", self.begin), ("终点", self.end)):
+            field_label = QLabel(caption)
+            field_label.setBuddy(box)
+            box.setAccessibleName(caption + "时间")
             box.valueChanged.connect(self.selection_changed)
-        self.button(row, "放大选区", self.zoom)
-        self.button(row, "全曲", lambda: self.zoom(full=True))
-        layout.addLayout(row)
+            selection_form.addRow(field_label, box)
+        selection_actions = QHBoxLayout()
+        self.button(selection_actions, "放大选区", self.zoom)
+        self.button(selection_actions, "全曲", lambda: self.zoom(full=True))
+        selection_form.addRow(selection_actions)
+        column.addLayout(selection_form)
+
         self.candidates = QComboBox()
+        self.candidates.setAccessibleName("检测到的句尾位置")
+        self.candidates.setAccessibleDescription("选择检测到的句尾可定位对应的编辑区间。")
         self.candidates.addItem("定位检测到的句尾…", None)
         for item in report.get("tail_candidates", []):
             if item["candidate"]:
@@ -160,7 +202,8 @@ class PitchTailEditor(QWidget):
                     item,
                 )
         self.candidates.activated.connect(self.on_candidate)
-        layout.addWidget(self.candidates)
+        column.addWidget(self.candidates)
+
         form = QFormLayout()
         self.pitch = number(-5, 5, 0, 0.1, " st")
         self.speed = number(10, 300, params["pitch_speed_ms"], 5, " ms")
@@ -172,14 +215,10 @@ class PitchTailEditor(QWidget):
         self.repeats.setValue(3)
         self.echo = number(0, 0.8, params["delay"], 0.02)
         self.verb = number(0, 0.8, params["reverb"], 0.02)
-        for text, fields in (
+        for section, fields in (
             (
                 "音高",
-                (
-                    ("半音", self.pitch),
-                    ("速度", self.speed),
-                    ("贴音力度", self.strength),
-                ),
+                (("半音", self.pitch), ("速度", self.speed), ("贴音力度", self.strength)),
             ),
             (
                 "尾音",
@@ -187,39 +226,49 @@ class PitchTailEditor(QWidget):
             ),
             ("空间", (("延迟发送", self.echo), ("混响发送", self.verb))),
         ):
-            controls = QHBoxLayout()
+            section_label = QLabel(section)
+            section_label.setObjectName("section")
+            form.addRow(section_label)
             for caption, widget in fields:
-                controls.addWidget(QLabel(caption))
-                controls.addWidget(widget, 1)
-            form.addRow(text, controls)
-        layout.addLayout(form)
-        row = QHBoxLayout()
-        self.button(row, "写入选区音高", lambda: self.commit("pitch_regions"))
-        self.button(row, "写入选区尾音", lambda: self.commit("tail_regions"))
-        self.button(row, "移除编辑", self.remove)
-        self.button(row, "撤销编辑", self.undo)
-        layout.addLayout(row)
+                field_label = QLabel(caption)
+                field_label.setBuddy(widget)
+                widget.setAccessibleName(caption)
+                form.addRow(field_label, widget)
+        column.addLayout(form)
+
+        row = QGridLayout()
+        self.button(row, "写入选区音高", lambda: self.commit("pitch_regions"), 0, 0)
+        self.button(row, "写入选区尾音", lambda: self.commit("tail_regions"), 0, 1)
+        self.button(row, "移除编辑", self.remove, 1, 0)
+        self.button(row, "撤销编辑", self.undo, 1, 1)
+        column.addLayout(row)
         self.list = QListWidget()
-        self.list.setMaximumHeight(76)
+        self.list.setAccessibleName("已写入的音高与尾音编辑")
+        self.list.setAccessibleDescription("选择一项可查看并编辑其参数。")
+        self.list.setMinimumHeight(76)
         self.list.currentRowChanged.connect(self.load_edit)
-        layout.addWidget(self.list)
-        row = QHBoxLayout()
-        self.button(row, "A 原音", lambda: self.audition(False))
-        self.button(row, "B 修正后", lambda: self.audition(True))
-        self.button(row, "试听下一句", lambda: self.audition(True, next_phrase=True))
-        self.button(row, "停止试听", self.stop)
-        layout.addLayout(row)
+        column.addWidget(self.list)
+        row = QGridLayout()
+        self.button(row, "A 原音", lambda: self.audition(False), 0, 0)
+        self.button(row, "B 修正后", lambda: self.audition(True), 0, 1)
+        self.button(row, "试听下一句", lambda: self.audition(True, next_phrase=True), 1, 0)
+        self.button(row, "停止试听", self.stop, 1, 1)
+        column.addLayout(row)
         self.info = QLabel()
+        self.info.setAccessibleName("选区与试听状态")
         self.info.setWordWrap(True)
-        layout.addWidget(self.info)
+        column.addWidget(self.info)
+        self.scroll.setWidget(content)
+        layout.addWidget(self.scroll, 1)
         self.refresh()
         self.selection_changed()
 
     @staticmethod
-    def button(layout, text, action):
+    def button(layout, text, action, *position):
         b = QPushButton(text)
+        b.setAutoDefault(False)
         b.clicked.connect(lambda checked=False: action())
-        layout.addWidget(b)
+        layout.addWidget(b, *position)
 
     def select(self, a, b):
         self.begin.setValue(a)

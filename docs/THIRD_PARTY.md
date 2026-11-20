@@ -1,6 +1,8 @@
 # 第三方软件及再分发说明
 
-适用于 VoxMaster AI 0.1.1 Windows x64 本机构建。安装目录 ThirdParty 保存 wheel 随附的许可证、版权声明、嵌套组件声明及版本元数据。requirements.txt 同时锁定运行、测试和打包工具。核心代码的使用权由其作者决定。
+适用于 VoxMaster AI 0.4.0 Windows x64 本机构建。安装目录 ThirdParty 保存 wheel 随附的许可证、版权声明、嵌套组件声明及版本元数据。requirements.txt 同时锁定运行、测试和打包工具。应用自有代码按仓库根目录 [MIT LICENSE](../LICENSE) 授权，第三方组件、模型和媒体不因此变更许可。
+
+0.4.0 **未新增运行依赖、模型权重、商业 SDK 或第三方源代码**。新歌曲流程只组合已有 NumPy / SciPy DSP、PyAV、ONNX Runtime 与 Qt；未复制竞品实现。详见 [竞品与四层许可研究](RESEARCH-040.md)。模型条款不明确的组件继续按需获取，不随发行包分发权重。
 
 | 组件 | 作用及授权来源 |
 | --- | --- |

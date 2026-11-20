@@ -240,7 +240,7 @@ def providers(mode):
     return [p for p in options.get(mode, []) if p in available] + ["CPUExecutionProvider"]
 
 
-def separate(audio, sr, cancel=None, progress=None, *, root=None, mode=None):
+def separate(audio, sr, cancel=None, progress=None, *, root=None, mode=None, audit=None):
     progress = progress or (lambda fraction, message: None)
     audio = np.asarray(audio, dtype=np.float32)
     if sr != 44100 or audio.ndim != 2 or audio.shape[1] != 2 or not audio.shape[0]:
@@ -257,6 +257,7 @@ def separate(audio, sr, cancel=None, progress=None, *, root=None, mode=None):
     vocal = np.empty_like(audio)
     overlap = None
     worker = None
+    used = []
     try:
         with store.locked(root):
             store.verify(root, cancel)
@@ -293,7 +294,11 @@ def separate(audio, sr, cancel=None, progress=None, *, root=None, mode=None):
                     window[:n] = window[:n] * FADE_IN[:n] + overlap * (1 - FADE_IN[:n])
                 vocal[pos : pos + count] = window[:count]
                 overlap = window[count:].copy()
+                if provider not in used:
+                    used.append(provider)
                 progress((pos + count) / len(audio), fallback + provider + stats)
+        if audit is not None:
+            audit["providers"] = used
         return vocal, audio - vocal
     finally:
         if worker is not None:
