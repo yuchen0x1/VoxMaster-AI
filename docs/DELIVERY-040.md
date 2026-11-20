@@ -16,6 +16,7 @@
 - 旧 v1 工程、相对路径、备份、重定位继续可用；外部分轨保留不等长尾音。非中性歌曲处理加真实 Studio 编辑，保存/重开输出逐采样一致。
 - CLI `song` 与 GUI 共用服务；输入、成品、权重、模型配置、锁和断点文件受到报告路径冲突保护。源码入口使用 `python app.py --cli song …`，专用控制台使用 `VoxMasterAI-CLI.exe song …`。
 - 自动化全量已有 **436 通过、1 跳过、0 失败/错误（437）** 的实际记录，212.3 s；唯一跳过为当前 Windows 账户缺少文件符号链接权限。模型用例实际使用本地固定权重，不用 Mock 替代核心处理。
+- 分支推送后 GitHub Actions 四平台（Windows、Ubuntu 24.04、macOS 15、macOS 15 Intel）与 actionlint 作业全部 success（run 44751308841）；这是 runner 上的源码回归，不替代 Windows 10 实机或实体设备验收。
 - 两首指定完整歌曲完成真实 DirectML 分离、DSP、FLAC 24-bit 编码和回读，输入不变、帧数一致。最终输出约 −15.00 LUFS-I，真峰值 −6.62 / −6.91 dBTP；这是客观电平结果，不是听感评分。
 - 原生 Windows Qt 界面截图已检查，错误数组为空；截图用 CC BY 4.0 FLEURS 语音与合成伴奏，不用用户私有歌曲。
 

@@ -20,6 +20,7 @@
 | 原生 Qt 截图验证 | 成功，错误数组为空 | `docs/evidence-040/ui.json`；授权 FLEURS + 合成伴奏，不代表真实歌曲音质；最终代码复测 `.audit/040-release-review/ui-native/` |
 | 代码编译/版本一致性/Ruff F 检查 | 通过 | `compileall`、`scripts/version.py`（0.4.0）、`ruff check --select F --ignore F841` |
 | 冻结 Windows 应用自检 | PASS（真实 DirectML、WAV/MP3/FLAC/AAC） | `.audit/040-release-review/freeze-verified.txt` 与隔离构建 `build/bundle-*.json` |
+| 推送后 GitHub Actions 四平台回归 | **全部 success**：Windows、Ubuntu 24.04、macOS 15、macOS 15 Intel，actionlint 作业亦通过 | run [44751308841](https://github.com/yuchen0x1/VoxMaster-AI/actions/runs/44751308841)；runner 环境不等于 Windows 10 实机验收 |
 | 冻结专用 CLI 实际歌曲链路 | 成功，CPU provider，FLEURS 真人夹具→FLAC | `.audit/040-release-review/frozen-song/report.json`；首次误加 `--cli` 前缀被参数解析器拒绝，已更正命令并重跑 |
 | 两首完整真人歌曲 | 本地推理/渲染/编码/回读通过 | [AUDIO-040.md](AUDIO-040.md)；**主观听审待验收**；最终媒体事务代码复测 `.audit/040-release-review/real/`，输出哈希与首轮一致 |
 | 最终冻结专用 CLI 实际歌曲链路 | 成功，CPU provider，FLEURS 真人夹具→FLAC | `.audit/040-release-review/frozen-song/report.json`（`--cli` 前缀误用已记录更正） |
@@ -60,7 +61,7 @@ $env:VOXMASTER_DATA = "$PWD\.audit\recheck-data"
 
 ## 尚未覆盖
 
-- Windows 10 实机、Linux/macOS 本轮 runner、NVIDIA CUDA / DirectML 以外设备没有新验收，不沿用旧记录为本轮通过。
+- Windows 10 实机、Linux/macOS 实体设备本轮 runner 之外的环境、NVIDIA CUDA / DirectML 以外设备没有新验收。四平台 GitHub Actions 回归通过只证明该 runner 上源码测试通过，不沿用为实体机或安装包验收。
 - 没有实体音频设备拔插、跨实体高 DPI 屏、真实低延迟播放性能、长音频连续压力/磁盘耗尽新数据。
 - 未执行人工听审，不能用自动通过证明“音质优秀”“专业母带完成”或“模型分离效果优秀”。
 - 安装/便携/升级/卸载结果单列 [DELIVERY-040.md](DELIVERY-040.md)，不与源码或离屏 GUI 测试混算。
