@@ -4,6 +4,8 @@ sources.json 用稳定编号记录输入文件的来源、类型依据、授权�
 
 ## 重建
 
+0.5.1 起，公开清单的本地素材文件名使用 `MC01.mp3` 这类中性编号，不披露原始私人曲名；这只改变测试元数据，不改动本机音频。需要重新执行已获授权的私人素材验收时，请保留原件，在隔离的本地验收目录准备对应编号的副本，再配合既有私有指纹映射传入 `--local` 与 `--private-digests`。不要将原文件、指纹映射或本地原始清单上传或加入公开包。
+
 准备正式 0.1.0 源码包，将其放在 build/acceptance-011/baseline-010-source.zip，脚本会校验已发布的 SHA-256。用户提供的五首歌保存在本机授权目录中。公开清单的 local 项只标记 `private_digest_required=true`，不公开私有 SHA-256；原指纹映射保存在被 `.gitignore` 忽略的 `.audit/040-release-review/private-corpus-digests.json`，格式为 JSON 对象 `{ "MC01": "<64 位十六进制 SHA-256>", ... }`，不得提交或分发。渲染 local 项必须显式传入 `--private-digests`；缺失条目、非法指纹或输入不匹配都会拒绝执行，不会跳过校验或自动重算指纹基准。仅选公共素材时可省略该参数，仍校验清单中的原哈希。生成文件进入 build/acceptance-011，保留输入与各版本原文件，录音、盲听 WAV 和密钥仅本机可见。
 
 ```powershell

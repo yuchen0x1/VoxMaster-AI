@@ -21,6 +21,8 @@ from .studio_effects import (
 
 TRACKS = ("Vocal", "Instrumental", "FX")
 BLOCK = 65536
+FADE_GAIN_ERROR = 1e-5
+FADE_EXTRA_NODES = 4096
 
 
 def checked(cancel):
@@ -324,11 +326,36 @@ class Session:
         if b - a < 2 or not pieces:
             return
         for c in pieces:
-            nodes = {}
-            for x in sorted({0, duration(c) - 1, *(p[0] for p in c["env"])}):
-                f = (c["at"] + x - a) / (b - a - 1)
-                nodes[x] = float(envelope(c, x) * (f if fade_in else 1 - f))
-            c["env"] = [list(p) for p in nodes.items()]
+            positions = sorted({0, duration(c) - 1, *(p[0] for p in c["env"])})
+            gains = [float(envelope(c, x)) for x in positions]
+            factors = [(c["at"] + x - a) / (b - a - 1) for x in positions]
+            if not fade_in:
+                factors = [1 - f for f in factors]
+            nodes = {x: g * f for x, g, f in zip(positions, gains, factors)}
+            pending = [(positions[i], positions[i + 1], gains[i], gains[i + 1],
+                        factors[i], factors[i + 1]) for i in range(len(positions) - 1)]
+            extra = 0
+            while pending:
+                left, right, g0, g1, f0, f1 = pending.pop()
+                if right - left < 2:
+                    continue
+                middle = (left + right) // 2
+                fraction = (middle - left) / (right - left)
+                gain = g0 + (g1 - g0) * fraction
+                factor = f0 + (f1 - f0) * fraction
+                value = gain * factor
+                linear = g0 * f0 + (g1 * f1 - g0 * f0) * fraction
+                # Each old envelope segment times a linear fade is quadratic.
+                # Its largest sampled interpolation error is at an integer midpoint.
+                if abs(value - linear) <= FADE_GAIN_ERROR:
+                    continue
+                extra += 1
+                if extra > FADE_EXTRA_NODES:
+                    raise ValueError("淡化包络过于复杂，请缩小选区后重试。")
+                nodes[middle] = value
+                pending.extend(((left, middle, g0, gain, f0, factor),
+                                (middle, right, gain, g1, factor, f1)))
+            c["env"] = [list(p) for p in sorted(nodes.items())]
         self.replace(track, a, b, pieces)
 
     def point(self, track, frame, gain):

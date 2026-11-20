@@ -9,6 +9,8 @@ import shutil
 import sys
 import pefile
 
+from shipping_docs import copy_documents as stage_documents
+
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist/VoxMasterAI"
 RUNTIME = DIST / "_internal"
@@ -86,16 +88,7 @@ def copy_licenses():
 
 
 def copy_documents():
-    # Include test evidence and hearing forms published alongside the manual.
-    for doc in (ROOT / "docs").rglob("*"):
-        if doc.is_file() and doc.suffix.lower() in {".md", ".png", ".json", ".jsonl", ".csv", ".txt"}:
-            target = DIST / doc.relative_to(ROOT)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(doc, target)
-    for name in ["README.md", "CHANGELOG.md", "LICENSE"]:
-        shutil.copy2(ROOT / name, DIST)
-    shutil.copy2(ROOT / "docs/THIRD_PARTY.md", INFO)
-    shutil.copy2(ROOT / "LICENSE", INFO / "VoxMaster-AI-LICENSE.txt")
+    stage_documents(ROOT, DIST)
 
 
 

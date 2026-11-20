@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-
 SCRIPT = Path(__file__).with_name("mc_corpus") / "render_trials.py"
 SPEC = importlib.util.spec_from_file_location("corpus_render_trials", SCRIPT)
 render_trials = importlib.util.module_from_spec(SPEC)
@@ -50,6 +49,16 @@ def test_invalid_private_mapping_is_rejected(tmp_path):
         mapping.write_text(invalid_json, encoding="utf-8")
         with pytest.raises(ValueError, match="--private-digests.*JSON object"):
             render_trials.load_private_digests(mapping)
+
+
+@pytest.mark.parametrize(
+    "item", [item for item in render_trials.CATALOG if item["location"] == "local"],
+    ids=lambda item: item["id"],
+)
+def test_local_catalog_uses_neutral_filenames(item):
+    assert item["file"] == item["id"] + Path(item["file"]).suffix
+    assert item["private_digest_required"] is True
+    assert "sha256" not in item
 
 
 def test_public_fixture_still_uses_original_hash():

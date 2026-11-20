@@ -161,3 +161,34 @@ def test_main_uses_previous_session_before_marking_open(previous, tmp_path, monk
     finally:
         status.deleteLater()
         flush_deletes(qt_session_app)
+
+
+@pytest.mark.parametrize('fail_at', ['open', 'close'])
+def test_optional_health_marker_failure_does_not_abort_app(fail_at, monkeypatch, capsys):
+    import app as entry
+
+    def cannot_write():
+        raise PermissionError('test denied marker access')
+
+    application = Mock()
+    application.exec.return_value = 0
+    main_window = Mock()
+    mark_open, mark_closed = Mock(), Mock()
+    (mark_open if fail_at == 'open' else mark_closed).side_effect = cannot_write
+    monkeypatch.setattr(health, 'startup_notice', lambda: None)
+    monkeypatch.setattr(health, 'mark_open', mark_open)
+    monkeypatch.setattr(health, 'mark_closed', mark_closed)
+    monkeypatch.setattr(entry, 'QApplication', lambda _: application)
+    monkeypatch.setattr(entry, 'MainWindow', lambda: main_window)
+    monkeypatch.setattr(entry, 'preferences', dict)
+    monkeypatch.setattr(entry.sys, 'argv', ['VoxMaster AI'])
+
+    assert entry.main() == 0
+    main_window.show.assert_called_once()
+    application.exec.assert_called_once()
+    assert '会话诊断' in capsys.readouterr().err
+    if fail_at == 'open':
+        mark_closed.assert_not_called()
+        main_window.progress_text.setText.assert_called_once_with('无法记录本次会话诊断；请检查数据目录权限。')
+    else:
+        mark_closed.assert_called_once()

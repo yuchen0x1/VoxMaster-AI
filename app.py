@@ -33,18 +33,29 @@ def main():
     app.setWindowIcon(app_icon())
     install_theme(app, preferences().get("theme", "system"))
     ungraceful = health.startup_notice()
-    health.mark_open()
+    marker_warning = None
+    try:
+        health.mark_open()
+    except OSError as exc:
+        marker_warning = "无法记录本次会话诊断；请检查数据目录权限。"
+        if sys.stderr is not None:
+            print(f"{marker_warning} ({type(exc).__name__})", file=sys.stderr)
     window = MainWindow()
     window.show()
-    if ungraceful:
-        window.progress_text.setText(ungraceful)
+    notices = "\n".join(filter(None, (ungraceful, marker_warning)))
+    if notices:
+        window.progress_text.setText(notices)
     if len(sys.argv) > 1 and Path(sys.argv[1]).is_file():
         from PySide6.QtCore import QTimer
 
         QTimer.singleShot(0, lambda: window.open_path(sys.argv[1]))
     code = app.exec()
-    if code == 0:
-        health.mark_closed()
+    if code == 0 and marker_warning is None:
+        try:
+            health.mark_closed()
+        except OSError as exc:
+            if sys.stderr is not None:
+                print(f"无法更新会话诊断 ({type(exc).__name__})。", file=sys.stderr)
     return code
 
 

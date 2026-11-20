@@ -138,6 +138,7 @@ def main(argv=None):
         return 2
     try:
         for path, target in zip(inputs, targets):
+            published = {}
             try:
                 if target is not None and (target.exists() or target.is_symlink()):
                     raise FileExistsError('目标文件已存在：' + str(target))
@@ -155,11 +156,13 @@ def main(argv=None):
                         song_options={'style': args.style, 'target': args.target, 'master': args.master},
                     )
                     stems = rendered.document['stems']
+                    published = dict(stems=stems, recovery_project=rendered.publication_project)
                     protected.extend(Path(stem) for stem in stems.values())
+                    protected.append(Path(rendered.publication_project))
                     if args.report is not None:
                         validate_report_path(args.report, protected, directories)
                     audioio.encode(target, rendered.output, SR, cancel=cancel)
-                    item.update(output=str(target), stems=stems, measured=rendered.measured,
+                    item.update(published, output=str(target), measured=rendered.measured,
                                 audit=rendered.audit, style=rendered.document['style'])
                     for key in ('song', 'separation'):
                         if key in rendered.document:
@@ -177,7 +180,9 @@ def main(argv=None):
                 results.append(item)
             except Exception as exc:
                 failed = True
-                results.append(dict(input=str(path), error=str(exc)))
+                # The pair and its project are independent of master encoding; report
+                # how to recover them without claiming a master file was written.
+                results.append(dict(input=str(path), error=str(exc), **published))
     except KeyboardInterrupt:
         cancel.set()
         return 130

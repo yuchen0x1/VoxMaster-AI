@@ -7,7 +7,7 @@ from threading import Event
 
 import pytest
 
-from vox import interface, models_store, service
+from vox import audioio, interface, models_store, service
 from vox.jobs import Worker
 from vox.storage import load_project, project
 
@@ -57,6 +57,49 @@ def test_queued_cancel_rejects_draft_but_delivers_already_published_result(windo
     published = replace(window.s, publication_committed=True)
     window.job_success(received.append, published)
     assert received == [published]
+
+
+@pytest.mark.parametrize('already_written', [False, True], ids=['before-publish', 'after-publish'])
+def test_export_cancellation_reports_disk_outcome(window, tmp_path, monkeypatch, qt_session_app,
+                                                 already_written):
+    target = tmp_path / 'export.wav'
+    window.s.output = window.s.original[:4410]
+    window.s.measured = window.s.analysis
+    monkeypatch.setattr(interface.ExportDialog, 'exec', lambda self: True)
+    monkeypatch.setattr(interface.ExportDialog, 'value', lambda self: ('wav', 44100, 24, 2))
+    monkeypatch.setattr(interface.QFileDialog, 'getSaveFileName', lambda *_: (str(target), ''))
+    real_encode = audioio.encode
+    at_boundary, resume = Event(), Event()
+
+    def held_encode(*args, **kwargs):
+        if already_written:
+            real_encode(*args, **kwargs)
+        at_boundary.set()
+        if not resume.wait(10):
+            raise RuntimeError('test did not release encoder')
+        if not already_written:
+            real_encode(*args, **kwargs)
+
+    monkeypatch.setattr(audioio, 'encode', held_encode)
+    window.export()
+    worker = window.worker
+    assert worker is not None
+    try:
+        assert at_boundary.wait(10)
+        window.cancel()
+    finally:
+        resume.set()
+        assert worker.wait(10_000)
+        qt_session_app.processEvents()
+    assert window.worker is None
+    if already_written:
+        assert window.progress_text.text() == '已导出 · ' + str(target)
+        decoded, _ = audioio.decode(target)
+        assert decoded.shape == window.s.output.shape
+    else:
+        assert '已取消' in window.progress_text.text()
+        assert not target.exists()
+    assert not list(tmp_path.glob('.vox-*.part'))
 
 
 def test_published_song_checkpoint_failure_reports_recoverable_project(window, tmp_path, monkeypatch):

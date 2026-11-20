@@ -27,3 +27,20 @@
 ## 许可和整合结论
 
 本轮没有复制上述项目的源代码、界面资产或模型，也没有新增运行依赖。GPL 项目仅用于理解设计原则；MIT 项目亦不自动授权其所有模型、音频或间接依赖。UVR 独立 LICENSE 文件缺失的核验边界已保留，不以 README 声明代替代码整合所需的完整许可核对。当前项目原有第三方声明继续适用，见 [THIRD_PARTY](THIRD_PARTY.md)。
+
+## 最终整合轮的六仓库精确快照复核
+
+2026-11-21 通过官方公共 API、README、许可正文与相关源码重新查证以下六个仓库。此表是单独的只读研究快照，不把上表的分支链接当作不可变证据；没有克隆运行竞品、下载权重、复制实现或进行速度、内存、音质、取消延迟及安装横向实测。上游 API 的自动许可识别与正文不同时，以实际正文及具体组件为准。
+
+| 仓库、默认分支、核对提交 | 许可与维护边界 | 实际源码观察 | 对当前整合的启发与限制 |
+|---|---|---|---|
+| Audacity · master · `97db61c263888efddffe54ffd1621d179afde770` · [工程 I/O](https://github.com/audacity/audacity/blob/97db61c263888efddffe54ffd1621d179afde770/au3/libraries/au3-project-file-io/ProjectFileIO.cpp) · [许可](https://github.com/audacity/audacity/blob/97db61c263888efddffe54ffd1621d179afde770/LICENSE.txt) | 未归档；发行版 GPLv3，多数源码 GPLv2-or-later，文档 CC BY 3.0 | SQLite 工程中区分 project、autosave、project_history，临时文件、安全备份和事务有不同职责；取消由原子标志通知可取消对象 | 借恢复入口在附属设置损坏时仍应可用的原则，不引入 SQLite/通用 DAW，也不复制 GPL 代码；所读文件不足以评价整个项目的外部媒体哈希策略 |
+| Ardour · master · `221970a27b8ed24c24a145b40d118738a8ce17df` · [会话状态](https://github.com/ardour/ardour/blob/221970a27b8ed24c24a145b40d118738a8ce17df/libs/ardour/session_state.cc) · [许可](https://github.com/ardour/ardour/blob/221970a27b8ed24c24a145b40d118738a8ce17df/COPYING) | 未归档；GPLv2-or-later | 明确区分会话目录、interchange 素材、外部引用、快照、备份、自动保存和待恢复状态；进度窗口单列取消 | 本项目继续使用兼容 v1 的 JSON/相对素材引用，逐条隔离恢复候选失败而不自动覆盖当前工程；不搬入 C++ 会话或插件框架 |
+| Mixxx · main · `825e45199b1c68e42035eea30cd796eb7577a841` · [扫描任务](https://github.com/mixxxdj/mixxx/blob/825e45199b1c68e42035eea30cd796eb7577a841/src/library/scanner/recursivescandirectorytask.cpp) · [许可](https://github.com/mixxxdj/mixxx/blob/825e45199b1c68e42035eea30cd796eb7577a841/LICENSE) | 未归档；GPLv2，另有 LGPL/其他组件声明 | 音乐库保存位置、大小、删除和待验证状态；目录扫描有 SHA-256 文件列表摘要与取消，分析线程使用单生产者/单消费者队列，进度约 60 ms 节流 | 可借批量任务状态/节流，不能把目录列表摘要等同每个音频内容的提交前哈希，也不将 DJ 曲库等同非破坏多轨工程；不复制 GPL 实现 |
+| UVR GUI · master · `a5f88453bfb2b38b05a965bcf67727243e0cbf19` · [界面实现](https://github.com/Anjok07/ultimatevocalremovergui/blob/a5f88453bfb2b38b05a965bcf67727243e0cbf19/UVR.py) · [README](https://github.com/Anjok07/ultimatevocalremovergui/blob/a5f88453bfb2b38b05a965bcf67727243e0cbf19/README.md) | 未归档；README/API 声明 MIT，但精确提交根目录无独立 LICENSE，许可接口 404 | Tkinter、多模型/批量/日志与自包含 Python/PyTorch 包；所读实现使用 pickle 设置和 KThread terminate 路径 | 借明确模型/设备及错误状态呈现，不采用不可信 pickle 或强杀线程，不据 MIT 声明导入代码、模型或捆绑工具 |
+| Spleeter · master · `6f2c8a2e283914faa544631430f65b793f1b1218` · [分离入口](https://github.com/deezer/spleeter/blob/6f2c8a2e283914faa544631430f65b793f1b1218/spleeter/separator.py) · [许可](https://github.com/deezer/spleeter/blob/6f2c8a2e283914faa544631430f65b793f1b1218/LICENSE) | 未归档；源码 MIT，模型/转换产物另核 | TensorFlow 2/4/5 stems、CLI/API/Docker；模型 provider 以目录和 probe 管理可用性，GitHub provider 临时下载、校验后解包 | 继续固定 ONNX 双轨、SHA 和独立进程，不重新引入 TensorFlow、不因目录存在就认为模型可用；不下载新权重 |
+| Demucs · main · `e976d93ecc3865e5757426930257e200846a520a` · [分段推理](https://github.com/facebookresearch/demucs/blob/e976d93ecc3865e5757426930257e200846a520a/demucs/apply.py) · [许可](https://github.com/facebookresearch/demucs/blob/e976d93ecc3865e5757426930257e200846a520a/LICENSE) | **已归档**；源码 MIT，不是持续维护保证 | PyTorch CLI 多输入、CPU/CUDA、two-stems、segment/overlap/shifts、线程池及 cancel_futures；模型仓库有校验和 | 只将重叠分块和细粒度进度列后续；取消待运行 futures 不等同正在运行推理可取消，不把 README 的 SDR/显存数字当本机验收 |
+
+### 安装、安全与扩展取舍
+
+Audacity/Ardour/Mixxx 是更广的原生多轨或 DJ 应用，UVR 以捆绑推理库的桌面分离为中心，Spleeter/Demucs 则主要是库和 CLI；没有证据据此宣称本项目的完整功能或性能超越它们。本轮适合当前产品的实际成果是恢复候选可达、提交收据准确、发行文档与研发证据分层，以及原有包络格式下叠加淡变的正确性。新依赖、新模型、插件主机和全链路流式化暂不引入。下一轮优先测长音频资源与取消时限，再决定分块；模型许可、权重、演示素材及第三方依赖必须分别审阅。

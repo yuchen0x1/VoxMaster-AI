@@ -54,7 +54,11 @@ function New-IsolatedInstaller([string]$ReleaseFolder, [string]$Label) {
     }
     $oldGroup = 'DefaultGroupName=VoxMaster AI'
     if (([regex]::Matches($original, [regex]::Escape($oldGroup))).Count -ne 1) { throw 'Unexpected Start Menu group' }
-    $isolatedRecipe = $original.Replace($oldLine, ('AppId={{' + $testId + '}')).Replace($oldGroup, "DefaultGroupName=VoxMaster QA $testId")
+    $oldSource = 'Source: "..\dist\VoxMasterAI\*"'
+    if (([regex]::Matches($original, [regex]::Escape($oldSource))).Count -ne 1) { throw 'Unexpected payload source in installer recipe' }
+    # Avoid retaining packaging\.. in every expanded path near Windows MAX_PATH.
+    $payload = Join-Path (Resolve-Path -LiteralPath "$recipe\dist").Path 'VoxMasterAI\*'
+    $isolatedRecipe = $original.Replace($oldLine, ('AppId={{' + $testId + '}')).Replace($oldGroup, "DefaultGroupName=VoxMaster QA $testId").Replace($oldSource, ('Source: "' + $payload + '"'))
     [IO.File]::WriteAllText($iss, $isolatedRecipe, [Text.UTF8Encoding]::new($true))
     & $InnoCompiler /Q $iss | Out-Host
     if ($LASTEXITCODE) { throw "Could not compile isolated $Label installer" }

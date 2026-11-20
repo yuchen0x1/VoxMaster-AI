@@ -44,7 +44,7 @@ from .storage import (
     write_json,
 )
 from .dialogs import choices, label, ParameterDialog, ExportDialog, managed_dialog
-from .jobs import Worker
+from .jobs import PublishedFile, Worker
 from .service import prepare, tuning_plan, SR
 from .reference import comparison, describe_match, space_notes
 from .review import ReportDialog, PreviewDialog
@@ -634,12 +634,15 @@ class MainWindow(QMainWindow):
     def home(self):
         self.timeline.setFocus()
 
-    def remember(self, path):
+    def recent_paths(self):
         recent = self.settings.get("recent", [])
         if not isinstance(recent, list):
-            recent = []
+            return []
+        return [p for p in recent if isinstance(p, str) and p]
+
+    def remember(self, path):
         self.settings["recent"] = [str(path)] + [
-            p for p in recent if isinstance(p, str) and p != str(path)
+            p for p in self.recent_paths() if p != str(path)
         ][:15]
         try:
             self.save_settings()
@@ -980,22 +983,35 @@ class MainWindow(QMainWindow):
         lay = QVBoxLayout(d)
         lay.addWidget(label("最近工程与恢复记录", "section"))
         files = QListWidget()
-        recent = [Path(p) for p in self.settings.get("recent", []) if Path(p).is_file()]
-        recoveries = sorted(
-            (ROOT / "recovery").glob("*.voxproj"), key=lambda p: p.stat().st_mtime, reverse=True
-        )[:20]
-        history = (
-            sorted(Path(str(self.path) + ".history").glob("*.voxproj"), reverse=True)
-            if self.path
-            else []
-        )
+        recent = [Path(p) for p in self.recent_paths()]
+
+        def modified(path):
+            try:
+                return path.stat().st_mtime
+            except OSError:
+                return float("-inf")
+
+        try:
+            recoveries = sorted(
+                (ROOT / "recovery").glob("*.voxproj"), key=modified, reverse=True
+            )[:20]
+        except OSError:
+            recoveries = []
+        try:
+            history = (
+                sorted(Path(str(self.path) + ".history").glob("*.voxproj"), reverse=True)
+                if self.path
+                else []
+            )
+        except OSError:
+            history = []
         for group, paths in [("工程", recent), ("备份", history), ("自动保存", recoveries)]:
             for path in paths:
                 try:
                     title = load_project(path)["name"]
+                    stamp = datetime.datetime.fromtimestamp(path.stat().st_mtime).strftime("%m-%d %H:%M")
                 except Exception:
                     continue
-                stamp = datetime.datetime.fromtimestamp(path.stat().st_mtime).strftime("%m-%d %H:%M")
                 files.addItem(f"{group}    {title}    {stamp}")
                 files.item(files.count() - 1).setData(Qt.UserRole, str(path))
                 files.item(files.count() - 1).setToolTip(str(path))
@@ -1495,10 +1511,15 @@ class MainWindow(QMainWindow):
             return
         if Path(path).suffix.lower() != "." + fmt:
             return self.notice("目标文件扩展名与所选格式不符。")
+        def encode(cancel, _progress):
+            audioio.encode(path, source, SR, bits, cancel, output_rate=rate, channels=ch)
+            # A late cancellation cannot undo the completed no-replace publication.
+            return PublishedFile(Path(path))
+
         self.run_job(
             "编码成品",
-            lambda ev, pg: audioio.encode(path, source, SR, bits, ev, output_rate=rate, channels=ch),
-            lambda _: self.progress_text.setText("已导出 · " + str(path)),
+            encode,
+            lambda result: self.progress_text.setText("已导出 · " + str(result.path)),
         )
 
     def settings_view(self):
