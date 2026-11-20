@@ -1,8 +1,14 @@
-# VoxMaster AI 0.5.0
+# VoxMaster AI 0.5.1
 
 **AI-Powered Vocal Production & Music Mixing Workstation** · 本地优先的人声制作与歌曲混音工作站
 
 [![CI](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml) · [官方下载](https://github.com/yuchen0x1/VoxMaster-AI/releases/latest) · [反馈](https://github.com/yuchen0x1/VoxMaster-AI/issues)
+
+## 0.5.1 更新
+
+本轮优先加强工程、素材与后台任务的一致性：外部多轨素材加入 SHA-256 缓存身份和提交前复核，同尺寸/同修改时间的替换也不会复用旧声音；搬迁工程目录时，新建历史备份跟随素材相对定位；并发迁移模型时拒绝使用过期源目录。工程/恢复点已保存而最近工程记录写入失败时，会明确提示记录未保存，不再把成功操作误报为失败。官方更新检查可取消，关闭窗口会等待后台线程安全结束，取消后不继续校验元数据或发布下载缓存。
+
+不改变音频算法、模型、`.voxproj` v1 格式、默认音色或导出规格，不新增运行依赖。[本轮能力与问题清单、验证及后续路线](docs/EVOLUTION-051.md) · [六仓库研究与许可边界](docs/RESEARCH-051.md)。正式发布仍须通过现有人工听审与发行验收门禁，不以版本号或候选构建代替公开发布。
 
 ## 0.5.0 更新
 
@@ -25,6 +31,12 @@ Windows 本地喊麦与歌曲制作工作站。人声处理继续使用测量驱
 「设备与设置 → 外观」支持 **跟随系统 / 浅色 / 深色**，切换立即预览，取消恢复原主题，保存后下次启动继续使用。原生 Qt 控件、菜单与自绘波形/图表共用语义颜色；系统标题栏及 OS 原生文件选择器仍由系统管理。较小窗口可滚动访问全部操作，时间轴增加键盘定位与选区，原音频引擎、工程格式和导出规格不变。
 
 完整界面清单、前后截图、双主题与有效 DPI 验收、独立二审和未验边界见 [UI/UX 专项报告](docs/UIUX-040.md)。上面的 0.4.0 旧截图早于新主题，不代表当前外观。
+
+![0.5.1 深色工作台，公开 FLEURS 普通话夹具](docs/evidence-051/workstation-dark.png)
+
+![0.5.1 浅色整曲工作台，公开语音与合成伴奏演示](docs/evidence-051/song-light.png)
+
+这两张截图来自本轮隔离快照的真实 Windows/Qt 渲染，不是界面设计稿；使用 CC BY 4.0 FLEURS 及合成素材，不是私人歌曲，也不代表主观音质听审通过。[更新窗口](docs/evidence-051/update-light.png) · [本轮验证边界](docs/EVOLUTION-051.md)。
 
 ## 安装和首次使用
 
@@ -107,7 +119,7 @@ py -3.11 -m venv .venv
 
 ## 真实音频与听审
 
-两版各自对五首本地中文混音整曲执行一键调音。把《王斩 - 习武弃文》00:57–01:09 的两个成品截取、匹配到 −23 LUFS 并隐藏版本，听者选中 A，揭盲对应 0.1.1。两版试听相差 0.001 LU。此次得到一位听者对一个片段的偏好；设备、分项打分与选择原因均未提供。另有带作者记录的真人 Rap、长音、气声等测试材料。用户歌曲仅供本机验收。[音频报告](docs/AUDIO-011.md) · [听审记录与评分表](docs/LISTENING-011.md) · [测试素材与来源](tests/mc_corpus/README.md)
+两版各自对五首本地中文混音整曲执行一键调音。把《private-reference-01》00:57–01:09 的两个成品截取、匹配到 −23 LUFS 并隐藏版本，听者选中 A，揭盲对应 0.1.1。两版试听相差 0.001 LU。此次得到一位听者对一个片段的偏好；设备、分项打分与选择原因均未提供。另有带作者记录的真人 Rap、长音、气声等测试材料。用户歌曲仅供本机验收。[音频报告](docs/AUDIO-011.md) · [听审记录与评分表](docs/LISTENING-011.md) · [测试素材与来源](tests/mc_corpus/README.md)
 
 [使用手册](docs/MANUAL.md) · [多轨编辑手册](docs/MULTITRACK.md) · [技术架构](docs/ARCHITECTURE.md) · [工程基线与开源调研](docs/RESEARCH.md) · [音频验收记录](docs/ACCEPTANCE.md)
 

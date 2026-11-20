@@ -111,6 +111,11 @@ def prepare(doc, cancel, progress, previous=None):
     if doc.get("reference"):
         paths["reference"] = doc["reference"]
     paths.update({"stem/" + name: path for name, path in doc.get("stems", {}).items()})
+    supplied = {"Vocal", *doc.get("stems", {})}
+    external = {name: path for name, path in
+                (doc.get("studio") or {}).get("external_sources", {}).items()
+                if name not in supplied}
+    paths.update({"external/" + name: path for name, path in external.items()})
     signatures = {key: signature(path) for key, path in paths.items()}
     hashes = {key: file_hash(path, cancel) for key, path in paths.items()}
     provenance_warnings = verify_separation(doc, hashes)
@@ -217,15 +222,16 @@ def prepare(doc, cancel, progress, previous=None):
             session.mix_sources = dict(tracks)
         progress(0.79, "正在渲染同步混音")
         if doc.get("studio"):
-            signatures = {}
-            for key, path in doc["studio"].get("external_sources", {}).items():
-                stat = Path(path).stat()
-                signatures[key] = (path, stat.st_size, stat.st_mtime_ns)
+            # Match load_sources: supplied built-in tracks take precedence over external aliases.
+            external_keys = [key for key in external if key not in tracks]
+            for key in external_keys:
                 cached = previous.external_cache.get(key) if previous else None
-                if cached and cached[0] == signatures[key]:
+                if cached and reusable("external/" + key):
                     tracks[key] = cached[1]
             tracks = load_sources(doc["studio"], tracks, cancel=cancel)
-            session.external_cache = {key: (sig, tracks[key]) for key, sig in signatures.items()}
+            session.external_cache = {
+                key: (signatures["external/" + key], tracks[key]) for key in external_keys
+            }
         mix = MixSession(tracks, SR, state=doc.get("studio"))
         audio = mix.render(cancel=cancel)
         expected_frames = mix.frames

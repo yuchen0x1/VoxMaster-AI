@@ -636,8 +636,17 @@ class MainWindow(QMainWindow):
 
     def remember(self, path):
         recent = self.settings.get("recent", [])
-        self.settings["recent"] = [str(path)] + [p for p in recent if p != str(path)][:15]
-        self.save_settings()
+        if not isinstance(recent, list):
+            recent = []
+        self.settings["recent"] = [str(path)] + [
+            p for p in recent if isinstance(p, str) and p != str(path)
+        ][:15]
+        try:
+            self.save_settings()
+        except Exception as exc:
+            # Preferences are ancillary to an already committed project/checkpoint.
+            return "最近工程记录未保存：" + str(exc)
+        return None
 
     def autosave(self):
         if not self.s:
@@ -670,7 +679,8 @@ class MainWindow(QMainWindow):
         self.refresh()
         self.last_autosave = checkpoint
         if reset and path:
-            self.remember(path)
+            return self.remember(path)
+        return None
 
     @staticmethod
     def render_warnings(session):
@@ -697,10 +707,12 @@ class MainWindow(QMainWindow):
         previous = None if reset else self.s
 
         def success(session):
-            self.commit(session, path=path, reset=reset, record=done is None)
+            warning = self.commit(session, path=path, reset=reset, record=done is None)
             if done:
                 done()
             self.show_ready(session)
+            if warning:
+                self.progress_text.setText(self.progress_text.text() + " · " + warning)
 
         self.run_job(msg, lambda ev, pg: prepare(doc, ev, pg, previous), success)
 
@@ -782,9 +794,10 @@ class MainWindow(QMainWindow):
         try:
             save_project(p, self.s.document)
             self.path = p
-            self.remember(p)
+            warning = self.remember(p)
             self.refresh()
-            self.progress_text.setText("工程已保存 · " + Path(p).name)
+            self.progress_text.setText("工程已保存 · " + Path(p).name
+                                       + (" · " + warning if warning else ""))
         except Exception as exc:
             self.failed(str(exc))
 

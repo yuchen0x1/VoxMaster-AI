@@ -98,7 +98,7 @@ def test_atomic_download_cancel_corruption_and_install_recheck(signed, monkeypat
             pass
         def iter_content(self, size):
             yield self.body
-    monkeypatch.setattr(updating, 'response', lambda url: Response())
+    monkeypatch.setattr(updating, 'response', lambda url, cancel=None: Response())
     stop = threading.Event()
     dest = updating.download(asset, stop, lambda *a: None, tmp_path)
     assert dest.read_bytes() == payload

@@ -37,20 +37,22 @@ def trusted_url(url):
         return False
 
 
-def response(url):
+def response(url, cancel=None):
     for _ in range(6):
+        check_cancel(cancel)
         if not trusted_url(url):
             raise ValueError('更新下载来源不受信任。')
         r = requests.get(url, stream=True, allow_redirects=False, timeout=(8, 30),
                          headers={'Accept-Encoding': 'identity', 'User-Agent': 'VoxMasterAI/' + __version__})
-        if r.status_code in (301, 302, 303, 307, 308):
-            location = r.headers.get('Location', '')
-            r.close()
-            if not location:
-                raise ValueError('更新重定向缺少目标。')
-            url = urljoin(url, location)
-            continue
         try:
+            check_cancel(cancel)
+            if r.status_code in (301, 302, 303, 307, 308):
+                location = r.headers.get('Location', '')
+                if not location:
+                    raise ValueError('更新重定向缺少目标。')
+                url = urljoin(url, location)
+                r.close()
+                continue
             r.raise_for_status()
         except Exception:
             r.close()
@@ -59,13 +61,21 @@ def response(url):
     raise ValueError('更新重定向次数过多。')
 
 
-def fetch(url, limit):
+def check_cancel(cancel):
+    if cancel is not None and cancel.is_set():
+        raise InterruptedError('更新已取消。')
+
+
+def fetch(url, limit, cancel=None):
+    check_cancel(cancel)
     data = bytearray()
-    with response(url) as r:
+    with response(url, cancel) as r:
         for chunk in r.iter_content(65536):
+            check_cancel(cancel)
             data.extend(chunk)
             if len(data) > limit:
                 raise ValueError('更新响应超过大小限制。')
+    check_cancel(cancel)
     return bytes(data)
 
 
@@ -98,13 +108,15 @@ def verify_manifest(body, signature):
     return data
 
 
-def check_release():
-    body = fetch(MANIFEST, 65536)
-    signature = fetch(MANIFEST + '.sig', 256).strip()
+def check_release(cancel=None):
+    body = fetch(MANIFEST, 65536, cancel)
+    signature = fetch(MANIFEST + '.sig', 256, cancel).strip()
+    check_cancel(cancel)
     return verify_manifest(body, signature)
 
 
 def download(asset, cancel, progress, directory=None):
+    check_cancel(cancel)
     root = Path(directory) if directory else data_directory() / 'updates'
     root.mkdir(parents=True, exist_ok=True)
     if shutil.disk_usage(root).free < asset['size'] + 32 * 1024**2:
@@ -116,7 +128,7 @@ def download(asset, cancel, progress, directory=None):
     count = 0
     digest = hashlib.sha256()
     try:
-        with os.fdopen(fd, 'wb') as out, response(asset['url']) as r:
+        with os.fdopen(fd, 'wb') as out, response(asset['url'], cancel) as r:
             for chunk in r.iter_content(256 * 1024):
                 if cancel.is_set():
                     raise InterruptedError('更新已取消。')
@@ -128,6 +140,7 @@ def download(asset, cancel, progress, directory=None):
                 progress(count / asset['size'], f'{count // 1024} / {asset["size"] // 1024} KiB')
             out.flush()
             os.fsync(out.fileno())
+        check_cancel(cancel)
         if count != asset['size'] or digest.hexdigest() != asset['sha256']:
             raise ValueError('更新包长度或 SHA-256 校验失败。')
         os.replace(temp, dest)

@@ -169,10 +169,18 @@ def save_project(path, data, backup=True):
 
 
 def data_at_location(raw, before, after):
+    """Rebase media references between the old and new containing directories."""
+    after = Path(after).resolve()
     result = copy.deepcopy(raw)
 
     def move(ref):
-        return str((before / ref).resolve()) if ref else ""
+        if not ref:
+            return ""
+        absolute = (before / ref).resolve()
+        try:
+            return os.path.relpath(absolute, after)
+        except ValueError:  # Separate Windows drive.
+            return str(absolute)
 
     for key in ("source", "reference"):
         result[key] = move(result.get(key, ""))
