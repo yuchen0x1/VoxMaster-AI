@@ -3,7 +3,7 @@
 from copy import deepcopy
 import numpy as np
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, QPointF
-from PySide6.QtGui import QColor, QPainter, QPen, QPolygonF
+from PySide6.QtGui import QPainter, QPen, QPolygonF
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QPlainTextEdit,
     QPushButton,
+    QScrollArea,
     QTabWidget,
     QTableView,
     QVBoxLayout,
@@ -23,6 +24,7 @@ from PySide6.QtWidgets import (
 from .visual import timecode
 from .playback import Playback
 from .segments import CONTROLS
+from .theme import color as theme_color, watch_theme
 
 FIELDS = {
     "body_delta_db": "厚度 EQ · dB",
@@ -74,6 +76,8 @@ class SegmentModel(QAbstractTableModel):
 
 def segment_table(parts, parent):
     table = QTableView()
+    table.setAccessibleName("音频时间分段列表")
+    table.setAccessibleDescription("选择段落行可查看证据或定位区间。")
     table.setModel(SegmentModel(parts, table))
     table.setSelectionBehavior(QTableView.SelectRows)
     table.setSelectionMode(QTableView.SingleSelection)
@@ -102,9 +106,12 @@ class AutomationPage(QWidget):
             lo, hi, _ = CONTROLS[key]
             box.setRange(lo, hi)
             box.setSingleStep(1.0 if key == "highpass_delta_hz" else 0.05)
+            box.setAccessibleName(name)
             box.valueChanged.connect(lambda v, k=key: self.changed(k, v))
             self.inputs[key] = box
-            form.addRow(name, box)
+            field_label = QLabel(name)
+            field_label.setBuddy(box)
+            form.addRow(field_label, box)
         reset = QPushButton("还原所选段进入编辑器时的参数")
         reset.clicked.connect(self.restore)
         layout.addWidget(reset)
@@ -217,33 +224,51 @@ def audit_text(session):
 class TracePlot(QWidget):
     """Plot measured points on a common dB scale, with time or band labels."""
 
-    def __init__(self, series, ticks):
+    def __init__(self, series, ticks, labels=None, color_tokens=None):
         super().__init__()
         self.series = series
         self.ticks = ticks
-        self.setMinimumHeight(95)
+        self.labels = list(labels or (f"系列 {i + 1}" for i in range(len(series))))
+        self.color_tokens = list(
+            color_tokens or ("wave_a", "wave_b", "accent")[: len(series)]
+        )
+        self.setMinimumHeight(110)
+        self.setAccessibleName("处理效果实测曲线图")
+        self.setAccessibleDescription(
+            "图中纵轴为 dB；横轴依次为 " + "、".join(map(str, ticks))
+            + "；曲线分别表示 " + "、".join(self.labels) + "。"
+        )
+        watch_theme(self)
 
     def paintEvent(self, event):
         painter = QPainter(self)
+        painter.setFont(self.font())
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.fillRect(self.rect(), QColor("#141b25"))
-        left, top = 42, 10
-        width, height = max(1, self.width() - 90), max(1, self.height() - 42)
+        painter.fillRect(self.rect(), theme_color("canvas"))
+        left, top = 42, 36
+        width, height = max(1, self.width() - 90), max(1, self.height() - 68)
         low = min(-3.0, float(np.floor(min(min(y) for y in self.series))))
+        for index, (token, label) in enumerate(zip(self.color_tokens, self.labels)):
+            legend_y = 17
+            legend_x = left + index * max(140, self.width() // max(1, len(self.labels)))
+            painter.setPen(QPen(theme_color(token), 2))
+            painter.drawLine(legend_x, legend_y - 4, legend_x + 16, legend_y - 4)
+            painter.setPen(theme_color("text"))
+            painter.drawText(legend_x + 22, legend_y, label)
         for value in (0, low / 2, low):
             y = int(top + height * value / low)
-            painter.setPen(QColor("#334052"))
+            painter.setPen(theme_color("grid_strong" if value == 0 else "grid"))
             painter.drawLine(left, y, left + width, y)
-            painter.setPen(QColor("#a2b3c8"))
+            painter.setPen(theme_color("muted"))
             painter.drawText(5, y + 4, f"{value:.0f}")
+        painter.setPen(theme_color("muted"))
         for i, tick in enumerate(self.ticks):
             x = left + width * i / max(1, len(self.ticks) - 1)
             painter.drawText(
                 int(x - painter.fontMetrics().horizontalAdvance(tick) / 2), top + height + 19, tick
             )
-        colors = ("#49c6b7",) if len(self.series) == 1 else ("#98a9be", "#49c6b7")
-        for series, color in zip(self.series, colors):
-            painter.setPen(QPen(QColor(color), 2))
+        for series, token in zip(self.series, self.color_tokens):
+            painter.setPen(QPen(theme_color(token), 2))
             points = QPolygonF(
                 [
                     QPointF(left + width * i / max(1, len(series) - 1), top + height * v / low)
@@ -256,6 +281,14 @@ class TracePlot(QWidget):
                 painter.drawPolyline(points)
 
 
+def scroll_page(widget):
+    """Keep long evidence/plot pages scrollable without clipping their controls."""
+    area = QScrollArea()
+    area.setWidgetResizable(True)
+    area.setWidget(widget)
+    return area
+
+
 class ReportDialog(QDialog):
     def __init__(self, session, report, summary, parent):
         super().__init__(parent)
@@ -265,10 +298,14 @@ class ReportDialog(QDialog):
         self.resize(740, 590)
         layout = QVBoxLayout(self)
         tabs = QTabWidget()
+        tabs.setAccessibleName("音频处理报告页面")
+        tabs.setAccessibleDescription("处理前后摘要可复制；时间分段和实测曲线页面可滚动。")
         layout.addWidget(tabs)
 
         def text_tab(title, content):
             text = QPlainTextEdit()
+            text.setAccessibleName(title + "报告文本")
+            text.setAccessibleDescription("只读报告文本；可选择并复制内容。")
             text.setPlainText(content)
             text.setReadOnly(True)
             tabs.addTab(text, title)
@@ -277,26 +314,28 @@ class ReportDialog(QDialog):
         parts = report.get("segments", [])
         page = QWidget()
         col = QVBoxLayout(page)
-        table = segment_table(parts, self)
+        table = segment_table(parts, page)
         col.addWidget(table)
-        evidence = QLabel()
-        evidence.setWordWrap(True)
+        evidence = QPlainTextEdit()
+        evidence.setAccessibleName("所选时间分段的证据与限制")
+        evidence.setReadOnly(True)
         col.addWidget(evidence)
 
         def choose(i, _):
             if i.isValid():
                 row = parts[i.row()]
                 self.interval = (row["start"], row["end"])
-                evidence.setText("\n".join(row["evidence"] + row["limitations"]))
+                evidence.setPlainText("\n".join(row["evidence"] + row["limitations"]))
 
         table.selectionModel().currentRowChanged.connect(choose)
         listen = QPushButton("试听所选区间")
+        listen.setAccessibleDescription("关闭报告并试听当前选中的时间分段。")
         listen.setEnabled(bool(parts))
         listen.clicked.connect(self.accept)
         col.addWidget(listen)
         if parts:
             table.selectRow(0)
-        tabs.addTab(page, "时间分段")
+        tabs.addTab(scroll_page(page), "时间分段")
         text_tab("处理前后", audit_text(session))
         if session.measured:
             curve = session.audit.get("compression", {}).get("curve", [])
@@ -308,15 +347,21 @@ class ReportDialog(QDialog):
                 keys = list(bands)
                 column.addWidget(QLabel("均衡器输入与输出 · 各频带相对功率（dB）"))
                 column.addWidget(
-                    TracePlot([list(bands.values()), [eq["after_bands_db"][k] for k in keys]], keys)
+                    TracePlot(
+                        [list(bands.values()), [eq["after_bands_db"][k] for k in keys]],
+                        keys,
+                        labels=("均衡器输入", "均衡器输出"),
+                        color_tokens=("wave_a", "wave_b"),
+                    )
                 )
-                column.addWidget(QLabel("灰蓝为输入，青色为输出"))
             if curve:
                 column.addWidget(QLabel("压缩器增益衰减（dB）"))
                 column.addWidget(
                     TracePlot(
                         [[-point[1] for point in curve]],
                         [timecode(curve[0][0]), timecode(curve[-1][0])],
+                        labels=("压缩衰减",),
+                        color_tokens=("warning",),
                     )
                 )
             stage_choice = QComboBox()
@@ -335,7 +380,7 @@ class ReportDialog(QDialog):
                 column.addWidget(play)
             else:
                 column.addWidget(QLabel("本次未运行可比较的人声模块。"))
-            tabs.addTab(plots, "效果器实测")
+            tabs.addTab(scroll_page(plots), "效果器实测")
         buttons = QDialogButtonBox(QDialogButtonBox.Close)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -348,18 +393,23 @@ class PreviewDialog(QDialog):
         self.player = Playback()
         self.player.device = device
         self.side = 0
-        self.setMinimumWidth(360)
+        self.resize(520, 300)
         layout = QVBoxLayout(self)
         description = QLabel(
             f"区间 {len(pair[0]) / sr:.2f} 秒     A {levels[0]:.1f} / B {levels[1]:.1f} LUFS"
         )
+        description.setAccessibleName("等响试听区间与响度")
+        description.setWordWrap(True)
         layout.addWidget(description)
         row = QHBoxLayout()
         layout.addLayout(row)
         self.status = QLabel()
+        self.status.setAccessibleName("试听状态")
+        self.status.setWordWrap(True)
         names = ("A  模块输入", "B  模块输出") if stage else ("A  同风格原参数", "B  加入参考匹配")
         for side, title in enumerate(names):
             btn = QPushButton(title)
+            btn.setAccessibleDescription("循环试听该侧的音频结果。")
             btn.clicked.connect(lambda _, i=side: play(i))
             row.addWidget(btn)
 
@@ -377,4 +427,7 @@ class PreviewDialog(QDialog):
         stop = QPushButton("停止")
         stop.clicked.connect(lambda: (self.player.stop(), self.status.setText("已停止")))
         layout.addWidget(stop)
+        close = QDialogButtonBox(QDialogButtonBox.Close)
+        close.rejected.connect(self.reject)
+        layout.addWidget(close)
         self.finished.connect(lambda _: self.player.stop())

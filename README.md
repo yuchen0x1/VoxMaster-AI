@@ -1,12 +1,12 @@
-# VoxMaster AI 0.4.0
+# VoxMaster AI 0.5.0
 
 **AI-Powered Vocal Production & Music Mixing Workstation** · 本地优先的人声制作与歌曲混音工作站
 
 [![CI](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml) · [官方下载](https://github.com/yuchen0x1/VoxMaster-AI/releases/latest) · [反馈](https://github.com/yuchen0x1/VoxMaster-AI/issues)
 
-## 0.4.0 更新
+## 0.5.0 更新
 
-当前为本地 0.4.0 候选构建，尚未创建 GitHub Release。最终验证与未完成门禁见 [交付状态](docs/DELIVERY-040.md)。
+0.5.0 是首个公开发布版本：包含 0.4.0 的完整歌曲工作流与本轮双主题界面改造。候选与发布状态、听审门禁见 [发布说明](docs/releases/release-notes.md)。
 
 0.4.0 将处理路径显式分为 **独立人声、完整歌曲、专业多轨** 三种模式，共用本地音频分析、DSP 与现有多轨混音引擎。完整歌曲模式复用本地按需下载的 Spleeter 双轨模型，提供人声/伴奏独立处理、可编辑混音目标、峰值受限的最终母带及质量报告；分轨与处理在工程提交前完成，取消或失败保留原工程。保守方案不会默认对已含空间效果的人声再次降噪、修音、加混响或做音高修正。原 `v1` 工程继续读取，新增方案作为可选字段保存。**分离重建误差不能证明分离质量**；两首指定参考歌曲的主观听审仍待制作人完成。[项目审计](docs/AUDIT-040.md) · [DSP/模型审计](docs/AUDIT-AUDIO-040.md) · [竞品研究](docs/RESEARCH-040.md) · [38 项取舍](docs/UPGRADE-040.md) · [测试与素材报告](docs/TESTS-040.md)
 
@@ -20,9 +20,15 @@ Windows 本地喊麦与歌曲制作工作站。人声处理继续使用测量驱
 
 现有喊麦人声链会按信号证据分别处理快速咬字、爆发音和拖腔。在「完整分析报告」中可以选一句看判断依据，比较均衡器前后的频谱、压缩器的实际衰减，再等响试听某个效果器。支持在音高曲线上框选、手动移调和编辑尾音，保存后可重新打开工程。[版本变更](CHANGELOG.md) · [专项验收](docs/UPGRADE-011.md)
 
+## 双主题与界面验收
+
+「设备与设置 → 外观」支持 **跟随系统 / 浅色 / 深色**，切换立即预览，取消恢复原主题，保存后下次启动继续使用。原生 Qt 控件、菜单与自绘波形/图表共用语义颜色；系统标题栏及 OS 原生文件选择器仍由系统管理。较小窗口可滚动访问全部操作，时间轴增加键盘定位与选区，原音频引擎、工程格式和导出规格不变。
+
+完整界面清单、前后截图、双主题与有效 DPI 验收、独立二审和未验边界见 [UI/UX 专项报告](docs/UIUX-040.md)。上面的 0.4.0 旧截图早于新主题，不代表当前外观。
+
 ## 安装和首次使用
 
-标准构建输出的 Windows x64 安装版为 `dist/VoxMasterAI-Setup.exe`，按当前用户安装，支持从 Windows 应用列表卸载。便携版为 `dist/VoxMasterAI-Portable.zip`，请解压整个目录后启动 `VoxMasterAI.exe`。**本轮 0.4.0 未覆盖旧 `dist`；本机候选包单独位于 `.audit/040-delivery/dist/`，位置与限制见 [交付报告](docs/DELIVERY-040.md)。** 两种发行物包含 Python、Qt、音频编解码器和本地推理运行库。软件设置、自动保存与默认模型放在当前用户的 LocalAppData 中。便携版也使用这个位置。
+标准构建输出的 Windows x64 安装版为 `dist/VoxMasterAI-Setup.exe`，按当前用户安装，支持从 Windows 应用列表卸载。便携版为 `dist/VoxMasterAI-Portable.zip`，请解压整个目录后启动 `VoxMasterAI.exe`。发布流水线在隔离注册表环境完成安装/卸载验收后才允许公开发布。两种发行物包含 Python、Qt、音频编解码器和本地推理运行库。软件设置、自动保存与默认模型放在当前用户的 LocalAppData 中。便携版也使用这个位置。
 
 1. 启动后进入「设备与设置」查看自动生成的硬件报告，选择监听设备。
 2. 将 WAV、MP3、FLAC、M4A、AAC、OGG 或 AIFF 拖入窗口。分析完成后，在时间轴下方选择喊麦风格。

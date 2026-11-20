@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QInputDialog,
     QLabel,
+    QLayout,
     QListWidget,
     QMainWindow,
     QMenu,
@@ -49,7 +50,9 @@ from .reference import comparison, describe_match, space_notes
 from .review import ReportDialog, PreviewDialog
 from .song import TARGETS, MASTERING
 from .song_dialog import SongDialog
-from .visual import Timeline, Spectrum, timecode, app_icon
+from .visual import (Timeline, Spectrum, timecode, app_icon, ElidedLabel, WrappedLabel,
+                     TransportShortcutGuard)
+from .theme import manager as theme_manager
 
 FORMATS = "音频 (*.wav *.mp3 *.flac *.m4a *.aac *.ogg *.aiff *.aif);;所有文件 (*)"
 KINDS = [
@@ -100,7 +103,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("VoxMaster AI · 人声调音工作站")
-        self.setMinimumSize(920, 620)
+        self.setMinimumSize(820, 560)
         available = self.screen().availableGeometry()
         self.resize(min(1280, available.width()), min(790, available.height() - 40))
         self.setAcceptDrops(True)
@@ -145,9 +148,9 @@ class MainWindow(QMainWindow):
         top.addSpacing(4)
         top.addWidget(label("VoxMaster AI", "brand"))
         top.addSpacing(16)
-        self.project_name = label("未命名工程", "sub")
-        top.addWidget(self.project_name)
-        top.addStretch()
+        self.project_name = ElidedLabel("未命名工程", "sub")
+        self.project_name.setAccessibleName("当前工程名称")
+        top.addWidget(self.project_name, 1)
         top.addWidget(button("打开工程", self.open_project))
         top.addWidget(button("保存工程", self.save))
         self.export_btn = button("导出成品", self.export)
@@ -178,7 +181,16 @@ class MainWindow(QMainWindow):
         side = QFrame()
         side.setObjectName("side")
         side.setFixedWidth(151)
-        nav = QVBoxLayout(side)
+        side_shell = QVBoxLayout(side)
+        side_shell.setContentsMargins(0, 0, 0, 0)
+        side_scroll = QScrollArea()
+        side_scroll.setWidgetResizable(True)
+        side_scroll.setFrameShape(QFrame.NoFrame)
+        side_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        side_scroll.setAccessibleName("工作站导航")
+        nav_content = QWidget()
+        nav_content.setObjectName("sideContent")
+        nav = QVBoxLayout(nav_content)
         nav.setContentsMargins(10, 14, 10, 12)
         nav.setSpacing(3)
         for caption, fn in [
@@ -201,21 +213,25 @@ class MainWindow(QMainWindow):
         nav.addStretch()
         splitline(nav)
         nav.addWidget(button("设备与设置", self.settings_view, "nav"))
+        side_scroll.setWidget(nav_content)
+        side_shell.addWidget(side_scroll)
         body.addWidget(side)
         splitter = QSplitter(Qt.Horizontal)
+        splitter.setChildrenCollapsible(False)
         body.addWidget(splitter, 1)
         center = QWidget()
         c = QVBoxLayout(center)
         c.setContentsMargins(18, 17, 18, 12)
         c.setSpacing(9)
         title = QHBoxLayout()
-        self.track_name = label("人声工作台", "title")
-        self.track_name.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        self.track_name = ElidedLabel("人声工作台", "title")
+        self.track_name.setAccessibleName("当前工作区")
         title.addWidget(self.track_name, 1)
         self.import_btn = button("＋  导入音频", self.import_audio)
         title.addWidget(self.import_btn)
         c.addLayout(title)
         self.meta = label("选择一段录音，开始本地分析。", "sub")
+        self.meta.setWordWrap(True)
         c.addWidget(self.meta)
         c.addSpacing(4)
         line = QHBoxLayout()
@@ -244,7 +260,9 @@ class MainWindow(QMainWindow):
         splitline(c)
         line = QHBoxLayout()
         self.style = choices(list(engine.PRESETS) + list(self.custom))
+        self.style.setAccessibleName("人声调音风格")
         self.style_label = label("喊麦风格")
+        self.style_label.setBuddy(self.style)
         line.addWidget(self.style_label)
         line.addWidget(self.style, 1)
         self.go = button("AI 一键调音", self.run_mode, "primary")
@@ -258,10 +276,18 @@ class MainWindow(QMainWindow):
         jb.addWidget(self.cancel_btn)
         c.addLayout(jb)
         self.progress = QProgressBar()
-        self.progress.setFixedHeight(3)
+        self.progress.setAccessibleName("音频处理进度")
+        self.progress.setFixedHeight(6)
         self.progress.setTextVisible(False)
         c.addWidget(self.progress)
-        splitter.addWidget(center)
+        center_scroll = QScrollArea()
+        center_scroll.setWidgetResizable(True)
+        center_scroll.setFrameShape(QFrame.NoFrame)
+        center_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        center_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        center_scroll.setAccessibleName("工作台内容")
+        center_scroll.setWidget(center)
+        splitter.addWidget(center_scroll)
         right = QFrame()
         right.setObjectName("inspector")
         rl = QVBoxLayout(right)
@@ -269,9 +295,12 @@ class MainWindow(QMainWindow):
         rl.addWidget(label("调音检查器", "section"))
         splitline(rl)
         scroll = QScrollArea()
+        scroll.setObjectName("inspectorScroll")
         scroll.setWidgetResizable(True)
         panel = QWidget()
+        panel.setObjectName("inspectorContent")
         r = QVBoxLayout(panel)
+        r.setSizeConstraint(QLayout.SetMinAndMaxSize)
         r.setContentsMargins(0, 3, 2, 4)
         r.setSpacing(9)
         self.report_mode = label("原音测量", "sub")
@@ -282,7 +311,7 @@ class MainWindow(QMainWindow):
         r.addWidget(self.peak)
         splitline(r)
         r.addWidget(label("音频体检", "section"))
-        self.issues = label("导入后查看声学测量结果。", "sub")
+        self.issues = WrappedLabel("导入后查看声学测量结果。", "sub")
         self.issues.setWordWrap(True)
         self.issues.setTextInteractionFlags(Qt.TextSelectableByMouse)
         r.addWidget(self.issues)
@@ -291,15 +320,20 @@ class MainWindow(QMainWindow):
         splitline(r)
         r.addWidget(label("处理方案", "section"))
         self.kind = choices(KINDS)
+        self.kind.setAccessibleName("音频内容类型")
         r.addWidget(self.kind)
         self.advanced = button("调整效果器与链路", self.parameters)
         r.addWidget(self.advanced)
-        self.plan_label = label("", "sub")
+        self.plan_label = WrappedLabel("", "sub")
         self.plan_label.setWordWrap(True)
         r.addWidget(self.plan_label)
-        self.match_label = label("尚未载入参考音频", "sub")
+        self.match_label = WrappedLabel("尚未载入参考音频", "sub")
         self.match_label.setWordWrap(True)
         r.addWidget(self.match_label)
+        for wrapped in (self.issues, self.plan_label, self.match_label):
+            policy = wrapped.sizePolicy()
+            policy.setVerticalPolicy(QSizePolicy.Minimum)
+            wrapped.setSizePolicy(policy)
         r.addStretch()
         scroll.setWidget(panel)
         rl.addWidget(scroll, 1)
@@ -307,34 +341,47 @@ class MainWindow(QMainWindow):
         splitter.setSizes([770, 255])
         splitter.setStretchFactor(0, 1)
         splitline(layout)
-        transport = QHBoxLayout()
-        transport.setContentsMargins(15, 9, 15, 9)
+        transport = QVBoxLayout()
+        transport.setContentsMargins(15, 7, 15, 7)
+        playback_row = QHBoxLayout()
         self.play_btn = button("▶  播放", self.play)
         self.stop_btn = button("■", self.stop)
+        self.stop_btn.setAccessibleName("停止播放并回到开头")
         self.stop_btn.setToolTip("停止并回到开头")
         self.loop = QCheckBox("循环")
-        transport.addWidget(self.play_btn)
-        transport.addWidget(self.stop_btn)
-        transport.addWidget(self.loop)
+        playback_row.addWidget(self.play_btn)
+        playback_row.addWidget(self.stop_btn)
+        playback_row.addWidget(self.loop)
         self.clock = label("00:00.00", "clock")
-        transport.addSpacing(10)
-        transport.addWidget(self.clock)
+        self.clock.setAccessibleName("播放位置")
+        playback_row.addSpacing(10)
+        playback_row.addWidget(self.clock)
         self.total = label("/ 00:00.00", "sub")
-        transport.addWidget(self.total)
-        transport.addStretch()
+        self.total.setAccessibleName("音频总时长")
+        playback_row.addWidget(self.total)
+        playback_row.addStretch()
         self.device_button = button("音频设备", self.settings_view)
         self.device_button.setMaximumWidth(160)
-        transport.addWidget(self.device_button)
+        playback_row.addWidget(self.device_button)
+        transport.addLayout(playback_row)
+        monitor_row = QHBoxLayout()
         self.meter = label("— dBFS", "sub")
-        transport.addWidget(self.meter)
-        transport.addWidget(label("监听音量", "sub"))
+        self.meter.setAccessibleName("实时输出电平")
+        monitor_row.addWidget(self.meter)
+        monitor_row.addStretch()
+        volume_label = label("监听音量", "sub")
         vol = QSlider(Qt.Horizontal)
+        vol.setAccessibleName("监听音量")
+        vol.setAccessibleDescription("调整本机试听音量，不改变导出成品电平。")
+        volume_label.setBuddy(vol)
+        monitor_row.addWidget(volume_label)
         vol.setRange(0, 100)
         vol.setValue(75)
         self.player.volume = 0.75
         vol.valueChanged.connect(self.set_monitor_volume)
         vol.setFixedWidth(85)
-        transport.addWidget(vol)
+        monitor_row.addWidget(vol)
+        transport.addLayout(monitor_row)
         layout.addLayout(transport)
 
     def install_actions(self):
@@ -353,6 +400,8 @@ class MainWindow(QMainWindow):
             action.setShortcut(QKeySequence(key))
             action.triggered.connect(lambda _=False, fn=fn: fn())
             self.addAction(action)
+            if key == "Space":
+                self.transport_guard = TransportShortcutGuard(self, action)
 
     def notice(self, msg):
         QMessageBox.information(self, "VoxMaster AI", str(msg))
@@ -1445,6 +1494,10 @@ class MainWindow(QMainWindow):
         d = SettingsDialog(self.settings, self.device_report, self)
         with managed_dialog(d):
             if d.exec():
+                previous_settings = self.settings
+                previous_theme = previous_settings.get("theme", "system")
+                previous_device = self.player.device
+                previous_cache = audioio.cache_directory()
                 try:
                     new = d.value()
                     audioio.set_cache_directory(new.get("cache_dir"))
@@ -1452,8 +1505,18 @@ class MainWindow(QMainWindow):
                     self.settings = new
                     self.show_device_names()
                     self.save_settings()
+                    theme_manager().set_mode(new.get("theme", "system"))
                 except Exception as exc:
-                    self.failed(str(exc))
+                    self.settings = previous_settings
+                    self.player.device = previous_device
+                    self.show_device_names()
+                    theme_manager().set_mode(previous_theme)
+                    message = str(exc)
+                    try:
+                        audioio.set_cache_directory(previous_cache)
+                    except OSError as rollback_error:
+                        message += "\n恢复音频缓存目录失败：" + str(rollback_error)
+                    self.failed(message)
 
     def closeEvent(self, event):
         if self.worker:

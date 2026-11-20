@@ -21,6 +21,11 @@ _SPOOL_BYTES = 64 * 1024**2
 _cache_directory = None
 
 
+def cache_directory():
+    """Return the active spool directory, including a startup fallback to default."""
+    return _cache_directory
+
+
 def set_cache_directory(path):
     """Applies to subsequently opened audio files; live mappings remain valid."""
     global _cache_directory

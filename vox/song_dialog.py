@@ -8,7 +8,9 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QFormLayout,
     QLabel,
+    QScrollArea,
     QVBoxLayout,
+    QWidget,
 )
 
 from .song import MASTERING, TARGETS, _LIMITS, validate_plan
@@ -30,13 +32,20 @@ class SongDialog(QDialog):
                  replaces_vocal=False, has_studio=False, parent=None):
         super().__init__(parent)
         self.setWindowTitle("整曲处理")
-        self.setMinimumWidth(465)
+        self.setMinimumWidth(420)
         self.plan = validate_plan(plan) if plan is not None else None
         self.reviewing = self.plan is not None and not recommend
         self.recommend_again = False
         self.style_name = style
         self.values = {}
         layout = QVBoxLayout(self)
+        content = QWidget()
+        body = QVBoxLayout(content)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setAccessibleName("整曲处理方案")
+        scroll.setWidget(content)
+        layout.addWidget(scroll, 1)
         form = QFormLayout()
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         apply = buttons.button(QDialogButtonBox.Ok)
@@ -54,6 +63,7 @@ class SongDialog(QDialog):
             for key, (caption, unit) in FIELDS.items():
                 field = QDoubleSpinBox()
                 field.setObjectName(key)
+                field.setAccessibleName(caption)
                 field.setRange(*_LIMITS[key][:2])
                 field.setDecimals(3)
                 field.setSingleStep(0.1)
@@ -90,9 +100,18 @@ class SongDialog(QDialog):
         info = QLabel(text)
         info.setTextFormat(Qt.PlainText)
         info.setWordWrap(True)
-        layout.addWidget(info)
-        layout.addLayout(form)
+        body.addWidget(info)
+        body.addLayout(form)
+        body.addStretch()
         layout.addWidget(buttons)
+        # A fixed 540×560 left dead space below short plans; follow the content height.
+        hint = self.sizeHint()
+        available = self.screen().availableGeometry()
+        self.resize(
+            max(540, min(hint.width(), available.width() - 40)),
+            max(self.minimumSizeHint().height(),
+                min(hint.height(), available.height() - 60)),
+        )
 
     def profile(self, labels, key, default):
         box = QComboBox()
