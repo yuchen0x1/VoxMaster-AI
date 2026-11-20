@@ -3,6 +3,23 @@ on:
   push:
     tags: ['v[0-9]*']
   workflow_dispatch:
+    inputs:
+      publish:
+        description: '正式公开发布（默认仅构建候选包）'
+        type: boolean
+        default: false
+      confirm_tag:
+        description: '发布时完整填写当前 tag，例如 v0.4.0；必须从该 tag 运行'
+        type: string
+        default: ''
+      listening_approved:
+        description: '制作人已完成人工等响听审并批准此版本'
+        type: boolean
+        default: false
+      accept_limitations:
+        description: '已接受发行说明中的未签名和未验收平台等限制'
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -24,6 +41,18 @@ jobs:
       QT_QPA_PLATFORM: offscreen
       VOXMASTER_DATA: ${{ github.workspace }}/.voxmaster-package-test-data
     steps:
+      - name: Require explicit stable publication approval
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        shell: pwsh
+        env:
+          CONFIRM_TAG: ${{ inputs.confirm_tag }}
+          LISTENING_APPROVED: ${{ inputs.listening_approved }}
+          ACCEPT_LIMITATIONS: ${{ inputs.accept_limitations }}
+        run: |
+          if ($env:CONFIRM_TAG -cne $env:GITHUB_REF_NAME -or
+              $env:LISTENING_APPROVED -ne 'true' -or $env:ACCEPT_LIMITATIONS -ne 'true') {
+            throw 'Stable publication requires the exact tag, completed listening approval and explicit acceptance of limitations'
+          }
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Verify tag commit is reachable from main
         shell: pwsh
@@ -66,32 +95,54 @@ jobs:
             Copy-Item "$env:RUNNER_TEMP/ChineseSimplified.isl" "$innoLanguages/ChineseSimplified.isl"
           }
           ./scripts/build.ps1 -Bash $bash
-      - shell: pwsh
+          if ($LASTEXITCODE) { throw 'Windows build failed' }
+      - name: Verify isolated installation, portable runtime and uninstall
+        shell: pwsh
+        run: ./scripts/verify-release.ps1 -IsolatedRegistration
+      - name: Prepare signed stable update assets
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        shell: pwsh
         env:
           UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
         run: .venv/Scripts/python scripts/release_assets.py
-      - shell: pwsh
+      - name: Publish explicitly approved stable release
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create $env:GITHUB_REF_NAME --verify-tag --draft --title "VoxMaster AI $env:GITHUB_REF_NAME" --notes-file docs/releases/release-notes.md
+          gh release create $env:GITHUB_REF_NAME --verify-tag --draft --latest=false --title "VoxMaster AI $env:GITHUB_REF_NAME" --notes-file docs/releases/release-notes.md
           if ($LASTEXITCODE) { throw 'Release creation failed' }
           gh release upload $env:GITHUB_REF_NAME (Get-ChildItem dist/release -File).FullName
-          if ($LASTEXITCODE) { throw 'Asset upload failed' }
-          gh release edit $env:GITHUB_REF_NAME --draft=false
+          if ($LASTEXITCODE) { throw 'Asset upload failed; release remains a draft' }
+          gh release edit $env:GITHUB_REF_NAME --draft=false --latest=true
           if ($LASTEXITCODE) { throw 'Release publication failed' }
-      - name: Verify published links through the public update channel
+      - name: Verify the exact published version through the public update channel
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
         shell: pwsh
         run: |
-          # The latest manifest is CDN-cached; retry briefly before declaring failure.
+          # A cached older manifest must not pass as verification of this version.
           $ok = $false
+          $version = $env:GITHUB_REF_NAME.Substring(1)
           foreach ($i in 1..5) {
-            .venv/Scripts/python scripts/verify_release.py
+            .venv/Scripts/python scripts/verify_release.py --expected-version $version --download
             if ($LASTEXITCODE -eq 0) { $ok = $true; break }
-            Start-Sleep -Seconds 60
+            if ($i -lt 5) { Start-Sleep -Seconds 60 }
           }
-          if (-not $ok) { throw 'Published update manifest or asset links failed verification' }
+          if (-not $ok) { throw 'Exact published update manifest or installer verification failed; inspect the release manually' }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
+          name: windows-candidate
+          if-no-files-found: error
+          path: |
+            dist/VoxMasterAI-Setup.exe
+            dist/VoxMasterAI-Portable.zip
+            dist/VoxMasterAI-Source.zip
+            dist/Qt-6.12.0-Corresponding-Sources.zip
+            dist/SHA256SUMS.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        with:
           name: signed-release
+          if-no-files-found: error
           path: dist/release/*

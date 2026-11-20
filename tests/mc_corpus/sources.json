@@ -5,7 +5,7 @@
     "location": "local",
     "description": "用户提供的中文喊麦成品混音",
     "rights": "只在本机试听，未提供公开传播许可",
-    "sha256": "cf6f84d4578430142ab74ffbfcc0e05c6ae30b53e138701726db81a6721ed8c6",
+    "private_digest_required": true,
     "preset": "经典喊麦",
     "kind": "自动判断"
   },
@@ -15,7 +15,7 @@
     "location": "local",
     "description": "用户提供的中文喊麦成品混音",
     "rights": "只在本机试听，未提供公开传播许可",
-    "sha256": "92bc7d390af12954303c4409ef76e60436d2ad995904cf283cfc71824a0b5072",
+    "private_digest_required": true,
     "preset": "经典喊麦",
     "kind": "自动判断"
   },
@@ -25,7 +25,7 @@
     "location": "local",
     "description": "用户提供的中文喊麦成品混音",
     "rights": "只在本机试听，未提供公开传播许可",
-    "sha256": "9c9f3d373f9a81d91791b781947f79539b48edc1417d705c990d267522f3dfed",
+    "private_digest_required": true,
     "preset": "经典喊麦",
     "kind": "自动判断"
   },
@@ -35,7 +35,7 @@
     "location": "local",
     "description": "用户提供的中文喊麦成品混音",
     "rights": "只在本机试听，未提供公开传播许可",
-    "sha256": "6aa35a74193c02adadc5f2ef4102d82aea65483a25dbbb7ac9ef4ca090fa12d0",
+    "private_digest_required": true,
     "preset": "经典喊麦",
     "kind": "自动判断"
   },
@@ -45,7 +45,7 @@
     "location": "local",
     "description": "用户提供的中文喊麦成品混音",
     "rights": "只在本机试听，未提供公开传播许可",
-    "sha256": "bf83df46b604e536f8ced108349286f4ea6384cf64f96378ff84903f51fbc1f8",
+    "private_digest_required": true,
     "preset": "经典喊麦",
     "kind": "自动判断"
   },

@@ -105,6 +105,16 @@ def _validate_project_data(data):
         _string_mapping(external, "studio.external_sources")
     if "before_reference" in data and not isinstance(data["before_reference"], dict):
         raise ValueError("工程字段 before_reference 必须是对象。")
+    if "mode" in data and data["mode"] not in ("vocal", "song", "multitrack"):
+        raise ValueError("未知的工作台模式。")
+    if data.get("song") is not None:
+        from .song import validate_plan
+
+        data["song"] = validate_plan(data["song"])
+        if not all(data["stems"].get(key) for key in ("Vocal", "Instrumental")):
+            raise ValueError("歌曲方案需要人声与伴奏两条分轨。")
+    if "separation" in data and not isinstance(data["separation"], dict):
+        raise ValueError("工程字段 separation 必须是对象。")
 
 
 def load_project(path):

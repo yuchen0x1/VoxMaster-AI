@@ -12,8 +12,11 @@ from vox import updating
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--download', action='store_true')
+    p.add_argument('--expected-version')
     args = p.parse_args()
     data = updating.check_release()
+    if args.expected_version is not None and data['version'] != args.expected_version:
+        raise ValueError(f"Expected published version {args.expected_version}, received {data['version']}")
     for asset in data['assets'].values():
         with updating.response(asset['url']) as r:
             if r.headers.get('Content-Length') and int(r.headers['Content-Length']) != asset['size']:

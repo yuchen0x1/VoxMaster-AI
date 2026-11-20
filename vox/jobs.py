@@ -16,9 +16,10 @@ class Worker(QThread):
     def run(self):
         try:
             result = self.action(self.cancel, self.progress.emit)
-            if self.cancel.is_set():
+            if self.cancel.is_set() and not getattr(result, "publication_committed", False):
                 self.cancelled.emit()
             else:
+                # A published stem pair is a committed result, not a cancelable draft.
                 self.succeeded.emit(result)
         except Exception as exc:
             if self.cancel.is_set() or isinstance(exc, InterruptedError):

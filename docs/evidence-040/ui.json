@@ -1,0 +1,19 @@
+{
+  "phase": "done",
+  "errors": [],
+  "song_demo": true,
+  "source": "CC BY 4.0 FLEURS; optional instrumental is synthetic, not a real song",
+  "original_lufs": -42.21787363995357,
+  "output_lufs": -17.090897536318028,
+  "song_plan": {
+    "target": "natural",
+    "master": "conservative",
+    "vocal_gain_db": -1.8,
+    "instrumental_gain_db": 1.2,
+    "instrumental_low_db": -0.301,
+    "instrumental_mid_db": 0.0,
+    "instrumental_high_db": 0.0,
+    "target_lufs": -25.573,
+    "ceiling_db": -1.6
+  }
+}

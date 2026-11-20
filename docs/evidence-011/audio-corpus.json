@@ -401,7 +401,8 @@
     },
     {
       "id": "MC01",
-      "source_sha256": "cf6f84d4578430142ab74ffbfcc0e05c6ae30b53e138701726db81a6721ed8c6",
+      "source_sha256": null,
+      "source_sha256_note": "已为保护隐私省略本地素材指纹。",
       "preset": "经典喊麦",
       "mode": "自动判断",
       "duration_s": 174.93913832199547,
@@ -455,7 +456,8 @@
     },
     {
       "id": "MC02",
-      "source_sha256": "92bc7d390af12954303c4409ef76e60436d2ad995904cf283cfc71824a0b5072",
+      "source_sha256": null,
+      "source_sha256_note": "已为保护隐私省略本地素材指纹。",
       "preset": "经典喊麦",
       "mode": "自动判断",
       "duration_s": 75.21154195011339,
@@ -509,7 +511,8 @@
     },
     {
       "id": "MC03",
-      "source_sha256": "9c9f3d373f9a81d91791b781947f79539b48edc1417d705c990d267522f3dfed",
+      "source_sha256": null,
+      "source_sha256_note": "已为保护隐私省略本地素材指纹。",
       "preset": "经典喊麦",
       "mode": "自动判断",
       "duration_s": 117.06965986394557,
@@ -563,7 +566,8 @@
     },
     {
       "id": "MC04",
-      "source_sha256": "6aa35a74193c02adadc5f2ef4102d82aea65483a25dbbb7ac9ef4ca090fa12d0",
+      "source_sha256": null,
+      "source_sha256_note": "已为保护隐私省略本地素材指纹。",
       "preset": "经典喊麦",
       "mode": "自动判断",
       "duration_s": 186.66666666666666,
@@ -617,7 +621,8 @@
     },
     {
       "id": "MC05",
-      "source_sha256": "bf83df46b604e536f8ced108349286f4ea6384cf64f96378ff84903f51fbc1f8",
+      "source_sha256": null,
+      "source_sha256_note": "已为保护隐私省略本地素材指纹。",
       "preset": "经典喊麦",
       "mode": "自动判断",
       "duration_s": 69.40444444444445,

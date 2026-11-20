@@ -185,6 +185,25 @@ def audit_text(session):
         ]
     if "peak_trim_db" in audit:
         lines.append(f"复测后总线增益修正 {audit['peak_trim_db']:+.2f} dB。")
+    if song := audit.get("song"):
+        plan, premaster = song["plan"], song["before_master"]
+        lines.extend(["", "歌曲工作流 · 原始分轨 → 混音总线 → 母带"])
+        lines.append(
+            f"人声 {song['stems']['Vocal']['lufs']:.1f} LUFS，"
+            f"伴奏 {song['stems']['Instrumental']['lufs']:.1f} LUFS（两轨处理前）。"
+        )
+        lines.append(
+            f"混音总线 → 成品：{premaster['lufs']:.1f} → {after['lufs']:.1f} LUFS，"
+            f"{premaster['true_peak_db']:.1f} → {after['true_peak_db']:.1f} dBTP。"
+        )
+        lines.append(f"母带目标 {plan['target_lufs']:.1f} LUFS；峰值上限 {plan['ceiling_db']:.1f} dBTP。")
+    if separation := getattr(session, "document", {}).get("separation"):
+        providers = separation.get("providers", [])
+        if separation.get("status") != "verified":
+            lines.append("分离来源未验证或媒体已替换：无可复用的模型、后端或重建结论。")
+        elif isinstance(providers, list) and all(isinstance(p, str) for p in providers):
+            lines.append("分离推理后端：" + (" / ".join(providers) or "未知"))
+        lines.append("分轨的重建误差不代表泄漏或分离伪影，请以实际试听判断。")
     return "\n".join(
         lines
         + [

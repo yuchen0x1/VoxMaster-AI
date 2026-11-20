@@ -13,6 +13,17 @@
 | 工程与混音 | storage.py 保存版本化 JSON、相对路径和旧版本。studio_session.py 管理片段引用、采样级时间点、音量包络与混音。studio_timeline.py 和 studio.py 提供专业工作台 |
 | 本机与发布 | hardware.py 查询系统、磁盘、驱动与设备。packaging 和 scripts 生成冻结程序、便携档案及 Inno Setup 安装器 |
 
+## 0.4.0 共享模块和三个路由
+
+- `intelligence.measure(samples, sr, cancel)` 统一旧测量栈；`inspect_file` 区分源格式和内部 PCM；`metrics` 为歌曲路径提供不运行音高检测的电平/频带测量。`routing` 始终允许人工选择，`unknown` 不会被阈值伪装成源分类。
+- 独立人声沿用 `service.tuning_plan → engine.process`。歌曲路径由 `service.separate_project` 使用固定、校验过的本地模型，生成原始双轨，再由 `service.plan_song` 形成 `song` 参数。分离及整曲渲染都在临时目录成功后才发布原始分轨。
+- `song.vocal_params` 生成人声保守链，`song.process_stems` 只作轨道增益/伴奏 EQ，**不另造混音器**。`studio_session.Session.render` 沿用现有编排、总线与保护。`song.master_mix` 在整条混音总线之后处理；有 `song` 的工程强制旁通人声层 `master`，避免二次母带。
+- 会话同时持有 `sources`（原始分轨）、`tuned_vocal`（调音人声）、`mix_sources`（增益/EQ 后送入 Studio 的两轨）、`output`（最终母带）。进入工作室使用 `mix_sources`，不能退回原伴奏或重复应用歌曲增益。
+- `.voxproj` 外层仍为 v1；新增 `mode`、`song`、`separation` 为可选字段。不含这些字段的旧工程仍执行原路径。原始媒体不写入工程文件；相对路径、重新定位、备份和撤销沿用既有机制。
+- 各任务通过取消 Event 报告中断，内部采样数组检查时长/声道/有限性，失败不提交新 Session。新报告保留处理前两轨、母带前总线、母带后总线和实际 inference provider；编码文件需另行回读。
+
+**边界：**歌曲建议目前使用全曲积分响度/频带，不宣称时间对齐的语义掩蔽检测。工作室已有同窗平衡与选频侧链，未来可将其证据接入建议层。DSP 与同一模型的重建守恒，不代表分离无串音或成品音质达标。
+
 ## 一次渲染
 
 1. 仅打开原始音频进行读取。解码为 44,100 Hz、左右声道 float32 PCM，并另存原文件的采样率、位深和声道元数据。

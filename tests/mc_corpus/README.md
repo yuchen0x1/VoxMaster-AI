@@ -4,7 +4,7 @@ sources.json 用稳定编号记录输入文件的来源、类型依据、授权�
 
 ## 重建
 
-准备正式 0.1.0 源码包，将其放在 build/acceptance-011/baseline-010-source.zip，脚本会校验已发布的 SHA-256。用户提供的五首歌保存在本机授权目录中。生成文件进入 build/acceptance-011，保留输入与各版本原文件，录音、盲听 WAV 和密钥仅本机可见。
+准备正式 0.1.0 源码包，将其放在 build/acceptance-011/baseline-010-source.zip，脚本会校验已发布的 SHA-256。用户提供的五首歌保存在本机授权目录中。公开清单的 local 项只标记 `private_digest_required=true`，不公开私有 SHA-256；原指纹映射保存在被 `.gitignore` 忽略的 `.audit/040-release-review/private-corpus-digests.json`，格式为 JSON 对象 `{ "MC01": "<64 位十六进制 SHA-256>", ... }`，不得提交或分发。渲染 local 项必须显式传入 `--private-digests`；缺失条目、非法指纹或输入不匹配都会拒绝执行，不会跳过校验或自动重算指纹基准。仅选公共素材时可省略该参数，仍校验清单中的原哈希。生成文件进入 build/acceptance-011，保留输入与各版本原文件，录音、盲听 WAV 和密钥仅本机可见。
 
 ```powershell
 $qaRoot = 'build/acceptance-011'
@@ -12,8 +12,8 @@ $py = '.venv/Scripts/python.exe'
 & $py tests/mc_corpus/fetch_vocalset.py "$qaRoot/external"
 & $py tests/mc_corpus/fetch_freesound.py "$qaRoot/external"
 & $py tests/mc_corpus/mix_controls.py "$qaRoot/external"
-& $py tests/mc_corpus/render_trials.py 0.1.0 --local "$env:USERPROFILE/Desktop/yin"
-& $py tests/mc_corpus/render_trials.py 0.1.1 --local "$env:USERPROFILE/Desktop/yin"
+& $py tests/mc_corpus/render_trials.py 0.1.0 --local "$env:USERPROFILE/Desktop/yin" --private-digests '.audit/040-release-review/private-corpus-digests.json'
+& $py tests/mc_corpus/render_trials.py 0.1.1 --local "$env:USERPROFILE/Desktop/yin" --private-digests '.audit/040-release-review/private-corpus-digests.json'
 & $py tests/mc_corpus/blind_trials.py
 ```
 

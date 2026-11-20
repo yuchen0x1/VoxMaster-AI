@@ -8,6 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 import platform
+import re
 import sys
 import zipfile
 from threading import Event
@@ -64,7 +65,64 @@ def select_ranges(x, rate, source_id):
     ]
 
 
+def load_private_digests(path):
+    """Read an explicitly supplied, local-only ID -> SHA-256 mapping."""
+    if path is None:
+        return {}
+    try:
+        values = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError(
+            "Cannot read --private-digests: provide a UTF-8 JSON object "
+            "mapping source IDs to their existing SHA-256 fingerprints."
+        ) from exc
+    if not isinstance(values, dict):
+        raise ValueError("--private-digests must be a JSON object mapping IDs to SHA-256.")
+    for sid, value in values.items():
+        if not sid or not isinstance(value, str) or re.fullmatch(r"[0-9a-fA-F]{64}", value) is None:
+            raise ValueError(
+                f"--private-digests entry {sid!r} must contain exactly 64 hexadecimal "
+                "SHA-256 characters; use the original fingerprint, not a new baseline."
+            )
+    return {sid: value.lower() for sid, value in values.items()}
+
+
+def verify_source_digest(path, item, private_digests):
+    """Always verify input bytes; never infer or persist a replacement baseline."""
+    sid = item["id"]
+    if item["location"] == "local":
+        expected = private_digests.get(sid)
+        if expected is None:
+            raise ValueError(
+                f"Local input {sid} requires --private-digests PATH with its original "
+                "ID -> SHA-256 mapping (for example "
+                ".audit/040-release-review/private-corpus-digests.json). "
+                "No fingerprint baseline is generated automatically."
+            )
+        if not isinstance(expected, str) or re.fullmatch(r"[0-9a-fA-F]{64}", expected) is None:
+            raise ValueError(
+                f"--private-digests entry {sid!r} must contain exactly 64 hexadecimal "
+                "SHA-256 characters."
+            )
+        expected = expected.lower()
+    else:
+        expected = item["sha256"]
+    if digest(path) != expected:
+        raise RuntimeError(f"Input digest mismatch: {sid}")
+
+
 def render(args):
+    private_digests = load_private_digests(args.private_digests)
+    dirs = {
+        "local": args.local,
+        "external": args.output / "external",
+        "fixture": ROOT / "tests/fixtures",
+    }
+    items = [item for item in CATALOG if not args.only or item["id"] in args.only]
+    # Reject missing/invalid private mappings and changed inputs before any
+    # snapshot, report or output is created, including when resuming.
+    for item in items:
+        verify_source_digest(dirs[item["location"]] / item["file"], item, private_digests)
     code_path = args.baseline_zip if args.version == "0.1.0" else args.snapshot
     if args.version == "0.1.0" and digest(code_path) != BASELINE:
         raise RuntimeError("0.1.0 source ZIP digest differs from the shipped version")
@@ -85,18 +143,9 @@ def render(args):
         )
     version_dir = args.output / "engineering" / args.version
     version_dir.mkdir(parents=True, exist_ok=True)
-    dirs = {
-        "local": args.local,
-        "external": args.output / "external",
-        "fixture": ROOT / "tests/fixtures",
-    }
-    for item in CATALOG:
+    for item in items:
         sid = item["id"]
-        if args.only and sid not in args.only:
-            continue
         path = dirs[item["location"]] / item["file"]
-        if digest(path) != item["sha256"]:
-            raise RuntimeError(f"Input digest mismatch: {sid}")
         dest = version_dir / sid
         if (dest / "report.json").is_file() and args.resume:
             continue
@@ -145,7 +194,7 @@ def render(args):
                 service.SR,
                 bitdepth=24,
             )
-        assert digest(path) == item["sha256"]
+        verify_source_digest(path, item, private_digests)
         source_id = digest(code_path)
         report = dict(
             source=item,
@@ -178,6 +227,11 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("version", choices=["0.1.0", "0.1.1"])
     p.add_argument("--local", required=True, type=Path)
+    p.add_argument(
+        "--private-digests",
+        type=Path,
+        help="Local-only JSON mapping of source IDs to existing SHA-256 fingerprints",
+    )
     p.add_argument("--output", type=Path, default=ROOT / "build/acceptance-011")
     p.add_argument(
         "--baseline-zip",
@@ -195,7 +249,10 @@ def main():
         help="Skip previously completed cases for the same build",
     )
     p.add_argument("--only", nargs="+", choices=[item["id"] for item in CATALOG])
-    render(p.parse_args())
+    try:
+        render(p.parse_args())
+    except ValueError as exc:
+        p.error(str(exc))
 
 
 if __name__ == "__main__":

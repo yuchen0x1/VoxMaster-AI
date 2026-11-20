@@ -6,6 +6,7 @@ import numpy as np
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QCheckBox,
     QDialog,
     QFileDialog,
@@ -28,7 +29,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from . import audioio, engine, hardware
+from . import audioio, engine, hardware, service
 from .acoustics import compare_lines, report_lines
 from .playback import Playback
 from .storage import (
@@ -46,6 +47,8 @@ from .jobs import Worker
 from .service import prepare, tuning_plan, SR
 from .reference import comparison, describe_match, space_notes
 from .review import ReportDialog, PreviewDialog
+from .song import TARGETS, MASTERING
+from .song_dialog import SongDialog
 from .visual import Timeline, Spectrum, timecode, app_icon
 
 FORMATS = "音频 (*.wav *.mp3 *.flac *.m4a *.aac *.ogg *.aiff *.aif);;所有文件 (*)"
@@ -67,6 +70,12 @@ LEGACY_KINDS = {
     "混合音频": "人声加伴奏",
     "其他": "未知类型",
 }
+MODES = {
+    "vocal": ("独立人声", "AI 一键调音", "导入独立人声录音，分析并调音。"),
+    "song": ("整曲处理", "整曲处理…", "导入带伴奏的整首歌曲，分轨、混音并处理母带。"),
+    "multitrack": ("多轨混音", "打开多轨工作室", "导入音频后，打开工作室手动分配轨道和编辑。"),
+}
+STEM_ROLES = ("Vocal", "Instrumental")
 
 
 def button(caption, fn, role=None):
@@ -101,6 +110,7 @@ class MainWindow(QMainWindow):
         except OSError:
             audioio.set_cache_directory(None)
         self.s = None
+        self.import_mode = "vocal"
         self.path = None
         self.worker = None
         self.player = Playback()
@@ -143,6 +153,23 @@ class MainWindow(QMainWindow):
         self.export_btn = button("导出成品", self.export)
         top.addWidget(self.export_btn)
         layout.addLayout(top)
+        splitline(layout)
+        modes = QHBoxLayout()
+        modes.setContentsMargins(18, 6, 16, 6)
+        modes.addWidget(label("工作模式", "section"))
+        self.mode_group = QButtonGroup(self)
+        self.mode_buttons = {}
+        for mode, (caption, _, hint) in MODES.items():
+            choice = button(caption, lambda mode=mode: self.select_mode(mode), "mode_" + mode)
+            choice.setCheckable(True)
+            choice.setToolTip(hint)
+            self.mode_group.addButton(choice)
+            self.mode_buttons[mode] = choice
+            modes.addWidget(choice)
+        self.mode_hint = label("", "sub")
+        self.mode_hint.setWordWrap(True)
+        modes.addWidget(self.mode_hint, 1)
+        layout.addLayout(modes)
         splitline(layout)
         body = QHBoxLayout()
         body.setContentsMargins(0, 0, 0, 0)
@@ -217,9 +244,10 @@ class MainWindow(QMainWindow):
         splitline(c)
         line = QHBoxLayout()
         self.style = choices(list(engine.PRESETS) + list(self.custom))
-        line.addWidget(label("喊麦风格"))
+        self.style_label = label("喊麦风格")
+        line.addWidget(self.style_label)
         line.addWidget(self.style, 1)
-        self.go = button("AI 一键调音", self.tune, "primary")
+        self.go = button("AI 一键调音", self.run_mode, "primary")
         line.addWidget(self.go)
         c.addLayout(line)
         self.progress_text = label("等待导入", "sub")
@@ -319,7 +347,7 @@ class MainWindow(QMainWindow):
             ("Ctrl+Z", lambda: self.travel(False)),
             ("Ctrl+Y", lambda: self.travel(True)),
             ("Ctrl+E", self.export),
-            ("Ctrl+Return", self.tune),
+            ("Ctrl+Return", self.run_mode),
         ]:
             action = QAction(self)
             action.setShortcut(QKeySequence(key))
@@ -354,6 +382,9 @@ class MainWindow(QMainWindow):
         job.start()
 
     def job_success(self, cb, result):
+        if self.worker and self.worker.cancel.is_set() and not getattr(result, "publication_committed", False):
+            self.progress_text.setText("任务已取消，保留上一版本")
+            return
         try:
             self.progress_text.setText("任务完成")
             cb(result)
@@ -424,10 +455,60 @@ class MainWindow(QMainWindow):
             return None
         return self.s.output if self.listening and self.s.output is not None else self.s.original
 
+    def mode(self):
+        if self.s is None:
+            return self.import_mode
+        doc = self.s.document
+        return doc.get("mode", "multitrack" if doc.get("studio") else "vocal")
+
+    def select_mode(self, mode):
+        current = self.mode()
+        self.mode_buttons[current].setChecked(True)
+        if mode == current or not self.available(False):
+            return
+        if self.s is None:
+            self.import_mode = mode
+            self.refresh()
+            self.progress_text.setText("等待导入 · " + MODES[mode][0])
+            return
+        # This is a routing choice, not a request to replace the current render.
+        doc = copy.deepcopy(self.s.document)
+        doc["mode"] = mode
+        self.rebuild(doc, "切换工作模式 · " + MODES[mode][0])
+
+    def run_mode(self):
+        {"vocal": self.tune, "song": self.song_mix, "multitrack": self.studio}[self.mode()]()
+
     def refresh_controls(self):
         has = self.s is not None
         wet = has and self.s.output is not None
         free = self.worker is None
+        mode = self.mode()
+        _, primary, hint = MODES[mode]
+        if has:
+            if mode == "song":
+                if self.s.document.get("song"):
+                    primary, hint = "复核整曲方案…", "方案已生成，可复核参数或切换 A/B 等响试听。"
+                elif self.has_song_stems():
+                    hint = "人声与伴奏分轨已就绪，可分析并生成整曲方案。"
+                else:
+                    hint = "已导入歌曲，下一步确认本地分轨及整曲处理。"
+            elif mode == "multitrack":
+                hint = "在工作室手动管理轨道与剪辑；立体声不代表素材角色。"
+            else:
+                hint = "选择喊麦风格，按录音测量值调音。"
+            if mode != "song" and self.s.document.get("song"):
+                hint += " 已应用的整曲方案仍保留。"
+        else:
+            hint = "选择模式后" + hint
+        self.mode_hint.setText(hint)
+        self.mode_buttons[mode].setChecked(True)
+        for choice in self.mode_buttons.values():
+            choice.setEnabled(free)
+        self.go.setText(primary)
+        self.style_label.setVisible(mode == "vocal")
+        self.style.setVisible(mode == "vocal")
+        self.kind.setVisible(mode == "vocal")
         self.a.setEnabled(has)
         self.matched.setEnabled(wet)
         self.b.setEnabled(wet)
@@ -449,7 +530,8 @@ class MainWindow(QMainWindow):
             self.timeline.set_data(None, None, 0)
             self.track_name.setText("人声工作台")
             self.project_name.setText("未命名工程")
-            self.meta.setText("选择一段录音，开始本地分析。")
+            self.track_name.setToolTip("")
+            self.meta.setText("导入后在本机进行音频体检。")
             self.level.setText("—   LUFS")
             self.peak.setText("—   dBTP")
             self.issues.setText("导入后查看声学测量结果。")
@@ -476,15 +558,25 @@ class MainWindow(QMainWindow):
             if s.document.get("reference")
             else "尚未载入参考音频"
         )
-        p = s.document.get("params")
-        self.plan_label.setText(
-            (
+        doc = s.document
+        p = doc.get("params")
+        song = doc.get("song")
+        if song:
+            self.plan_label.setText(
+                f"整曲 · {TARGETS[song['target']]} / {MASTERING[song['master']]}\n"
+                f"人声 {song['vocal_gain_db']:+.2f} dB，伴奏 {song['instrumental_gain_db']:+.2f} dB。\n"
+                f"总线母带目标 {song['target_lufs']:.2f} LUFS，最高 {song['ceiling_db']:.2f} dBTP。"
+            )
+        elif p:
+            self.plan_label.setText(
                 f"高通 {p['highpass_hz']:.0f} Hz，低中频 {p['mud_db']:+.1f} dB，"
                 f"压缩 {p['ratio']:.1f}:1，目标 {p['target_lufs']:.1f} LUFS。"
             )
-            if p
-            else "选择风格，按当前录音的频谱与动态生成参数。"
-        )
+        else:
+            self.plan_label.setText(MODES[self.mode()][2])
+        warnings = self.render_warnings(s)
+        if warnings:
+            self.plan_label.setText(self.plan_label.text() + "\n\n复测提示\n" + "\n".join(warnings))
         lengths = (len(s.original) / SR, len(s.output) / SR if s.output is not None else 0.0)
         self.timeline.set_data(s.original_wave, s.output_wave, max(lengths), lengths)
         self.set_monitor_gain()
@@ -506,13 +598,17 @@ class MainWindow(QMainWindow):
         self.last_autosave = path
 
     def commit(self, session, *, path=None, reset=False, record=True):
+        recovery_id = uuid.uuid4().hex if reset else getattr(self, "recovery_id", uuid.uuid4().hex)
+        checkpoint = ROOT / "recovery" / (recovery_id + PROJECT_EXT)
+        # Write the recovery checkpoint before changing live audio or undo history.
+        save_project(checkpoint, session.document, False)
         self.stop()
         if reset:
             self.undo_stack.clear()
             self.redo_stack.clear()
             self.path = path
-            self.recovery_id = uuid.uuid4().hex
-        elif self.s and record:
+        self.recovery_id = recovery_id
+        if not reset and self.s and record:
             self.undo_stack.append(copy.deepcopy(self.s.document))
             self.undo_stack = self.undo_stack[-30:]
             self.redo_stack.clear()
@@ -523,9 +619,30 @@ class MainWindow(QMainWindow):
         self.listening = session.output is not None
         self.timeline.region = None
         self.refresh()
-        self.autosave()
+        self.last_autosave = checkpoint
         if reset and path:
             self.remember(path)
+
+    @staticmethod
+    def render_warnings(session):
+        evidence = (session.document.get("separation") or {}).get("reconstruction", {})
+        return list(dict.fromkeys([
+            *session.audit.get("warnings", ()), *session.audit.get("output_warnings", ()),
+            *evidence.get("warnings", ()),
+        ]))
+
+    def show_ready(self, session):
+        warnings = self.render_warnings(session)
+        if warnings:
+            self.progress_text.setText("处理完成。复测提示 · " + warnings[0])
+        elif session.output is not None:
+            self.progress_text.setText("成品已就绪，可 A/B 等响试听并导出。")
+        else:
+            self.progress_text.setText({
+                "vocal": "音频体检完成，可开始一键调音。",
+                "song": "音频体检完成，可进入整曲处理。",
+                "multitrack": "音频体检完成，可打开多轨工作室。",
+            }[self.mode()])
 
     def rebuild(self, doc, msg, *, reset=False, path=None, done=None):
         previous = None if reset else self.s
@@ -534,23 +651,16 @@ class MainWindow(QMainWindow):
             self.commit(session, path=path, reset=reset, record=done is None)
             if done:
                 done()
-            self.progress_text.setText(
-                "成品已就绪，可 A/B 试听并导出。"
-                if session.output is not None
-                else "音频体检完成，可开始一键调音。"
-            )
-            if session.audit.get("output_warnings"):
-                self.progress_text.setText(
-                    "成品已生成。复测提示 · " + session.audit["output_warnings"][0]
-                )
+            self.show_ready(session)
 
         self.run_job(msg, lambda ev, pg: prepare(doc, ev, pg, previous), success)
 
     def import_audio(self):
         if not self.available(False):
             return
+        mode_label = MODES[self.mode()][0]
         p, _ = QFileDialog.getOpenFileName(
-            self, "导入原始录音", self.settings.get("import_dir", ""), FORMATS
+            self, "导入音频 · " + mode_label, self.settings.get("import_dir", ""), FORMATS
         )
         if p:
             self.open_path(p)
@@ -591,7 +701,9 @@ class MainWindow(QMainWindow):
                 self.failed(str(exc))
         elif p.suffix.lower() in {".wav", ".aiff", ".aif", ".flac", ".mp3", ".m4a", ".aac", ".ogg"}:
             self.settings["import_dir"] = str(p.parent)
-            self.rebuild(project(p, p.stem), "正在读取音频", reset=True)
+            doc = project(p, p.stem)
+            doc["mode"] = self.mode()
+            self.rebuild(doc, "正在读取音频", reset=True)
         else:
             self.notice("请选择 WAV、MP3、FLAC、M4A、AAC、OGG、AIFF 或 .voxproj 工程。")
 
@@ -661,15 +773,16 @@ class MainWindow(QMainWindow):
         self.rebuild(d, caption)
 
     def tune(self):
-        if self.available():
-            try:
-                self.apply_params(
-                    self.current_params(),
-                    "按测量值渲染 · " + self.style.currentText(),
-                    reference_match=bool(self.s.reference_report),
-                )
-            except Exception as exc:
-                self.failed(str(exc))
+        if not self.available():
+            return
+        try:
+            self.apply_params(
+                self.current_params(),
+                "按测量值渲染 · " + self.style.currentText(),
+                reference_match=bool(self.s.reference_report),
+            )
+        except Exception as exc:
+            self.failed(str(exc))
 
     def parameters(self, tab=0):
         if not self.available():
@@ -1040,62 +1153,129 @@ class MainWindow(QMainWindow):
         with managed_dialog(ModelDialog(self)) as dialog:
             dialog.exec()
 
+    def has_song_stems(self):
+        stems = self.s.document.get("stems", {})
+        # The default Vocal buffer is the original mix, not a separated stem.
+        return all(stems.get(role) and role in self.s.sources for role in STEM_ROLES)
+
+    def separation_model_ready(self):
+        from . import models_store
+
+        def installed():
+            root = models_store.directory()
+            return all(models_store.size_of(root / name) == spec[0]
+                       for name, spec in models_store.FILES.items())
+
+        if installed():
+            return True
+        if QMessageBox.question(
+            self, "需要本地分离模型",
+            "模型缺失或不完整。打开模型中心，由你选择下载或导入？",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
+        ) != QMessageBox.Yes:
+            return False
+        self.models()
+        if installed():
+            return True
+        self.progress_text.setText("未安装完整模型，未开始分轨。")
+        return False
+
+    def separation_destination(self):
+        return QFileDialog.getExistingDirectory(
+            self, "选择分轨输出目录", self.settings.get("export_dir", "")
+        )
+
+    def song_mix(self):
+        if not self.available():
+            return
+        current = self.s
+        doc = current.document
+        has_stems = self.has_song_stems()
+        has_studio = doc.get("studio") is not None
+        if not has_stems and (has_studio or doc.get("stems")):
+            self.notice(
+                "当前工程含多轨编辑或已有分轨，但缺少可用的双轨。整曲处理不会替换这些素材。"
+                "请重新定位原分轨，或在备份工程后从「人声分离」明确执行重新分轨。"
+            )
+            return
+        styles = list(engine.PRESETS)
+        plan = doc.get("song")
+        style = doc["style"]
+        if plan and style not in styles:
+            styles.append(style)
+        try:
+            recommend = False
+            while True:
+                dialog = SongDialog(
+                    styles, style, has_stems=has_stems, plan=plan, recommend=recommend,
+                    replaces_vocal=bool(doc.get("applied") and not plan),
+                    has_studio=has_studio, parent=self,
+                )
+                with managed_dialog(dialog):
+                    if not dialog.exec():
+                        return
+                    if dialog.recommend_again:
+                        recommend = True
+                        continue
+                    options = dialog.options()
+                    break
+            if has_stems:
+                work = lambda cancel, pg: service.plan_song(current, cancel, pg, **options)
+                stage = "应用整曲方案" if "plan" in options else "分析分轨并推荐整曲方案"
+            else:
+                if not self.separation_model_ready():
+                    return
+                dest = self.separation_destination()
+                if not dest:
+                    return
+                work = lambda cancel, pg: service.separate_project(
+                    current, dest, cancel, pg, song_options=options,
+                )
+                stage = "本地分轨 → 整曲分析 → 混音与母带"
+            self.run_job(stage, work, self.commit_render)
+        except Exception as exc:
+            self.failed(str(exc))
+
+    def commit_render(self, session):
+        try:
+            self.commit(session)
+        except OSError as exc:
+            if session.publication_committed and session.publication_project:
+                raise OSError(
+                    f"{exc}\n分轨已完成，但会话提交失败。可从以下工程恢复分轨与方案：\n"
+                    f"{session.publication_project}"
+                ) from exc
+            raise
+        self.show_ready(session)
+
     def separate(self):
         if not self.available():
             return
-        from . import models_store
-        from .models import separate
-
-        if not all((models_store.directory() / name).exists() for name in models_store.FILES):
-            self.models()
-            if not all((models_store.directory() / name).exists() for name in models_store.FILES):
-                return
-        if (
-            self.s.document.get("studio")
-            and QMessageBox.question(
-                self, "重新分轨", "分离会重建多轨时间轴。当前编辑已自动保存。继续？"
-            )
-            != QMessageBox.Yes
-        ):
-            return
-        dest = QFileDialog.getExistingDirectory(
-            self, "选择分轨输出目录", self.settings.get("export_dir", "")
-        )
-        if not dest:
-            return
         current = self.s
-
-        def work(cancel, pg):
-            import tempfile
-
-            folder = Path(dest) / (
-                Path(current.document["source"]).stem + "-分轨-" + uuid.uuid4().hex[:8]
-            )
-            with tempfile.TemporaryDirectory(dir=dest, prefix=".vox-stems-") as tmp:
-                vocal, instrument = separate(
-                    current.original, SR, cancel, lambda f, m: pg(0.7 * f, m)
+        doc = current.document
+        edited = doc.get("studio") is not None or doc.get("applied") or doc.get("song")
+        if edited or doc.get("stems"):
+            if QMessageBox.question(
+                self, "重新分轨",
+                "分离会替换本工程使用的分轨，并重置多轨时间轴、人声调音与整曲方案。"
+                "不会覆盖旧音频文件，可撤销。继续？",
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
+            ) != QMessageBox.Yes:
+                return
+        try:
+            if not self.separation_model_ready():
+                return
+            dest = self.separation_destination()
+            if dest:
+                self.run_job(
+                    "分离人声与伴奏",
+                    lambda cancel, pg: service.separate_project(
+                        current, dest, cancel, pg, song_options=None,
+                    ),
+                    self.commit_render,
                 )
-                for name, data in [("Vocal", vocal), ("Instrumental", instrument)]:
-                    audioio.encode(Path(tmp) / (name + ".wav"), data, SR, 32, cancel)
-                if cancel.is_set():
-                    raise InterruptedError()
-                # Only complete stem pairs are made visible.
-                staging = Path(tmp) / "tracks"
-                staging.mkdir()
-                for path in Path(tmp).glob("*.wav"):
-                    path.rename(staging / path.name)
-                staging.rename(folder)
-            doc = copy.deepcopy(current.document)
-            doc.update(
-                stems={k: str(folder / (k + ".wav")) for k in ("Vocal", "Instrumental")},
-                studio=None,
-                applied=False,
-                params={},
-            )
-            doc["history"].append(clockstr() + "  人声与伴奏分离")
-            return prepare(doc, cancel, lambda f, m: pg(0.7 + 0.3 * f, m), current)
-
-        self.run_job("分离人声与伴奏", work, lambda s: self.commit(s))
+        except Exception as exc:
+            self.failed(str(exc))
 
     def studio(self):
         if not self.available():
@@ -1103,12 +1283,18 @@ class MainWindow(QMainWindow):
         from .studio import StudioDialog
 
         self.stop()
-        tracks = dict(self.s.sources)
-        if self.s.tuned_vocal is not None:
+        mix_sources = self.s.mix_sources
+        tracks = dict(mix_sources if mix_sources is not None else self.s.sources)
+        if mix_sources is None and self.s.tuned_vocal is not None:
             tracks["Vocal"] = self.s.tuned_vocal
         try:
             d = StudioDialog(tracks, SR, self, state=copy.deepcopy(self.s.document.get("studio")))
             with managed_dialog(d):
+                if mix_sources is not None:
+                    hint = label("试听包含整曲处理后的分轨。应用混音后，最终母带在多轨总线之后处理。", "sub")
+                    hint.setWordWrap(True)
+                    hint.setContentsMargins(20, 8, 20, 0)
+                    d.layout().insertWidget(0, hint)
                 d.player.device = self.player.device
                 d.player.volume = self.monitor_volume
                 if d.exec():
