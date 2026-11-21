@@ -64,11 +64,44 @@ def file_hash(path, cancel=None):
     return hasher.hexdigest()
 
 
+def media_paths(document):
+    """Return every source whose identity contributes to a prepared session."""
+    paths = {"original": document["source"]}
+    if document.get("reference"):
+        paths["reference"] = document["reference"]
+    paths.update({"stem/" + name: path for name, path in document.get("stems", {}).items()})
+    supplied = {"Vocal", *document.get("stems", {})}
+    external = {name: path for name, path in
+                (document.get("studio") or {}).get("external_sources", {}).items()
+                if name not in supplied}
+    paths.update({"external/" + name: path for name, path in external.items()})
+    return paths
+
+
 def check_media(paths, session, cancel):
     for key, path in paths.items():
-        if (signature(path) != session.file_signatures[key]
-                or file_hash(path, cancel) != session.media_hashes[key]):
-            raise ValueError("处理期间素材已变更，未提交本次结果；请重新打开工程。")
+        expected_signature = session.file_signatures.get(key)
+        expected_hash = session.media_hashes.get(key)
+        if expected_signature is None or expected_hash is None:
+            raise ValueError("处理结果缺少媒体身份；未提交本次结果，请重新打开工程。")
+        try:
+            current_signature = signature(path)
+            if current_signature != expected_signature:
+                raise ValueError("处理期间素材已变更；未提交本次结果，请重新打开工程。")
+            current_hash = file_hash(path, cancel)
+        except InterruptedError:
+            raise
+        except OSError as exc:
+            raise ValueError(
+                "处理期间素材已变更或缺失；未提交本次结果，请重新打开工程。"
+            ) from exc
+        if current_hash != expected_hash:
+            raise ValueError("处理期间素材已变更；未提交本次结果，请重新打开工程。")
+
+
+def verify_session_media(session):
+    """Revalidate a prepared result immediately before GUI checkpoint/session commit."""
+    check_media(media_paths(session.document), session, None)
 
 
 def verify_separation(document, hashes):
@@ -107,12 +140,11 @@ def tuning_plan(report, style="经典喊麦", kind="自动判断", reference=Non
 
 def prepare(doc, cancel, progress, previous=None):
     doc = deepcopy(doc)
-    paths = {"original": doc["source"]}
-    if doc.get("reference"):
-        paths["reference"] = doc["reference"]
-    paths.update({"stem/" + name: path for name, path in doc.get("stems", {}).items()})
-    external = (doc.get("studio") or {}).get("external_sources", {})
-    paths.update({"external/" + key: path for key, path in external.items()})
+    paths = media_paths(doc)
+    supplied = {"Vocal", *doc.get("stems", {})}
+    external = {name: path for name, path in
+                (doc.get("studio") or {}).get("external_sources", {}).items()
+                if name not in supplied}
     signatures = {key: signature(path) for key, path in paths.items()}
     hashes = {key: file_hash(path, cancel) for key, path in paths.items()}
     provenance_warnings = verify_separation(doc, hashes)
@@ -219,13 +251,15 @@ def prepare(doc, cancel, progress, previous=None):
             session.mix_sources = dict(tracks)
         progress(0.79, "正在渲染同步混音")
         if doc.get("studio"):
-            for key in external:
+            # Match load_sources: supplied built-in tracks take precedence over external aliases.
+            external_keys = [key for key in external if key not in tracks]
+            for key in external_keys:
                 cached = previous.external_cache.get(key) if previous else None
                 if cached and reusable("external/" + key):
                     tracks[key] = cached[1]
             tracks = load_sources(doc["studio"], tracks, cancel=cancel)
             session.external_cache = {
-                key: (signatures["external/" + key], tracks[key]) for key in external
+                key: (signatures["external/" + key], tracks[key]) for key in external_keys
             }
         mix = MixSession(tracks, SR, state=doc.get("studio"))
         audio = mix.render(cancel=cancel)

@@ -131,7 +131,7 @@ def test_normal_report_matches_stdout_and_replaces_previous_json(tmp_path):
     report = tmp_path / 'reports' / 'analysis.json'
     report.parent.mkdir()
     report.write_text('{"old": true}', encoding='utf-8')
-    result = run_cli(tmp_path, 'analyze', source, '--report', report)
+    result = run_cli(tmp_path, 'analyze', source, '--report', report, '--overwrite-report')
     assert result.returncode == 0, result.stderr
     assert json.loads(report.read_text('utf-8')) == json.loads(result.stdout)
     assert source.read_bytes() == FIXTURE.read_bytes()
@@ -148,7 +148,7 @@ def test_report_publication_failure_keeps_existing_file(tmp_path, monkeypatch, c
         raise OSError('simulated publication failure')
 
     monkeypatch.setattr(storage.os, 'replace', fail_replace)
-    status = cli.main(['analyze', str(source), '--report', str(report)])
+    status = cli.main(['analyze', str(source), '--report', str(report), '--overwrite-report'])
     output = capsys.readouterr()
     assert status == 2
     assert report.read_bytes() == b'{"previous": true}'

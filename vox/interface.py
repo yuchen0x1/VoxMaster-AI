@@ -44,7 +44,7 @@ from .storage import (
     write_json,
 )
 from .dialogs import choices, label, ParameterDialog, ExportDialog, managed_dialog
-from .jobs import Worker
+from .jobs import PublishedFile, Worker
 from .service import prepare, tuning_plan, SR
 from .reference import comparison, describe_match, space_notes
 from .review import ReportDialog, PreviewDialog
@@ -634,10 +634,22 @@ class MainWindow(QMainWindow):
     def home(self):
         self.timeline.setFocus()
 
-    def remember(self, path):
+    def recent_paths(self):
         recent = self.settings.get("recent", [])
-        self.settings["recent"] = [str(path)] + [p for p in recent if p != str(path)][:15]
-        self.save_settings()
+        if not isinstance(recent, list):
+            return []
+        return [p for p in recent if isinstance(p, str) and p]
+
+    def remember(self, path):
+        self.settings["recent"] = [str(path)] + [
+            p for p in self.recent_paths() if p != str(path)
+        ][:15]
+        try:
+            self.save_settings()
+        except Exception as exc:
+            # Preferences are ancillary to an already committed project/checkpoint.
+            return "最近工程记录未保存：" + str(exc)
+        return None
 
     def autosave(self):
         if not self.s:
@@ -647,6 +659,9 @@ class MainWindow(QMainWindow):
         self.last_autosave = path
 
     def commit(self, session, *, path=None, reset=False, record=True):
+        # prepare() runs on a worker; media may change while its result waits in the GUI queue.
+        # Revalidate before writing the recovery checkpoint or mutating any live state.
+        service.verify_session_media(session)
         recovery_id = uuid.uuid4().hex if reset else getattr(self, "recovery_id", uuid.uuid4().hex)
         checkpoint = ROOT / "recovery" / (recovery_id + PROJECT_EXT)
         # Write the recovery checkpoint before changing live audio or undo history.
@@ -670,7 +685,8 @@ class MainWindow(QMainWindow):
         self.refresh()
         self.last_autosave = checkpoint
         if reset and path:
-            self.remember(path)
+            return self.remember(path)
+        return None
 
     @staticmethod
     def render_warnings(session):
@@ -697,10 +713,12 @@ class MainWindow(QMainWindow):
         previous = None if reset else self.s
 
         def success(session):
-            self.commit(session, path=path, reset=reset, record=done is None)
+            warning = self.commit(session, path=path, reset=reset, record=done is None)
             if done:
                 done()
             self.show_ready(session)
+            if warning:
+                self.progress_text.setText(self.progress_text.text() + " · " + warning)
 
         self.run_job(msg, lambda ev, pg: prepare(doc, ev, pg, previous), success)
 
@@ -782,9 +800,10 @@ class MainWindow(QMainWindow):
         try:
             save_project(p, self.s.document)
             self.path = p
-            self.remember(p)
+            warning = self.remember(p)
             self.refresh()
-            self.progress_text.setText("工程已保存 · " + Path(p).name)
+            self.progress_text.setText("工程已保存 · " + Path(p).name
+                                       + (" · " + warning if warning else ""))
         except Exception as exc:
             self.failed(str(exc))
 
@@ -967,22 +986,35 @@ class MainWindow(QMainWindow):
         lay = QVBoxLayout(d)
         lay.addWidget(label("最近工程与恢复记录", "section"))
         files = QListWidget()
-        recent = [Path(p) for p in self.settings.get("recent", []) if Path(p).is_file()]
-        recoveries = sorted(
-            (ROOT / "recovery").glob("*.voxproj"), key=lambda p: p.stat().st_mtime, reverse=True
-        )[:20]
-        history = (
-            sorted(Path(str(self.path) + ".history").glob("*.voxproj"), reverse=True)
-            if self.path
-            else []
-        )
+        recent = [Path(p) for p in self.recent_paths()]
+
+        def modified(path):
+            try:
+                return path.stat().st_mtime
+            except OSError:
+                return float("-inf")
+
+        try:
+            recoveries = sorted(
+                (ROOT / "recovery").glob("*.voxproj"), key=modified, reverse=True
+            )[:20]
+        except OSError:
+            recoveries = []
+        try:
+            history = (
+                sorted(Path(str(self.path) + ".history").glob("*.voxproj"), reverse=True)
+                if self.path
+                else []
+            )
+        except OSError:
+            history = []
         for group, paths in [("工程", recent), ("备份", history), ("自动保存", recoveries)]:
             for path in paths:
                 try:
                     title = load_project(path)["name"]
+                    stamp = datetime.datetime.fromtimestamp(path.stat().st_mtime).strftime("%m-%d %H:%M")
                 except Exception:
                     continue
-                stamp = datetime.datetime.fromtimestamp(path.stat().st_mtime).strftime("%m-%d %H:%M")
                 files.addItem(f"{group}    {title}    {stamp}")
                 files.item(files.count() - 1).setData(Qt.UserRole, str(path))
                 files.item(files.count() - 1).setToolTip(str(path))
@@ -1482,11 +1514,18 @@ class MainWindow(QMainWindow):
             return
         if Path(path).suffix.lower() != "." + fmt:
             return self.notice("目标文件扩展名与所选格式不符。")
+        def encode(cancel, _progress):
+            result = audioio.encode(path, source, SR, bits, cancel, output_rate=rate, channels=ch)
+            # Keep encoder receipts and warnings; legacy encoders returned no receipt.
+            # A late cancellation cannot undo the completed no-replace publication.
+            return result if result is not None else PublishedFile(Path(path))
+
         self.run_job(
             "编码成品",
-            lambda ev, pg: audioio.encode(path, source, SR, bits, ev, output_rate=rate, channels=ch),
+            encode,
             lambda result: self.progress_text.setText(
-                "已导出 · " + str(path) + ("\n" + result.warning if result.warning else "")
+                "已导出 · " + str(result.path)
+                + ("\n" + result.warning if getattr(result, "warning", None) else "")
             ),
         )
 

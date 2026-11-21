@@ -1,5 +1,17 @@
 import threading
+from dataclasses import dataclass
+from pathlib import Path
+from typing import ClassVar
+
 from PySide6.QtCore import QThread, Signal
+
+
+@dataclass(frozen=True)
+class PublishedFile:
+    """Receipt for an output that has already been made durable for the user."""
+
+    path: Path
+    publication_committed: ClassVar[bool] = True
 
 
 class Worker(QThread):

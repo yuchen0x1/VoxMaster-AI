@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 import urllib.request
 
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import QThread, Signal, Slot
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -25,31 +26,69 @@ from . import models_store as store
 from .models_runtime import providers, separate as separate
 
 
+_UPSTREAM_SOCKET_TIMEOUT = 3
+_UPSTREAM_DEADLINE = 15
+_UPSTREAM_MAX_BYTES = 1024 * 1024
+# A modal dialog (or its parent) can be deleted independently of a blocked
+# request. Retain unparented QThreads until finished, never until merely stopped.
+_RUNNING_TASKS = set()
+
+
 class ModelTask(QThread):
     update = Signal(float, str)
     result = Signal(str)
 
-    def __init__(self, task, parent):
-        super().__init__(parent)
+    def __init__(self, task, parent=None, *, download=False):
+        super().__init__()
         self.task = task
         self.stop = threading.Event()
+        self.download = download
         self.discard = False
+        self.cancel_message = None
+        if parent is not None:
+            parent.destroyed.connect(self.request_stop)
+
+    def start(self, *args, **kwargs):
+        # Connect disposal after the caller's finished slot: otherwise a fast
+        # worker can delete its sender before the dialog clears its task handle.
+        self.finished.connect(self._release)
+        _RUNNING_TASKS.add(self)
+        try:
+            super().start(*args, **kwargs)
+        except Exception:
+            if not self.isRunning():
+                _RUNNING_TASKS.discard(self)
+            raise
+
+    @Slot()
+    def request_stop(self):
+        self.stop.set()
+
+    @Slot()
+    def _release(self):
+        _RUNNING_TASKS.discard(self)
+        self.task = None
+        self.deleteLater()
 
     def run(self):
         try:
+            store.check_cancel(self.stop)
             msg = self.task(self.stop, self.update.emit)
             self.result.emit(msg or "已完成")
         except InterruptedError:
-            if self.discard:
+            if self.download and self.discard:
                 try:
                     store.remove(partial=True)
-                    self.result.emit("下载已取消")
-                except OSError as err:
-                    self.result.emit(str(err))
+                    self.cancel_message = "下载已取消"
+                except (OSError, RuntimeError) as err:
+                    self.cancel_message = "下载已取消，清理未完成 · " + str(err)
+            elif self.download:
+                self.cancel_message = "任务已暂停，可继续下载"
             else:
-                self.result.emit("任务已暂停，可继续下载")
+                self.cancel_message = "任务已取消"
+            self.result.emit(self.cancel_message)
         except Exception as exc:
-            self.result.emit("操作未完成 · " + str(exc))
+            self.result.emit("操作未完成 · " + (str(exc) or type(exc).__name__))
 
 
 class ModelDialog(QDialog):
@@ -58,6 +97,9 @@ class ModelDialog(QDialog):
         self.setWindowTitle("AI 模型中心")
         self.resize(660, 440)
         self.task = None
+        self.close_pending = False
+        self._close_result = QDialog.Rejected
+        self._stop_requested = None
         layout = QVBoxLayout(self)
         heading = QLabel("Spleeter 2-stem")
         heading.setStyleSheet("font-size:24px; font-weight:600")
@@ -169,47 +211,124 @@ class ModelDialog(QDialog):
         self.update.setEnabled(True)
         self.check.setEnabled(good_sizes)
         self.delete.setEnabled(count > 0)
+        self.cancel.setText("取消下载")
         self.cancel.setEnabled(partial)
         self.pause.setEnabled(False)
 
+    def _restore_controls(self):
+        for button in (self.start, self.migrate, self.update):
+            button.setEnabled(True)
+        for button in (self.pause, self.cancel, self.check, self.delete):
+            button.setEnabled(False)
+        self.cancel.setText("取消下载")
+        try:
+            self.refresh()
+        except (OSError, RuntimeError) as exc:
+            if not self.close_pending:
+                self.message.setText("无法读取模型状态 · " + str(exc))
+
     def _run(self, action, download=False):
-        if self.task:
+        if self.task is not None or self.close_pending:
             return
         for button in (self.start, self.migrate, self.update, self.check, self.delete):
             button.setEnabled(False)
         self.pause.setEnabled(download)
-        self.cancel.setEnabled(download)
+        self.cancel.setText("取消下载" if download else "取消任务")
+        self.cancel.setEnabled(True)
+        self._stop_requested = None
         self.message.setText("正在处理…")
-        self.task = ModelTask(action, self)
-        self.task.update.connect(self._progress)
-        self.task.result.connect(self.message.setText)
-        self.task.finished.connect(self._finished)
-        self.task.start()
+        task = None
+        try:
+            task = ModelTask(action, self, download=download)
+            self.task = task
+            task.update.connect(self._progress)
+            task.result.connect(self._result)
+            task.finished.connect(self._finished)
+            task.start()
+        except Exception as exc:
+            text = "任务无法启动 · " + (str(exc) or type(exc).__name__)
+            if task is not None and task.isRunning():
+                # A startup hook can fail after starting the native thread.
+                # Keep it alive and busy until its real finished signal arrives.
+                self._request_stop()
+                self.message.setText(text + "；已请求取消，请等待当前任务结束。")
+            else:
+                self.task = None
+                if task is not None:
+                    task.deleteLater()
+                self._restore_controls()
+                self.message.setText(text)
 
+    @Slot()
     def _finished(self):
-        self.task.deleteLater()
+        task = self.sender()
+        if task is None or task is not self.task:
+            return
         self.task = None
-        self.refresh()
+        if self._stop_requested and not self.close_pending:
+            text = task.cancel_message
+            if not text:
+                # Cancel can win the GUI race after success was already queued.
+                # Do not claim a completed file operation was rolled back.
+                text = (
+                    "任务已结束，已保留下载数据"
+                    if self._stop_requested == "pause"
+                    else "任务已结束（已请求取消），请确认模型状态"
+                )
+            self.message.setText(text)
+        self._stop_requested = None
+        self._restore_controls()
+        if self.close_pending:
+            self.done(self._close_result)
 
+    def _accepts_result(self):
+        return (
+            self.task is not None
+            and self.sender() is self.task
+            and not self._stop_requested
+            and not self.close_pending
+        )
+
+    @Slot(str)
+    def _result(self, message):
+        if self._accepts_result():
+            self.message.setText(message)
+
+    @Slot(float, str)
     def _progress(self, fraction, message):
-        self.progress.setValue(int(1000 * fraction))
-        self.message.setText(message)
+        if self._accepts_result():
+            self.progress.setValue(int(1000 * fraction))
+            self.message.setText(message)
 
     def _download(self):
         root = store.directory()
         force = all(store.size_of(root / n) == size for n, (size, _) in store.FILES.items())
         self._run(lambda c, p: store.install(c, p, force), download=True)
 
+    def _request_stop(self, *, pause=False, discard=False):
+        if self.task is None:
+            return
+        self._stop_requested = "pause" if pause else "cancel"
+        if discard and self.task.download:
+            self.task.discard = True
+        self.task.stop.set()
+        self.pause.setEnabled(False)
+        self.cancel.setEnabled(False)
+        if self.close_pending:
+            text = "已请求关闭，正在取消任务；请等待当前网络请求或文件操作结束。"
+        elif pause:
+            text = "已请求暂停，请等待当前网络请求或文件操作结束。"
+        else:
+            text = "已请求取消，请等待当前网络请求或文件操作结束。"
+        self.message.setText(text)
+
     def _pause(self):
-        if self.task:
-            self.task.stop.set()
-            self.message.setText("正在暂停传输…")
+        if self.task is not None and self.task.download:
+            self._request_stop(pause=True)
 
     def _cancel(self):
-        if self.task:
-            self.task.discard = True
-            self.task.stop.set()
-            self.message.setText("正在取消下载…")
+        if self.task is not None:
+            self._request_stop(discard=True)
         else:
             self._run(lambda c, p: store.remove(partial=True))
 
@@ -232,9 +351,43 @@ class ModelDialog(QDialog):
 
     @staticmethod
     def _upstream(cancel, progress):
+        deadline = time.monotonic() + _UPSTREAM_DEADLINE
+
+        def checkpoint():
+            store.check_cancel(cancel)
+            if time.monotonic() >= deadline:
+                raise TimeoutError("检查上游版本超时，请稍后重试。")
+
+        checkpoint()
         url = "https://huggingface.co/api/models/" + store.REPOSITORY
-        with urllib.request.urlopen(url, timeout=15) as r:
-            rev = json.load(r)["sha"]
+        # urllib's timeout is a socket-idle limit, not a whole-request deadline.
+        # A current socket call may still take this long to return; DNS and HTTP
+        # header parsing are controlled by urllib/the OS, not these checkpoints.
+        socket_timeout = min(
+            _UPSTREAM_SOCKET_TIMEOUT, max(0.001, deadline - time.monotonic())
+        )
+        with urllib.request.urlopen(url, timeout=socket_timeout) as response:
+            checkpoint()
+            read = getattr(response, "read1", None)
+            # HTTPResponse.read(n) fills n bytes and can wait forever on trickle.
+            # read1 performs at most one buffered/raw read. For other file-like
+            # responses, a one-byte read avoids the fill loop as well.
+            block_size = 64 * 1024 if callable(read) else 1
+            if not callable(read):
+                read = response.read
+            body = bytearray()
+            while True:
+                checkpoint()
+                block = read(min(block_size, _UPSTREAM_MAX_BYTES - len(body) + 1))
+                checkpoint()
+                if not block:
+                    break
+                body.extend(block)
+                if len(body) > _UPSTREAM_MAX_BYTES:
+                    raise ValueError("上游版本响应大小超过上限")
+        checkpoint()
+        rev = json.loads(body)["sha"]
+        checkpoint()
         return (
             "当前已是上游版本"
             if rev == store.REVISION
@@ -257,14 +410,23 @@ class ModelDialog(QDialog):
             ),
         )
 
+    def done(self, result):
+        if self.task is not None:
+            self.close_pending = True
+            self._close_result = result
+            self._request_stop()
+            return
+        self.close_pending = False
+        super().done(result)
+
+    def accept(self):
+        self.done(QDialog.Accepted)
+
     def reject(self):
-        if self.task:
-            self.message.setText("任务执行中。下载可暂停后关闭此窗口。")
-        else:
-            super().reject()
+        self.done(QDialog.Rejected)
 
     def closeEvent(self, event):
-        if self.task:
+        if self.task is not None:
             self.reject()
             event.ignore()
         else:

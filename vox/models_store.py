@@ -152,8 +152,11 @@ def transfer(url, part, size, sha, cancel, progress):
 
 
 def install(cancel, progress, force=False, root=None):
+    use_default = root is None
     root = root or directory()
     with locked(root):
+        if use_default and directory().resolve() != root.resolve():
+            raise RuntimeError("活动模型目录已变更，请重新发起操作。")
         completed = 0
         staged = []
         for name, (size, sha) in FILES.items():
@@ -181,8 +184,11 @@ def install(cancel, progress, force=False, root=None):
 
 
 def remove(root=None, partial=False):
+    use_default = root is None
     root = root or directory()
     with locked(root):
+        if use_default and directory().resolve() != root.resolve():
+            raise RuntimeError("活动模型目录已变更，请重新发起操作。")
         for name in FILES:
             (root / (name + ".part")).unlink(missing_ok=True)
             if not partial:
@@ -197,6 +203,8 @@ def migrate(new_base, cancel):
     if src in dst.parents or dst in src.parents:
         raise ValueError("请选择独立的模型目录")
     with locked(src), locked(dst):
+        if directory().resolve() != src:
+            raise RuntimeError("活动模型目录已变更，请重新发起迁移。")
         if any((src / (n + ".part")).exists() for n in FILES):
             raise ValueError("请先完成或取消下载，再迁移模型。")
         assets = [n for n in FILES if (src / n).is_file()]

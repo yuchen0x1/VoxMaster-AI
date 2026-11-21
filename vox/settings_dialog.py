@@ -45,9 +45,15 @@ def _valid_url(url):
         return False
 
 
-def check_version(url):
+def _check_cancelled(cancel):
+    if cancel is not None and cancel.is_set():
+        raise InterruptedError("检查已取消。")
+
+
+def check_version(url, cancel=None):
     if not _valid_url(url):
         raise ValueError("请输入不含账号信息的 HTTPS 清单地址。")
+    _check_cancelled(cancel)
     with requests.get(
         url,
         headers={"Accept": "application/json"},
@@ -59,9 +65,11 @@ def check_version(url):
             raise ValueError(f"服务器返回 HTTP {response.status_code}，请使用清单的直接地址。")
         data = bytearray()
         for block in response.iter_content(8192):
+            _check_cancelled(cancel)
             data.extend(block)
             if len(data) > 65536:
                 raise ValueError("更新清单超过 64 KiB。")
+    _check_cancelled(cancel)
     manifest = json.loads(data)
     if not isinstance(manifest, dict) or not isinstance(manifest.get("version"), str):
         raise ValueError("更新清单需要字符串字段 version。")
@@ -318,9 +326,11 @@ class SettingsDialog(QDialog):
         layout.addWidget(self.update_status)
         layout.addStretch()
         self._messages = queue.SimpleQueue()
+        self._check_cancel = None
         self._timer = QTimer(self)
         self._timer.setInterval(150)
         self._timer.timeout.connect(self._poll)
+        self.finished.connect(self._cancel_check)
         return page
 
     def _official_update(self):
@@ -331,6 +341,8 @@ class SettingsDialog(QDialog):
             dialog.exec()
 
     def _check(self):
+        if self._check_cancel is not None:
+            return
         url = self.url.text().strip()
         if not _valid_url(url):
             self.update_status.setText("请输入 HTTPS 清单的直接地址。")
@@ -338,24 +350,50 @@ class SettingsDialog(QDialog):
         self.check.setEnabled(False)
         self.update_status.setText("正在读取更新清单…")
         messages = self._messages
+        cancel = threading.Event()
+        self._check_cancel = cancel
 
         def run():
+            # The worker only retains plain Python state, never a Qt widget.
             try:
-                messages.put(check_version(url))
+                result = check_version(url, cancel)
+            except InterruptedError:
+                result = "检查已取消。"
             except Exception as exc:
-                messages.put(f"检查失败。{exc}")
+                result = f"检查失败。{exc}"
+            messages.put((cancel, result))
 
-        threading.Thread(target=run, daemon=True).start()
+        try:
+            threading.Thread(target=run, daemon=True).start()
+        except RuntimeError as exc:
+            self._check_cancel = None
+            self.check.setEnabled(True)
+            self.update_status.setText(f"检查失败。{exc}")
+            return
         self._timer.start()
 
-    def _poll(self):
-        try:
-            result = self._messages.get_nowait()
-        except queue.Empty:
-            return
+    def _cancel_check(self, _result=None):
+        if self._check_cancel is not None:
+            self._check_cancel.set()
+            self._check_cancel = None
+            self.update_status.setText("检查已取消。")
         self._timer.stop()
         self.check.setEnabled(True)
-        self.update_status.setText(result)
+
+    def _poll(self):
+        while True:
+            try:
+                cancel, result = self._messages.get_nowait()
+            except queue.Empty:
+                return
+            # A closed/reopened dialog must never consume an old request's result.
+            if cancel is not self._check_cancel or cancel.is_set():
+                continue
+            self._check_cancel = None
+            self._timer.stop()
+            self.check.setEnabled(True)
+            self.update_status.setText(result)
+            return
 
     def value(self):
         values = self._settings.copy()

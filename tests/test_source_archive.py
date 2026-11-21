@@ -1,6 +1,8 @@
 """Release archives must retain the app license, not private media or model caches."""
-from pathlib import Path
+import hashlib
+import json
 import os
+from pathlib import Path
 import shutil
 import subprocess
 from zipfile import ZipFile
@@ -10,6 +12,12 @@ import pytest
 from scripts import source_archive
 
 ROOT = Path(__file__).resolve().parents[1]
+UPSTREAM = 'packaging/upstream/mingw-w64-lame-3.100-3.src.tar.zst'
+
+
+def _write(path, content=b'test'):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(content)
 
 
 def test_archive_filters_private_media_and_keeps_attributed_fixture(tmp_path):
@@ -58,7 +66,7 @@ def test_source_archive_rejects_tree_internal_junction(tmp_path):
     (root / 'LICENSE').write_text('test license', encoding='utf-8')
     public = root / 'docs' / 'public'
     public.mkdir(parents=True)
-    (public / 'manual.txt').write_text('public', encoding='utf-8')
+    (public / 'manual.md').write_text('public', encoding='utf-8')
     link = root / 'docs' / 'linked'
     if os.name == 'nt':
         result = subprocess.run(['cmd', '/c', 'mklink', '/J', str(link), str(public)],
@@ -69,10 +77,451 @@ def test_source_archive_rejects_tree_internal_junction(tmp_path):
         link.symlink_to(public, target_is_directory=True)
     try:
         names = {name for _, name in source_archive.source_files(root)}
-        assert 'docs/public/manual.txt' in names
+        assert 'docs/public/manual.md' in names
         assert not any(name.startswith('docs/linked/') for name in names)
     finally:
         if os.name == 'nt':
             link.rmdir()
         else:
             link.unlink()
+
+
+def test_scope_allowlist_drops_unapproved_files_but_keeps_build_and_license_inputs(tmp_path):
+    root = tmp_path / 'source'
+    _write(root / 'LICENSE', b'MIT license')
+    _write(root / 'README.md')
+    _write(root / 'app.py')
+    _write(root / 'vox' / 'core.py')
+    _write(root / 'scripts' / 'build.ps1')
+    _write(root / 'scripts' / 'release.py')
+    _write(root / 'scripts' / 'unknown.bin')
+    _write(root / 'packaging' / 'VoxMasterAI.spec')
+    _write(root / 'packaging' / 'VoxMasterAI.iss')
+    _write(root / 'packaging' / 'build-codecs.sh')
+    _write(root / 'packaging' / 'VoxMasterAI.ico')
+    _write(root / 'packaging' / 'version.txt')
+    _write(root / 'packaging' / 'licenses' / 'ThirdPartyNotices.txt')
+    upstream = root / UPSTREAM
+    upstream.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(ROOT / UPSTREAM, upstream)
+    _write(root / 'tests' / 'test_core.py')
+    _write(root / 'tests' / 'fixtures' / 'README.md')
+    _write(root / 'tests' / 'mc_corpus' / 'README.md')
+    catalog = root / 'tests' / 'mc_corpus' / 'sources.json'
+    shutil.copy2(ROOT / 'tests' / 'mc_corpus' / 'sources.json', catalog)
+    _write(root / 'docs' / 'ARCHITECTURE.md')
+    _write(root / 'docs' / 'workstation.png')
+    _write(root / '.github' / 'workflows' / 'release.yml')
+    _write(root / '.github' / 'CODEOWNERS')
+
+    sentinels = (
+        'tests/private.caf', 'tests/private.wma', 'tests/private.raw', 'tests/private.pcm',
+        'tests/private.pem', 'tests/private.key', 'tests/private.p12', 'tests/private.pfx',
+        'tests/.env', 'tests/private.unknown', 'tests/private.json',
+        'docs/evidence-020/pytest.txt',
+        'docs/evidence-020/crash.xml', 'docs/evidence-020/private.json',
+        'docs/evidence-020/private.jsonl', 'packaging/private.caf',
+    )
+    for name in sentinels:
+        _write(root / name, b'sentinel must not ship')
+
+    output = tmp_path / 'source.zip'
+    source_archive.archive(output, root)
+    with ZipFile(output) as archive:
+        names = set(archive.namelist())
+
+    expected = {
+        'LICENSE', 'README.md', 'app.py', 'vox/core.py', 'scripts/build.ps1',
+        'scripts/release.py', 'packaging/VoxMasterAI.spec', 'packaging/VoxMasterAI.iss',
+        'packaging/build-codecs.sh', 'packaging/VoxMasterAI.ico', 'packaging/version.txt',
+        'packaging/licenses/ThirdPartyNotices.txt', UPSTREAM, 'tests/test_core.py',
+        'tests/fixtures/README.md', 'tests/mc_corpus/README.md',
+        'tests/mc_corpus/sources.json', 'docs/ARCHITECTURE.md', 'docs/workstation.png',
+        '.github/workflows/release.yml', '.github/CODEOWNERS',
+    }
+    assert names == expected
+    assert not names.intersection(sentinels)
+
+
+def test_catalog_retains_public_sources_and_anonymizes_only_local_filenames(tmp_path):
+    root = tmp_path / 'source'
+    _write(root / 'LICENSE')
+    relative = Path('tests/mc_corpus/sources.json')
+    catalog = root / relative
+    catalog.parent.mkdir(parents=True)
+    original = (ROOT / relative).read_bytes()
+    catalog.write_bytes(original)
+    output = tmp_path / 'source.zip'
+    source_archive.archive(output, root)
+    with ZipFile(output) as archive:
+        packed = json.loads(archive.read(relative.as_posix()))
+    reviewed = json.loads(original)
+    assert len(packed) == len(reviewed)
+    for before, after in zip(reviewed, packed, strict=True):
+        if before['location'] == 'local':
+            assert after['file'] == before['id'] + Path(before['file']).suffix
+            assert {k: v for k, v in after.items() if k != 'file'} == {
+                k: v for k, v in before.items() if k != 'file'
+            }
+        else:
+            assert after == before
+    assert catalog.read_bytes() == original
+    assert hashlib.sha256(original.replace(b'\r\n', b'\n')).hexdigest() in {
+        source_archive.CATALOG_SHA, source_archive.PUBLIC_CATALOG_SHA,
+        source_archive.REVIEWED_MERGED_CATALOG_SHA,
+    }
+    # Repacking the distributed source must remain supported and byte-stable.
+    catalog.write_bytes((json.dumps(packed, ensure_ascii=False, indent=2) + '\n').encode('utf-8'))
+    source_archive.archive(output, root)
+    with ZipFile(output) as archive:
+        assert json.loads(archive.read(relative.as_posix())) == packed
+
+
+@pytest.mark.parametrize('newline', [b'\n', b'\r\n'], ids=['LF', 'CRLF'])
+def test_catalog_line_endings_do_not_change_reviewed_content(tmp_path, newline):
+    canonical = (ROOT / source_archive.CATALOG).read_bytes().replace(b'\r\n', b'\n')
+    path = tmp_path / 'sources.json'
+    path.write_bytes(canonical.replace(b'\n', newline))
+    assert source_archive._public_catalog(path) == canonical
+
+
+def test_reviewed_local_catalog_filename_is_not_distributed(tmp_path, monkeypatch):
+    _write(tmp_path / 'LICENSE')
+    relative = 'tests/mc_corpus/sources.json'
+    original = b'[{"id":"MC01","location":"local","file":"private-sentinel.mp3","private_digest_required":true}]'
+    _write(tmp_path / relative, original)
+    monkeypatch.setattr(source_archive, 'CATALOG_SHA', hashlib.sha256(original).hexdigest())
+    output = tmp_path / 'source.zip'
+    source_archive.archive(output, tmp_path)
+    with ZipFile(output) as archive:
+        packed = archive.read(relative)
+    assert b'private-sentinel' not in packed
+    assert json.loads(packed)[0]['file'] == 'MC01.mp3'
+    assert (tmp_path / relative).read_bytes() == original
+
+
+def test_changed_catalog_aborts_without_replacing_previous_archive(tmp_path):
+    _write(tmp_path / 'LICENSE')
+    catalog = tmp_path / 'tests/mc_corpus/sources.json'
+    _write(catalog, b'[{"location":"local","file":"private-sentinel.mp3"}]')
+    output = tmp_path / 'source.zip'
+    output.write_bytes(b'previous archive')
+    with pytest.raises(ValueError, match='catalog.*changed'):
+        source_archive.archive(output, tmp_path)
+    assert output.read_bytes() == b'previous archive'
+    assert not list(tmp_path.glob('.vox-source-*'))
+
+
+def test_replaced_upstream_source_aborts_without_replacing_previous_archive(tmp_path):
+    _write(tmp_path / 'LICENSE')
+    _write(tmp_path / UPSTREAM, b'not the reviewed corresponding sources')
+    output = tmp_path / 'source.zip'
+    output.write_bytes(b'previous archive')
+    with pytest.raises(ValueError, match='upstream.*changed'):
+        source_archive.archive(output, tmp_path)
+    assert output.read_bytes() == b'previous archive'
+
+
+def test_source_archive_skips_symlinked_files_and_directories(tmp_path):
+    root = tmp_path / 'source'
+    _write(root / 'LICENSE')
+    _write(root / 'scripts' / 'real.py')
+    outside = tmp_path / 'outside.py'
+    outside.write_text('must not be archived', encoding='utf-8')
+    try:
+        (root / 'scripts' / 'linked.py').symlink_to(outside)
+        (root / 'scripts' / 'linked-dir').symlink_to(root / 'scripts', target_is_directory=True)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f'symlink creation is unavailable: {exc}')
+
+    output = tmp_path / 'source.zip'
+    source_archive.archive(output, root)
+    with ZipFile(output) as archive:
+        assert set(archive.namelist()) == {'LICENSE', 'scripts/real.py'}
+
+
+def test_symlinked_root_license_is_rejected(tmp_path):
+    root = tmp_path / 'source'
+    outside = tmp_path / 'outside-license'
+    outside.write_text('not the repository license', encoding='utf-8')
+    try:
+        (root / 'LICENSE').parent.mkdir(parents=True)
+        (root / 'LICENSE').symlink_to(outside)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f'symlink creation is unavailable: {exc}')
+
+    with pytest.raises(ValueError, match='LICENSE'):
+        source_archive.archive(tmp_path / 'source.zip', root)
+
+
+@pytest.mark.skipif(os.name != 'nt', reason='junctions are Windows-specific')
+def test_junction_to_outside_root_is_not_archived(tmp_path):
+    root = tmp_path / 'source'
+    _write(root / 'LICENSE')
+    outside = tmp_path / 'outside-dir'
+    _write(outside / 'outside.py')
+    junction = root / 'scripts' / 'junction'
+    junction.parent.mkdir(parents=True, exist_ok=True)
+    result = subprocess.run(
+        ['cmd.exe', '/c', 'mklink', '/J', str(junction), str(outside)],
+        check=False, capture_output=True,
+    )
+    if result.returncode:
+        pytest.skip(f'junction creation is unavailable: {result.stderr.strip()}')
+
+    output = tmp_path / 'source.zip'
+    source_archive.archive(output, root)
+    with ZipFile(output) as archive:
+        assert set(archive.namelist()) == {'LICENSE'}
+
+
+@pytest.mark.skipif(os.name != 'nt', reason='junctions are Windows-specific')
+@pytest.mark.parametrize('private_directory', ['.AuDiT', 'real_audio'])
+def test_junction_to_private_directory_inside_root_is_not_archived(tmp_path, private_directory):
+    root = tmp_path / 'source'
+    _write(root / 'LICENSE')
+    _write(root / 'scripts' / 'public.py')
+    private = root / private_directory
+    _write(private / 'private.py', b'private sentinel must not ship')
+    junction = root / 'scripts' / 'alias'
+    result = subprocess.run(
+        ['cmd.exe', '/c', 'mklink', '/J', str(junction), str(private)],
+        check=False, capture_output=True, timeout=30,
+    )
+    if result.returncode:
+        pytest.skip(f'junction creation is unavailable: {result.stderr.strip()}')
+
+    output = tmp_path / 'source.zip'
+    source_archive.archive(output, root)
+    with ZipFile(output) as archive:
+        assert set(archive.namelist()) == {'LICENSE', 'scripts/public.py'}
+
+
+def test_unexpected_extension_is_not_archived_from_every_source_scope(tmp_path):
+    root = tmp_path / 'source'
+    _write(root / 'LICENSE')
+    for scope in ('vox', 'scripts', 'packaging', 'tests', 'docs', '.github'):
+        _write(root / scope / 'payload.unknown', b'not an approved source type')
+    _write(root / 'tests' / '.PYTEST_CACHE' / 'private.py')
+    _write(root / 'docs' / '.AUDIT' / 'private.md')
+    _write(root / 'scripts' / 'expected.py')
+    output = tmp_path / 'source.zip'
+    source_archive.archive(output, root)
+    with ZipFile(output) as archive:
+        assert set(archive.namelist()) == {'LICENSE', 'scripts/expected.py'}
+
+
+def _git(root, *arguments):
+    return subprocess.run(
+        ['git', '-C', str(root), *arguments], check=True, capture_output=True,
+    )
+
+
+def test_checkout_archive_uses_index_and_excludes_untracked_documents(tmp_path):
+    root = tmp_path / 'source'
+    _write(root / 'LICENSE', b'reviewed license')
+    _write(root / 'docs' / 'public.md', b'approved source help')
+    _write(root / 'docs' / 'local-notes.md', b'untracked private note')
+    _git(root, 'init', '--quiet')
+    _git(root, 'add', 'LICENSE', 'docs/public.md')
+
+    output = tmp_path / 'source.zip'
+    source_archive.archive(output, root)
+    with ZipFile(output) as archive:
+        assert set(archive.namelist()) == {'LICENSE', 'docs/public.md'}
+
+
+def test_checkout_archive_rejects_worktree_index_mismatch_without_replacing_output(tmp_path):
+    root = tmp_path / 'source'
+    _write(root / 'LICENSE', b'reviewed license')
+    _write(root / 'docs' / 'manual.md', b'approved version')
+    _git(root, 'init', '--quiet')
+    _git(root, 'add', 'LICENSE', 'docs/manual.md')
+    (root / 'docs' / 'manual.md').write_bytes(b'worktree-only change')
+    output = tmp_path / 'source.zip'
+    output.write_bytes(b'previous approved archive')
+
+    with pytest.raises(ValueError, match='Working tree differs'):
+        source_archive.archive(output, root)
+    assert output.read_bytes() == b'previous approved archive'
+    assert not list(tmp_path.glob('.vox-source-*'))
+
+
+def test_checkout_archive_rejects_unsafe_tracked_inputs(tmp_path, monkeypatch):
+    root = tmp_path / 'source'
+    unsafe = root / 'scripts' / 'unsafe.py'
+    _write(root / 'LICENSE')
+    _write(unsafe, b'unsafe tracked source')
+    _git(root, 'init', '--quiet')
+    _git(root, 'add', 'LICENSE', 'scripts/unsafe.py')
+    is_link = source_archive._is_link
+
+    def mark_reparse(path):
+        if Path(path) == unsafe:
+            return True
+        return is_link(path)
+
+    monkeypatch.setattr(source_archive, '_is_link', mark_reparse)
+    with pytest.raises(ValueError, match='Unsafe tracked source input'):
+        list(source_archive.source_files(root))
+
+
+@pytest.mark.parametrize('flags, expected_flag', [
+    (('--assume-unchanged',), b'h'),
+    (('--skip-worktree',), b'S'),
+    (('--assume-unchanged', '--skip-worktree'), b's'),
+], ids=['assume-unchanged', 'skip-worktree', 'both-flags'])
+@pytest.mark.parametrize('changed', [False, True], ids=['clean', 'hidden-private-change'])
+def test_checkout_archive_rejects_index_flags_without_clearing_them(
+    tmp_path, flags, expected_flag, changed,
+):
+    root = tmp_path / 'source'
+    manual = root / 'docs' / 'manual.md'
+    _write(root / 'LICENSE', b'reviewed license')
+    _write(manual, b'reviewed manual')
+    _git(root, 'init', '--quiet')
+    _git(root, 'config', 'core.autocrlf', 'false')
+    _git(root, 'add', 'LICENSE', 'docs/manual.md')
+    for flag in flags:
+        _git(root, 'update-index', flag, '--', 'docs/manual.md')
+    if changed:
+        manual.write_bytes(b'private sentinel hidden from git diff')
+    original = manual.read_bytes()
+    index_before = _git(root, 'ls-files', '--stage', '-v', '-z').stdout
+    assert _git(root, 'ls-files', '-v', '--', 'docs/manual.md').stdout.startswith(
+        expected_flag + b' ',
+    )
+    # These flags really do bypass the old diff-only boundary on this Git host.
+    assert _git(root, 'diff', '--quiet', '--', *source_archive.SCOPES).returncode == 0
+    output = tmp_path / 'source.zip'
+    output.write_bytes(b'previous approved archive')
+
+    with pytest.raises(ValueError, match='Unsupported Git index flag'):
+        source_archive.archive(output, root)
+
+    assert output.read_bytes() == b'previous approved archive'
+    assert manual.read_bytes() == original
+    assert _git(root, 'ls-files', '--stage', '-v', '-z').stdout == index_before
+    assert not list(tmp_path.glob('.vox-source-*'))
+
+
+@pytest.mark.parametrize('newline', [b'\n', b'\r\n'], ids=['LF', 'CRLF'])
+def test_checkout_archive_uses_canonical_index_bytes_with_clean_line_endings(tmp_path, newline):
+    root = tmp_path / 'source'
+    reviewed = b'# Reviewed manual\nPublic help.\n'
+    _write(root / 'LICENSE', b'reviewed license\n')
+    manual = root / 'docs' / 'manual.md'
+    _write(manual, reviewed.replace(b'\n', newline))
+    binary = b'\x89PNG\x00\r\npublic binary bytes\r\n'
+    _write(root / 'docs' / 'screenshot.png', binary)
+    _git(root, 'init', '--quiet')
+    _git(root, 'config', 'core.autocrlf', 'true')
+    _git(root, 'add', 'LICENSE', 'docs/manual.md', 'docs/screenshot.png')
+    assert _git(root, 'show', ':docs/manual.md').stdout == reviewed
+    assert _git(root, 'diff', '--quiet').returncode == 0
+
+    output = tmp_path / 'source.zip'
+    assert source_archive.archive(output, root) == 3
+    with ZipFile(output) as archive:
+        assert archive.read('docs/manual.md') == reviewed
+        assert archive.read('docs/screenshot.png') == binary
+    assert manual.read_bytes() == reviewed.replace(b'\n', newline)
+
+
+@pytest.mark.parametrize('restage', [False, True], ids=['worktree-change', 'index-also-changes'])
+def test_checkout_archive_does_not_read_live_bytes_after_index_validation(
+    tmp_path, monkeypatch, restage,
+):
+    root = tmp_path / 'source'
+    manual = root / 'docs' / 'manual.md'
+    reviewed = b'reviewed manual'
+    private = b'private sentinel introduced after index validation'
+    _write(root / 'LICENSE', b'reviewed license')
+    _write(manual, reviewed)
+    _git(root, 'init', '--quiet')
+    _git(root, 'config', 'core.autocrlf', 'false')
+    _git(root, 'add', 'LICENSE', 'docs/manual.md')
+    tracked_paths = source_archive._tracked_paths
+    validations = []
+
+    def change_after_validation(path):
+        result = tracked_paths(path)
+        validations.append(path)
+        manual.write_bytes(private)
+        if restage:
+            _git(root, 'add', 'docs/manual.md')
+        return result
+
+    monkeypatch.setattr(source_archive, '_tracked_paths', change_after_validation)
+    output = tmp_path / 'source.zip'
+    source_archive.archive(output, root)
+    assert len(validations) == 1
+    with ZipFile(output) as archive:
+        assert archive.read('docs/manual.md') == reviewed
+        assert all(private not in archive.read(name) for name in archive.namelist())
+    assert manual.read_bytes() == private
+    assert _git(root, 'show', ':docs/manual.md').stdout == (private if restage else reviewed)
+    assert not list(tmp_path.glob('.vox-source-*'))
+
+
+@pytest.mark.parametrize('tracked', [False, True], ids=['source-kit', 'checkout'])
+def test_archive_uses_captured_source_bytes_when_inputs_change_during_zip_write(
+    tmp_path, monkeypatch, tracked,
+):
+    root = tmp_path / 'source'
+    manual = root / 'docs' / 'manual.md'
+    reviewed = b'reviewed manual'
+    private = b'private sentinel introduced while writing ZIP'
+    _write(root / 'LICENSE', b'reviewed license')
+    _write(manual, reviewed)
+    if tracked:
+        _git(root, 'init', '--quiet')
+        _git(root, 'add', 'LICENSE', 'docs/manual.md')
+    enter = source_archive.ZipFile.__enter__
+    mutations = []
+
+    def change_on_zip_write(archive):
+        if archive.mode == 'w':
+            mutations.append(archive.filename)
+            manual.write_bytes(private)
+        return enter(archive)
+
+    monkeypatch.setattr(source_archive.ZipFile, '__enter__', change_on_zip_write)
+    output = tmp_path / 'source.zip'
+    source_archive.archive(output, root)
+    assert len(mutations) == 1
+    with ZipFile(output) as archive:
+        assert archive.read('docs/manual.md') == reviewed
+    assert manual.read_bytes() == private
+    assert not list(tmp_path.glob('.vox-source-*'))
+
+
+@pytest.mark.parametrize('name', [source_archive.FIXTURE, UPSTREAM, source_archive.CATALOG])
+def test_source_kit_pins_validate_the_bytes_actually_captured_for_archive(
+    tmp_path, monkeypatch, name,
+):
+    root = tmp_path / 'source'
+    _write(root / 'LICENSE')
+    path = root / name
+    _write(path, (ROOT / name).read_bytes())
+    original = path.read_bytes()
+    expected = source_archive._public_catalog(path) if name == source_archive.CATALOG else original
+    private = b'private sentinel introduced after pinned input validation'
+    enter = source_archive.ZipFile.__enter__
+    mutations = []
+
+    def change_on_zip_write(archive):
+        if archive.mode == 'w':
+            mutations.append(archive.filename)
+            path.write_bytes(private)
+        return enter(archive)
+
+    monkeypatch.setattr(source_archive.ZipFile, '__enter__', change_on_zip_write)
+    output = tmp_path / 'source.zip'
+    source_archive.archive(output, root)
+    assert len(mutations) == 1
+    with ZipFile(output) as archive:
+        assert archive.read(name) == expected
+        assert private not in archive.read(name)
+    assert path.read_bytes() == private
+    assert not list(tmp_path.glob('.vox-source-*'))

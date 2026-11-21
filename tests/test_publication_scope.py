@@ -17,10 +17,10 @@ def git_checkout(tmp_path):
     (root / 'LICENSE').write_text('public test license', encoding='utf-8')
     (root / 'app.py').write_text('"""Public application."""', encoding='utf-8')
     (root / 'docs').mkdir()
-    (root / 'docs/manual.md').write_text('Public manual', encoding='utf-8')
+    (root / 'docs/example.md').write_text('Public example', encoding='utf-8')
     (root / '.gitignore').write_text('docs/private.txt\n', encoding='utf-8')
     subprocess.run(['git', '-C', str(root), 'add', '--', 'LICENSE', 'app.py',
-                    'docs/manual.md', '.gitignore'], check=True, capture_output=True)
+                    'docs/example.md', '.gitignore'], check=True, capture_output=True)
     return root
 
 
@@ -31,7 +31,7 @@ def test_git_archive_excludes_untracked_and_ignored_documents(tmp_path):
     destination = tmp_path / 'release.zip'
     source_archive.archive(destination, root)
     with ZipFile(destination) as archive:
-        assert set(archive.namelist()) == {'LICENSE', 'app.py', 'docs/manual.md', '.gitignore'}
+        assert set(archive.namelist()) == {'LICENSE', 'app.py', 'docs/example.md', '.gitignore'}
     assert (root / 'docs/operator-notes.md').read_text('utf-8') == 'local-only operator notes'
 
 
@@ -59,10 +59,21 @@ def load_stage(root, monkeypatch):
 
 
 def add_shipping_documents(root):
-    for name in ['README.md', 'CHANGELOG.md', 'docs/THIRD_PARTY.md']:
+    root_docs = ['README.md', 'CHANGELOG.md']
+    help_docs = [
+        'MANUAL.md', 'MULTITRACK.md', 'MODELS.md', 'UPDATING.md',
+        'PLATFORMS.md', 'THIRD_PARTY.md',
+    ]
+    for name in root_docs:
         (root / name).write_text('Public shipping document', encoding='utf-8')
-    subprocess.run(['git', '-C', str(root), 'add', '--', 'README.md', 'CHANGELOG.md',
-                    'docs/THIRD_PARTY.md'], check=True, capture_output=True)
+    for name in help_docs:
+        (root / 'docs' / name).write_text('Public shipping document', encoding='utf-8')
+    (root / 'docs' / 'studio.png').write_bytes(b'public test image')
+    subprocess.run(
+        ['git', '-C', str(root), 'add', '--', *root_docs,
+         *(f'docs/{name}' for name in help_docs), 'docs/studio.png'],
+        check=True, capture_output=True,
+    )
 
 
 def test_staged_documents_share_the_git_allowlist(tmp_path, monkeypatch):
@@ -71,7 +82,7 @@ def test_staged_documents_share_the_git_allowlist(tmp_path, monkeypatch):
     (root / 'docs/operator-notes.md').write_text('local-only notes', encoding='utf-8')
     stage = load_stage(root, monkeypatch)
     stage.copy_documents()
-    assert (stage.DIST / 'docs/manual.md').read_text('utf-8') == 'Public manual'
+    assert (stage.DIST / 'docs/MANUAL.md').read_text('utf-8') == 'Public shipping document'
     assert not (stage.DIST / 'docs/operator-notes.md').exists()
     assert (stage.INFO / 'VoxMaster-AI-LICENSE.txt').read_text('utf-8') == 'public test license'
 
