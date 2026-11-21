@@ -34,7 +34,9 @@ class Worker(QThread):
                 # Published files and stem pairs are committed results, not drafts.
                 self.succeeded.emit(result)
         except Exception as exc:
-            if self.cancel.is_set() or isinstance(exc, InterruptedError):
+            if (self.cancel.is_set() or isinstance(exc, InterruptedError)) and not getattr(
+                exc, "publication_committed", False,
+            ):
                 self.cancelled.emit()
             else:
                 self.failed.emit(str(exc) or type(exc).__name__)

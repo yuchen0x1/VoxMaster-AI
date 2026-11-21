@@ -259,3 +259,26 @@ def test_resume_allows_neutral_notes(tmp_path):
         encoding="utf-8",
     )
     assert render_trials._resume_report_is_public(report, LOCAL)
+
+
+@pytest.mark.parametrize(
+    "nested",
+    [
+        {"analysis": {"source": r"C:\\synthetic-private\\analysis.wav"}},
+        {"analysis": {"source": {"path": r"C:\\synthetic-private\\analysis.wav"}}},
+        {"analysis": [{"source": [r"/synthetic-private/analysis.wav"]}]},
+        {
+            "metadata": [
+                {"details": {"source": {"filename": "nested-private.wav"}}}
+            ]
+        },
+    ],
+    ids=["direct-source", "dict-source", "list-source", "nested-dict-source"],
+)
+def test_resume_rejects_private_paths_nested_under_source(tmp_path, nested):
+    report = tmp_path / "report.json"
+    report.write_text(
+        json.dumps({"source": LOCAL, **nested}),
+        encoding="utf-8",
+    )
+    assert not render_trials._resume_report_is_public(report, LOCAL)

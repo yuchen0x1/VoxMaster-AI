@@ -418,29 +418,60 @@ class MainWindow(QMainWindow):
     def run_job(self, text, work, success):
         if self.worker:
             return
-        job = Worker(work, self)
+        validation = {}
+
+        def action(cancel, progress):
+            result = work(cancel, progress)
+            if isinstance(result, service.Session):
+                try:
+                    # Published stem pairs must still be delivered after a late cancel.
+                    validation['receipt'] = service.verify_session_media(
+                        result, None if result.publication_committed else cancel,
+                    )
+                except InterruptedError:
+                    raise
+                except (OSError, ValueError) as exc:
+                    failure = self.commit_error(result, exc)
+                    if failure is exc:
+                        raise
+                    raise failure from exc
+            return result
+
+        job = Worker(action, self)
         self.worker = job
         self.progress.setRange(0, 0)
         self.progress_text.setText(text)
         self.refresh_controls()
-        job.progress.connect(self.on_progress)
-        job.succeeded.connect(lambda result: self.job_success(success, result))
-        job.failed.connect(self.failed)
-        job.cancelled.connect(lambda: self.progress_text.setText("任务已取消"))
-        job.finished.connect(self.job_finished)
+        job.progress.connect(lambda f, message: self.on_progress(f, message)
+                             if self.worker is job else None)
+        job.succeeded.connect(lambda result: self.job_success(
+            success, result, job=job, receipt=validation.get('receipt'),
+        ))
+        job.failed.connect(lambda message: self.failed(message) if self.worker is job else None)
+        job.cancelled.connect(lambda: self.progress_text.setText("任务已取消")
+                              if self.worker is job else None)
+        job.finished.connect(lambda: self.job_finished(job))
         job.start()
 
-    def job_success(self, cb, result):
+    def job_success(self, cb, result, *, job=None, receipt=None):
+        if job is not None and self.worker is not job:
+            return
         if self.worker and self.worker.cancel.is_set() and not getattr(result, "publication_committed", False):
             self.progress_text.setText("任务已取消，保留上一版本")
             return
+        previous_validation = getattr(self, '_commit_validation', None)
+        self._commit_validation = (result, receipt)
         try:
             self.progress_text.setText("任务完成")
             cb(result)
         except Exception as exc:
             self.failed(str(exc))
+        finally:
+            self._commit_validation = previous_validation
 
-    def job_finished(self):
+    def job_finished(self, job=None):
+        if job is not None and self.worker is not job:
+            return
         job = self.worker
         self.worker = None
         if job:
@@ -659,9 +690,13 @@ class MainWindow(QMainWindow):
         self.last_autosave = path
 
     def commit(self, session, *, path=None, reset=False, record=True):
-        # prepare() runs on a worker; media may change while its result waits in the GUI queue.
-        # Revalidate before writing the recovery checkpoint or mutating any live state.
-        service.verify_session_media(session)
+        # Full hashing stays on the worker; fence any change during queued delivery
+        # before writing the checkpoint or mutating live state. Direct callers also hash.
+        validated = getattr(self, '_commit_validation', None)
+        if validated is not None and validated[0] is session and validated[1] is not None:
+            service.verify_media_receipt(session, validated[1])
+        else:
+            service.verify_session_media(session)
         recovery_id = uuid.uuid4().hex if reset else getattr(self, "recovery_id", uuid.uuid4().hex)
         checkpoint = ROOT / "recovery" / (recovery_id + PROJECT_EXT)
         # Write the recovery checkpoint before changing live audio or undo history.
@@ -1317,16 +1352,27 @@ class MainWindow(QMainWindow):
         except Exception as exc:
             self.failed(str(exc))
 
+    @staticmethod
+    def commit_error(session, error):
+        if session.publication_committed and session.publication_project:
+            failure = type(error)(
+                f"{error}\n分轨已完成，但会话提交失败。可从以下工程恢复分轨与方案：\n"
+                f"{session.publication_project}"
+            )
+            failure.publication_committed = True
+            return failure
+        return error
+
     def commit_render(self, session):
         try:
             self.commit(session)
-        except OSError as exc:
-            if session.publication_committed and session.publication_project:
-                raise OSError(
-                    f"{exc}\n分轨已完成，但会话提交失败。可从以下工程恢复分轨与方案：\n"
-                    f"{session.publication_project}"
-                ) from exc
+        except InterruptedError:
             raise
+        except (OSError, ValueError) as exc:
+            failure = self.commit_error(session, exc)
+            if failure is exc:
+                raise
+            raise failure from exc
         self.show_ready(session)
 
     def separate(self):

@@ -99,9 +99,41 @@ def check_media(paths, session, cancel):
             raise ValueError("处理期间素材已变更；未提交本次结果，请重新打开工程。")
 
 
-def verify_session_media(session):
-    """Revalidate a prepared result immediately before GUI checkpoint/session commit."""
-    check_media(media_paths(session.document), session, None)
+def media_version(session):
+    """Bind a verification receipt to its paths, expected hashes and file versions."""
+    versions = []
+    for key, path in media_paths(session.document).items():
+        try:
+            resolved = Path(path).resolve()
+            stat = resolved.stat()
+        except OSError as exc:
+            raise ValueError(
+                "处理期间素材已变更或缺失；未提交本次结果，请重新打开工程。"
+            ) from exc
+        versions.append((
+            key, str(path), tuple(session.file_signatures.get(key, ())),
+            session.media_hashes.get(key), str(resolved), stat.st_dev, stat.st_ino,
+            stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns,
+        ))
+    return tuple(versions)
+
+
+def verify_media_receipt(session, receipt):
+    """Fence queued GUI delivery without rereading complete media on the GUI thread."""
+    if media_version(session) != receipt:
+        raise ValueError("处理期间素材已变更；未提交本次结果，请重新打开工程。")
+
+
+def verify_session_media(session, cancel=None):
+    """Hash on the worker, then return a version fence for the GUI commit boundary.
+
+    This is change detection, not a filesystem snapshot or a lock against a
+    concurrent writer that can preserve every observed metadata field.
+    """
+    before = media_version(session)
+    check_media(media_paths(session.document), session, cancel)
+    verify_media_receipt(session, before)
+    return before
 
 
 def verify_separation(document, hashes):

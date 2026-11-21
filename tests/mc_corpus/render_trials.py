@@ -184,7 +184,6 @@ def _resume_report_is_public(path, item):
             return any(
                 contains_private_path(child, child_key)
                 for child_key, child in value.items()
-                if child_key != "source"
             )
         if isinstance(value, list):
             return any(contains_private_path(child, key) for child in value)
@@ -192,7 +191,9 @@ def _resume_report_is_public(path, item):
             return False
         return key in {"path", "file", "filename"} or _PRIVATE_ABSOLUTE.search(value) is not None
 
-    return not contains_private_path(report)
+    return not contains_private_path(
+        {key: value for key, value in report.items() if key != "source"}
+    )
 
 
 def render(args):

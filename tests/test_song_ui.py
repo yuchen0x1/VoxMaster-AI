@@ -138,7 +138,7 @@ def test_resolved_plan_round_trips_and_can_be_edited(window):
 def test_review_does_not_discard_vocal_params_or_rerun_analysis(window, monkeypatch, qt_session_app):
     # This routing test supplies synthetic stem paths; media identity is covered
     # separately by test_commit_media_identity.py.
-    monkeypatch.setattr(interface.service, "verify_session_media", lambda session: None)
+    monkeypatch.setattr(interface.service, "verify_session_media", lambda session, cancel=None: None)
     window.open_path(SPEECH)
     settle(qt_session_app, window)
     params = copy.deepcopy(window.current_params())
@@ -188,7 +188,7 @@ def test_explicit_reseparate_clears_song_plan_without_silent_timeline_overwrite(
                                                                            qt_session_app, tmp_path):
     # This routing test returns a synthetic Session; real media identity checks
     # are covered separately by test_commit_media_identity.py.
-    monkeypatch.setattr(interface.service, "verify_session_media", lambda session: None)
+    monkeypatch.setattr(interface.service, "verify_session_media", lambda session, cancel=None: None)
     window.open_path(SPEECH)
     settle(qt_session_app, window)
     window.s.document["stems"] = {"Vocal": "/stems/vocal.wav", "Instrumental": "/stems/music.wav"}

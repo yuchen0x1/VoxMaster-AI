@@ -1,6 +1,8 @@
 """A GUI result is revalidated after preparation and immediately before checkpoint commit."""
 from copy import deepcopy
-from threading import Event
+from threading import Event, get_ident
+
+from PySide6.QtCore import QTimer
 import os
 
 import numpy as np
@@ -143,3 +145,184 @@ def test_late_cancel_still_commits_published_result_when_media_is_unchanged(prep
     assert received == [candidate]
     assert window.s is candidate
     assert window.last_autosave.is_file()
+
+
+def test_full_commit_hashing_does_not_block_gui_events(prepared_candidate, monkeypatch):
+    state = prepared_candidate
+    window, candidate, app = state['window'], state['candidate'], state['app']
+    entered, release = Event(), Event()
+    gui_thread, hash_threads, ticks, errors = get_ident(), [], [], []
+    real_hash = service.file_hash
+
+    def held_hash(path, cancel=None):
+        hash_threads.append(get_ident())
+        entered.set()
+        if not release.wait(5):
+            raise RuntimeError('test did not release media verification')
+        return real_hash(path, cancel)
+
+    monkeypatch.setattr(service, 'file_hash', held_hash)
+    monkeypatch.setattr(window, 'notice', errors.append)
+    window.run_job('verify media', lambda *_: candidate, window.commit_render)
+    worker = window.worker
+    try:
+        assert entered.wait(2), 'full validation must start before GUI result delivery'
+        QTimer.singleShot(0, lambda: ticks.append(True))
+        app.processEvents()
+        assert ticks and window.s is state['previous']
+        assert window.worker is worker
+    finally:
+        release.set()
+        assert worker.wait(10_000)
+        app.processEvents()
+    assert not errors
+    assert hash_threads and gui_thread not in hash_threads
+    assert window.s is candidate and window.worker is None
+
+
+@pytest.mark.parametrize('mutation', ['same-stat-replacement', 'delete'])
+def test_published_validation_failure_names_recovery_project(prepared_candidate, mutation):
+    state = prepared_candidate
+    if mutation == 'delete':
+        state['external'].unlink()
+    else:
+        replace_with_same_stat(state['external'])
+
+    with pytest.raises((ValueError, OSError), match='可从以下工程恢复') as error:
+        state['window'].commit_render(state['candidate'])
+
+    assert str(state['recovery']) in str(error.value)
+    assert state['window'].s is state['previous']
+    assert state['artifact'].is_file() and state['recovery'].is_file()
+
+
+def test_media_replaced_after_worker_validation_is_rejected_at_gui_boundary(
+        prepared_candidate, monkeypatch):
+    state = prepared_candidate
+    window, candidate, app = state['window'], state['candidate'], state['app']
+    errors = []
+    before = window.last_autosave.read_bytes()
+    monkeypatch.setattr(window, 'notice', errors.append)
+    window.run_job('verify media', lambda *_: candidate, window.commit_render)
+    worker = window.worker
+    assert worker.wait(10_000)
+    replace_with_same_stat(state['external'])
+    app.processEvents()
+
+    assert window.s is state['previous'] and window.worker is None
+    assert window.last_autosave.read_bytes() == before
+    assert len(errors) == 1 and str(state['recovery']) in errors[0]
+
+
+def test_late_worker_callbacks_cannot_clear_or_commit_a_new_job(prepared_candidate):
+    state = prepared_candidate
+    window = state['window']
+    old = Worker(lambda *_: None, window)
+    current = Worker(lambda *_: None, window)
+    window.worker = current
+    received = []
+
+    window.job_success(received.append, state['candidate'], job=old)
+    window.job_finished(old)
+
+    assert received == [] and window.s is state['previous']
+    assert window.worker is current
+    window.worker = None
+    old.deleteLater()
+    current.deleteLater()
+
+
+@pytest.mark.parametrize('published', [False, True], ids=['draft', 'published'])
+def test_close_during_validation_waits_for_worker_and_preserves_publication_semantics(
+        prepared_candidate, monkeypatch, published):
+    from PySide6.QtGui import QCloseEvent
+
+    state = prepared_candidate
+    window, candidate, app = state['window'], state['candidate'], state['app']
+    candidate.publication_committed = published
+    entered, release = Event(), Event()
+    errors = []
+    real_hash = service.file_hash
+
+    def held_hash(path, cancel=None):
+        entered.set()
+        if not release.wait(5):
+            raise RuntimeError('test did not release media verification')
+        return real_hash(path, cancel)
+
+    monkeypatch.setattr(service, 'file_hash', held_hash)
+    monkeypatch.setattr(window, 'notice', errors.append)
+    window.run_job('verify media', lambda *_: candidate, window.commit_render)
+    worker = window.worker
+    try:
+        assert entered.wait(2)
+        event = QCloseEvent()
+        window.closeEvent(event)
+        assert not event.isAccepted() and worker.cancel.is_set()
+        assert window.worker is worker
+    finally:
+        release.set()
+        assert worker.wait(10_000)
+        app.processEvents()
+    assert not errors and window.worker is None
+    assert window.s is (candidate if published else state['previous'])
+    assert state['artifact'].is_file() and state['recovery'].is_file()
+
+
+def test_late_cancel_cannot_hide_published_validation_error(prepared_candidate, monkeypatch):
+    state = prepared_candidate
+    window, candidate, app = state['window'], state['candidate'], state['app']
+    entered, release = Event(), Event()
+    errors = []
+    real_hash = service.file_hash
+
+    def held_hash(path, cancel=None):
+        entered.set()
+        if not release.wait(5):
+            raise RuntimeError('test did not release media verification')
+        return real_hash(path, cancel)
+
+    monkeypatch.setattr(service, 'file_hash', held_hash)
+    monkeypatch.setattr(window, 'notice', errors.append)
+    window.run_job('verify media', lambda *_: candidate, window.commit_render)
+    worker = window.worker
+    try:
+        assert entered.wait(2)
+        window.cancel()
+        state['external'].unlink()
+    finally:
+        release.set()
+        assert worker.wait(10_000)
+        app.processEvents()
+    assert window.s is state['previous'] and window.worker is None
+    assert len(errors) == 1 and str(state['recovery']) in errors[0]
+    assert state['artifact'].is_file() and state['recovery'].is_file()
+
+
+def test_commit_receipt_is_bound_to_expected_hashes_and_media_paths(prepared_candidate):
+    state = prepared_candidate
+    candidate = state['candidate']
+    receipt = service.verify_session_media(candidate)
+    candidate.media_hashes['original'] = '0' * 64
+    with pytest.raises(ValueError, match='素材已变更'):
+        service.verify_media_receipt(candidate, receipt)
+
+
+def test_interrupted_validation_is_not_wrapped_as_publication_failure(
+        prepared_candidate, monkeypatch):
+    state = prepared_candidate
+    window, app = state['window'], state['app']
+    errors = []
+
+    def interrupted(*_args, **_kwargs):
+        raise InterruptedError()
+
+    monkeypatch.setattr(service, 'file_hash', interrupted)
+    monkeypatch.setattr(window, 'notice', errors.append)
+    window.run_job('verify media', lambda *_: state['candidate'], window.commit_render)
+    worker = window.worker
+    assert worker.wait(10_000)
+    app.processEvents()
+    assert not errors and window.s is state['previous'] and window.worker is None
+    assert '已取消' in window.progress_text.text()
+    assert state['artifact'].is_file() and state['recovery'].is_file()
