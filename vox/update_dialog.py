@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QLabel, QMessageBox,
                                QProgressBar, QPushButton, QTextBrowser, QVBoxLayout)
 
 from . import __version__, updating
-from .jobs import Worker
+from .jobs import PublishedFile, Worker
 
 
 class UpdateDialog(QDialog):
@@ -53,7 +53,7 @@ class UpdateDialog(QDialog):
         self.job.start()
 
     def completed(self, complete, result):
-        if not self.close_pending:
+        if not self.close_pending or isinstance(result, PublishedFile):
             complete(result)
 
     def cancelled(self):
@@ -97,17 +97,34 @@ class UpdateDialog(QDialog):
                 self.failure(str(exc))
                 return
             self.started = time.monotonic()
-            self.run(lambda ev, pg: updating.download(asset, ev, pg), self.downloaded)
+            self.run(lambda ev, pg: PublishedFile(updating.download(asset, ev, pg)),
+                     lambda receipt: self.downloaded(receipt.path))
         else:
             self.status.setText('正在校验官方版本与 Ed25519 签名…')
-            self.run(lambda ev, pg: updating.check_release(ev), self.checked)
+            self.run(self.check, self.checked)
 
-    def checked(self, data):
+    @staticmethod
+    def check(cancel, _progress):
+        data = updating.check_release(cancel)
+        if Version(data['version']) > Version(__version__):
+            try:
+                asset = updating.installer_asset(data)
+            except (KeyError, ValueError):
+                pass  # The GUI shows the existing unsupported-platform or missing-asset message.
+            else:
+                return data, updating.cached_installer(asset, cancel)
+        return data, None
+
+    def checked(self, result):
+        data, cached = result
         self.notes.setPlainText(data['notes'])
         if Version(data['version']) <= Version(__version__):
             self.status.setText('已是最新版本 ' + __version__)
             return
         self.release = data
+        if cached is not None:
+            self.downloaded(cached)
+            return
         # Trust transparency: show what will be downloaded before asking to continue.
         try:
             asset = updating.installer_asset(data)
@@ -121,7 +138,7 @@ class UpdateDialog(QDialog):
     def downloaded(self, path):
         self.package = path
         self.progress.setValue(100)
-        self.status.setText('签名清单、下载大小与 SHA-256 均已校验。保存工程后可启动安装器。')
+        self.status.setText('签名清单、安装包大小与 SHA-256 均已校验。保存工程后可启动安装器。')
         self.action.setText('启动已验证的安装器')
 
     def failure(self, text):
@@ -131,7 +148,7 @@ class UpdateDialog(QDialog):
         if self.job is not None:
             self.close_pending = True
             self.job.cancel.set()
-            self.status.setText('正在取消，请等待当前网络请求结束后关闭。')
+            self.status.setText('正在取消，请等待当前更新任务结束后关闭。')
             return
         self.close_pending = False
         super().reject()

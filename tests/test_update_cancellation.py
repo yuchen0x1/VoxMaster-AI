@@ -1,11 +1,16 @@
-"""Cooperative cancellation stops updates before subsequent requests/publication."""
+"""Cancellation stops pending updates without discarding published installers."""
+import base64
 import hashlib
+import json
+from pathlib import Path
 from threading import Event
 import time
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 import pytest
 
-from vox import updating
+from vox import update_dialog, updating
 from vox.update_dialog import UpdateDialog
 
 
@@ -210,3 +215,214 @@ def test_dialog_closes_after_cancelled_worker_finishes(qt_session_app, monkeypat
         dialog.close()
         dialog.deleteLater()
         qt_session_app.processEvents()
+
+
+@pytest.fixture
+def signed_update(tmp_path, monkeypatch):
+    body = b'verified installer bytes'
+    asset = asset_for(body)
+    key = Ed25519PrivateKey.generate()
+    public = key.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+    manifest = json.dumps(dict(schema=1, version='9.0.0', minimum_version='0.1.1',
+                               notes='Signed notes', published_at='2026-11-21',
+                               assets={'windows-x64-setup': asset})).encode()
+    replies = {updating.MANIFEST: manifest, updating.MANIFEST + '.sig': base64.b64encode(key.sign(manifest)),
+               asset['url']: body}
+    requested = []
+    installer_actions = []
+
+    def get(url, **_):
+        requested.append(url)
+        return Response([replies[url]])
+
+    monkeypatch.setattr(updating.requests, 'get', get)
+    monkeypatch.setattr(updating, 'PUBLIC_KEY', base64.b64encode(public))
+    # Exercise Windows update UI on every CI platform, without an installer process.
+    monkeypatch.setattr(updating, 'installer_asset', lambda data: data['assets']['windows-x64-setup'])
+    monkeypatch.setattr(update_dialog.QMessageBox, 'question',
+                        lambda *args: installer_actions.append('confirm'))
+    monkeypatch.setattr(updating, 'launch_installer', lambda *args: installer_actions.append('launch'))
+    monkeypatch.setenv('VOXMASTER_DATA', str(tmp_path))
+    cached = tmp_path / 'updates' / (asset['sha256'] + '.exe')
+    yield body, asset, cached, replies, requested
+    assert not installer_actions
+
+
+@pytest.fixture
+def open_update_dialog(qt_session_app):
+    dialogs = []
+
+    def open_dialog():
+        dialog = UpdateDialog()
+        dialogs.append(dialog)
+        dialog.show()
+        return dialog
+
+    yield open_dialog
+    for dialog in dialogs:
+        if dialog.job is not None:
+            dialog.job.cancel.set()
+            dialog.job.wait(10000)
+        qt_session_app.processEvents()
+        dialog.close()
+        dialog.deleteLater()
+        qt_session_app.processEvents()
+
+
+def finish_update_job(app, dialog):
+    assert dialog.job is not None and dialog.job.wait(10000)
+    deadline = time.monotonic() + 3
+    while dialog.job is not None and time.monotonic() < deadline:
+        app.processEvents()
+        time.sleep(.005)
+    assert dialog.job is None
+
+
+@pytest.mark.parametrize('close_method', ['reject', 'close'])
+def test_close_after_atomic_download_keeps_committed_success(
+        qt_session_app, monkeypatch, signed_update, open_update_dialog, close_method):
+    body, asset, cached, _, requested = signed_update
+    dialog = open_update_dialog()
+    dialog.act()
+    finish_update_job(qt_session_app, dialog)
+    assert dialog.release is not None and dialog.package is None
+
+    committed, unblock = Event(), Event()
+    real_replace = updating.os.replace
+
+    def replace(source, target):
+        real_replace(source, target)
+        if Path(target) == cached:
+            committed.set()
+            if not unblock.wait(10):
+                raise RuntimeError('Test did not release the published download')
+
+    monkeypatch.setattr(updating.os, 'replace', replace)
+    dialog.act()
+    try:
+        job = dialog.job
+        succeeded, cancelled, failed = [], [], []
+        job.succeeded.connect(succeeded.append)
+        job.cancelled.connect(lambda: cancelled.append(True))
+        job.failed.connect(failed.append)
+        assert committed.wait(5)
+        assert cached.read_bytes() == body
+        assert list(cached.parent.iterdir()) == [cached]
+        getattr(dialog, close_method)()
+        assert job.cancel.is_set()
+        assert dialog.isVisible() and not dialog.action.isEnabled()
+        unblock.set()
+        finish_update_job(qt_session_app, dialog)
+        assert not dialog.isVisible()
+        assert requested == [updating.MANIFEST, updating.MANIFEST + '.sig', asset['url']]
+        assert len(succeeded) == 1 and not cancelled and not failed
+        assert dialog.package == cached
+        assert dialog.progress.value() == 100
+        reopened = open_update_dialog()
+        reopened.act()
+        finish_update_job(qt_session_app, reopened)
+        assert reopened.package == cached
+        assert requested == [updating.MANIFEST, updating.MANIFEST + '.sig', asset['url'],
+                             updating.MANIFEST, updating.MANIFEST + '.sig']
+    finally:
+        unblock.set()
+
+
+@pytest.mark.parametrize('case', ['valid', 'wrong-hash', 'wrong-size', 'unsigned', 'not-newer'])
+def test_fresh_dialog_rechecks_signed_update_before_using_cache(
+        qt_session_app, monkeypatch, signed_update, open_update_dialog, case):
+    body, asset, cached, replies, requested = signed_update
+    cached.parent.mkdir()
+    cached.write_bytes({'wrong-hash': bytes(len(body)), 'wrong-size': body[:-1]}.get(case, body))
+    if case == 'unsigned':
+        replies[updating.MANIFEST] += b' '
+    if case == 'not-newer':
+        monkeypatch.setattr(update_dialog, '__version__', '9.0.0')
+
+    dialog = open_update_dialog()
+    dialog.act()
+    finish_update_job(qt_session_app, dialog)
+    assert requested == [updating.MANIFEST, updating.MANIFEST + '.sig']
+    if case == 'valid':
+        assert dialog.package == cached
+        assert dialog.progress.value() == 100
+        assert dialog.action.text() == '启动已验证的安装器'
+    else:
+        assert dialog.package is None
+        if case in ('wrong-hash', 'wrong-size'):
+            assert dialog.action.text() == '下载并校验更新'
+            dialog.act()
+            finish_update_job(qt_session_app, dialog)
+            assert requested[-1] == asset['url'] and len(requested) == 3
+            assert dialog.package == cached and cached.read_bytes() == body
+        elif case == 'unsigned':
+            assert '签名' in dialog.status.text() and dialog.release is None
+        else:
+            assert '已是最新版本' in dialog.status.text() and dialog.release is None
+
+
+def test_close_ignores_queued_metadata_even_with_a_valid_cache(
+        qt_session_app, signed_update, open_update_dialog):
+    body, _, cached, _, requested = signed_update
+    cached.parent.mkdir()
+    cached.write_bytes(body)
+    dialog = open_update_dialog()
+    dialog.act()
+    assert dialog.job.wait(10000)  # Finish the worker but leave its GUI callbacks queued.
+    assert dialog.release is None and dialog.isVisible()
+    dialog.reject()
+    finish_update_job(qt_session_app, dialog)
+    assert not dialog.isVisible()
+    assert dialog.release is None and dialog.package is None
+    assert requested == [updating.MANIFEST, updating.MANIFEST + '.sig']
+    assert cached.read_bytes() == body
+
+
+def test_close_during_cache_hash_cancels_check_without_touching_installer(
+        qt_session_app, monkeypatch, signed_update, open_update_dialog):
+    body, _, cached, _, requested = signed_update
+    cached.parent.mkdir()
+    cached.write_bytes(body)
+    started, unblock = Event(), Event()
+    real_open = Path.open
+
+    class PausedFile:
+        def __init__(self, source):
+            self.source = source
+
+        def __enter__(self):
+            self.source.__enter__()
+            return self
+
+        def __exit__(self, *args):
+            return self.source.__exit__(*args)
+
+        def read(self, size=-1):
+            chunk = self.source.read(size)
+            started.set()
+            if not unblock.wait(10):
+                raise RuntimeError('Test did not release the cache read')
+            return chunk
+
+    def open_file(path, *args, **kwargs):
+        source = real_open(path, *args, **kwargs)
+        return PausedFile(source) if path == cached else source
+
+    monkeypatch.setattr(Path, 'open', open_file)
+    dialog = open_update_dialog()
+    dialog.act()
+    try:
+        assert started.wait(5)
+        qt_session_app.processEvents()
+        assert dialog.isVisible() and not dialog.action.isEnabled()
+        dialog.reject()
+        assert dialog.job.cancel.is_set() and dialog.isVisible()
+        unblock.set()
+        finish_update_job(qt_session_app, dialog)
+        assert not dialog.isVisible()
+        assert dialog.release is None and dialog.package is None
+        assert requested == [updating.MANIFEST, updating.MANIFEST + '.sig']
+        assert cached.read_bytes() == body
+        assert list(cached.parent.iterdir()) == [cached]
+    finally:
+        unblock.set()
