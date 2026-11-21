@@ -225,3 +225,28 @@ def test_resume_rejects_legacy_private_source_path(tmp_path):
     assert not render_trials._resume_report_is_public(report, LOCAL)
     report.write_text(json.dumps({"source": LOCAL}), encoding="utf-8")
     assert render_trials._resume_report_is_public(report, LOCAL)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        r"\\server\share\recording.wav",
+        r"\rooted\recording.wav",
+        "//server/share/recording.wav",
+        "C:relative-drive-path.mp3",
+    ],
+    ids=["unc-share", "rooted", "posix-unc", "drive-relative"],
+)
+def test_resume_rejects_rooted_paths_in_ordinary_string_fields(tmp_path, value):
+    report = tmp_path / "report.json"
+    report.write_text(json.dumps({"source": LOCAL, "notes": [value]}), encoding="utf-8")
+    assert not render_trials._resume_report_is_public(report, LOCAL)
+
+
+def test_resume_allows_neutral_notes(tmp_path):
+    report = tmp_path / "report.json"
+    report.write_text(
+        json.dumps({"source": LOCAL, "notes": ["local corpus", "mc01"]}),
+        encoding="utf-8",
+    )
+    assert render_trials._resume_report_is_public(report, LOCAL)

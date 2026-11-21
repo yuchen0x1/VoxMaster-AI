@@ -21,7 +21,10 @@ CATALOG = json.loads(
     Path(__file__).with_name("sources.json").read_text(encoding="utf-8")
 )
 BASELINE = "444455fd3e2cb5a5300131e277c29428a4eca39c4b297c55cdbaae0a35339844"
-_PRIVATE_ABSOLUTE = re.compile(r"(?i)^(?:[A-Z]:[\\/]|/|\\\\\\\\)")
+# Rooted path prefixes: a drive letter (absolute or drive-relative, but not a
+# prose label such as "A: note"), a POSIX root, or a leading backslash, which
+# also covers UNC shares such as \\server\share\recording.wav.
+_PRIVATE_ABSOLUTE = re.compile(r"^(?:[A-Za-z]:(?![ \t])|[\\/])")
 
 
 def digest(path):
