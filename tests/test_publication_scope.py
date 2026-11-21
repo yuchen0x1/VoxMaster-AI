@@ -3,6 +3,7 @@ import importlib.util
 from pathlib import Path
 import os
 import subprocess
+import sys
 from zipfile import ZipFile
 
 import pytest
@@ -47,6 +48,8 @@ def test_git_scope_query_failure_does_not_fall_back_to_filesystem(tmp_path, monk
 
 
 def load_stage(root, monkeypatch):
+    # Only exercise platform-neutral docs staging, not Windows PE processing.
+    monkeypatch.setitem(sys.modules, 'pefile', object())
     script = Path(__file__).resolve().parents[1] / 'packaging/stage.py'
     spec = importlib.util.spec_from_file_location('vox_test_stage', script)
     module = importlib.util.module_from_spec(spec)

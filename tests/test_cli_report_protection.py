@@ -263,6 +263,7 @@ def test_default_publication_loses_race_without_clobbering_the_winner(
     report = tmp_path / 'report.json'
     operation = 'rename' if os.name == 'nt' else 'link'
     real_publish = getattr(cli.os, operation)
+    real_link = os.link
     raced = []
 
     def publish(source, destination, *args, **kwargs):
@@ -273,6 +274,9 @@ def test_default_publication_loses_race_without_clobbering_the_winner(
                 report.write_bytes(b'concurrent unrelated file')
             elif kind == 'directory':
                 report.mkdir()
+            elif kind == 'hardlink':
+                # Avoid re-entering the intercepted POSIX publication call.
+                real_link(offline.source, report)
             else:
                 alias(offline.source, report, kind)
             raced.append(True)
