@@ -1,6 +1,54 @@
 # VoxMaster AI 0.5.1 整合交付与发布门禁
 
-**当前接续状态：两批候选正在安全整合，尚未正式发布。** 现有 PR #14 指向 work/evolution-051；UNC 私有路径修复已保存为独立提交 6788c10。下列两份记录分别属于之前的候选快照，测试数、构建、资产及 Git 状态仅对原快照有效，不能当作本次最终整合的证据。0.5.1 仍需准确提交的回归、构建和 PR 验核，以及本版本人工等响听审批准与限制接受。
+**当前状态（2026-11-21）：两批 0.5.1 候选已整合，仍未正式发布。** 本节是当前检查点，后文候选 A/B 保留为历史，不能混用测试数、资产或批准。v0.5.0 不重复发布；本版本仍需受保护 main 集成、准确提交 CI，以及真实人工等响听审、限制接受和精确发布确认。
+
+## 当前整合：可靠性与发行边界收尾
+
+### 1. 准确源码与修改范围
+
+- 两批候选合并为 `ce115c0349f4ba35f028a6351e7a26ee1f317993`，tree `e2728049774b968d5f56f58c0161af55ccf3cd8a`；两个父提交是 `6788c10` 与 `1e6d3b9`。UNC/rooted 路径修复已包含。
+- 实际全量与冻结/打包使用独立物理短路径 worktree，不从原目录混入模块；原工作区 dist 未被覆盖。测试核对 import 路径、准确 HEAD/tree、执行前后 tracked 状态，不以旧候选结果冒充本轮。
+- 源码归档拒绝源根/祖先和输出路径的链接、隐藏工作区变化的 Git 索引标记；捕获并校验不可变 Git blob 后写 ZIP，避免校验后重新读取 live 文件。CRLF checkout 使用 canonical blob；无 `.git` 源码包仍可重建。
+- 文档发布以逐目标事务日志处理 move-then-raise、`BaseException`、唯一备份和回滚失败；中断保留恢复目录并阻止盲目重试。只删除本事务新建的空 ThirdParty 目录，不递归删除后来出现的非托管许可证。
+- CLI 报告不覆盖/保护输入和恢复工程、GUI commit 前媒体复核、模型中心协作取消/关闭等待等修复保留。不增加运行依赖、第二模型、插件宿主、云端音频服务或大型模型下载。
+
+### 2. 本机当前证据
+
+| 检查 | 已取得结果与范围 |
+|---|---|
+| 最新 d4a10cd 完整真实模型回归 | **878 testcase：853 通过、25 跳过、0 失败/错误；293.797 秒，退出码 0**；tree `0554a4c3c200a2cbd847c04e1fe3489e36f9e67c`，准确 import 与执行前后 tree/状态一致 |
+| 前一 ce115c0 完整真实模型回归 | 同为 878 testcase：853 通过、25 跳过、0 失败/错误；257.406 秒；是构建时快照，不与最新轮相加 |
+| 发行边界定向 | 163 testcase：152 通过、11 个文件 symlink 权限跳过；独立 shipping-docs 93/93；与全量不相加 |
+| Windows 冻结与打包 | Freeze/Package 均退出 0，冻结版本 0.5.1；WAV/MP3/FLAC/AAC 实际编码回读 PASS，Package 含真实 DirectML 分离；原始 AAC 诊断 90,112 帧，不将编码补齐伪称为 88,200 帧精确往返 |
+| 原生 GUI | 真实公开 FLEURS 导入→一键调音→系统保存框→隔离目录 WAV 导出→窗口正常关闭；回读 **457,758 帧、10.38 秒、44.1 kHz、2 声道、24-bit PCM**；夹具哈希不变，退出码 0、`graceful=true` |
+| 原生 UI 路径边界 | 早期无效路径与旧目标覆盖提示未计为成功，覆盖提示选择“否”；最终用实际输入事件提交新隔离文件名。未覆盖旧 Music 成品，不以工具接受动作替代落盘验证 |
+| 真实旧版升级 | 官方 v0.5.0 Setup/Portable/Source 三资产先重新匹配官方校验清单；独立 AppId **0.5.0→0.5.1**、恢复完整 457,758 帧，安装版/便携版真实 DirectML 诊断与卸载 PASS；设置/工程/音频三文件哈希不变，原安装登记与快捷方式校验通过 |
+| 初次整合包内容 | 源码 240 成员；便携连同嵌套 ZIP 为 816 成员；32 个已知隐私标记及未批准媒体/权重均 0 命中，便携 docs 精确 8 文件；不是通用 DLP/秘密/恶意代码证明 |
+| 初次源码包 | 全部 240 成员逐字节匹配 committed tree，重建归档每个成员内容相同；解包定向 268 testcase：244 通过、24 个 symlink 权限跳过、0 失败/错误。审计 runner 首次 XML 相对路径落在审计目录的嵌套位置，实际 XML 已找回计数，未重跑冒充独立证据；后续 runner 使用绝对路径 |
+| 既有 Qt 对应源码 | 四份缓存及 ZIP 内 tarball 各自匹配当前官方小型 `.sha256`，没有下载大型源码/模型；未声称 Qt ZIP 整体与 v0.5.0 byte-identical |
+| 静态与兼容 | 版本脚本 0.5.1、已安装 33 包兼容、CI Ruff F、新模块/测试 Ruff、compileall、PowerShell parser、Git 空白检查通过；依赖兼容检查不等于当日漏洞数据库审计 |
+
+25 项完整回归跳过均为本机 WinError 1314 原生符号链接权限，不是缺少模型；真实目录 junction 与 Git 索引标记用例执行通过。公开夹具用于可公开证据，私人音频和映射只允许本机授权范围，未上传或进入发行物。原生功能验收不等于制作人的主观等响听审。
+
+原始证据保留在忽略的 `.audit/closure-051-20261121-01ztpbc4/`：`final-full-r1/`、`final-full-r2/`、`ci-d4a10cd-*-summary.json`、`release-boundary-final.xml`、shipping/source 红绿日志、`final-freeze.log`、`final-package.log`、`assets-051-receipt.json`、`sourcekit-051-20261121/`、`install-final-summary.json`。GUI `verification.json`、正常退出和 health 标记、隔离升级的两个诊断及 `upgrade.json` 留在独立 worktree 的 build 审计目录；不随源码或安装包分发。
+
+### 3. 首轮远程失败与精确修复
+
+整合提交已普通推送到现有 PR #14，UNC finding 已回复并解决线程；没有强推、管理员绕过或合并 main。ce115c0 的 push/PR 两事件 CI 均保留：Windows 869 通过、9 个缺模型前置条件跳过；Ubuntu、macOS ARM、macOS Intel 各 851 通过、23 跳过、4 失败。actionlint 与 Security 成功不能覆盖回归失败。
+
+根因是两个测试装置：三项平台中立文档 staging 测试导入未安装的 Windows-only `pefile`，另一个 POSIX 硬链接竞态用例递归进入自己 monkeypatch 的 `os.link`。提交 `d4a10cdbbf6dc3e775554a4520ab3f75bdc008f3` 仅给两份测试增加 7 行：沿用相邻测试隔离不使用的 PE 依赖，并在打桩前捕获真实硬链接函数。未更改运行/构建实现、删除用例、放宽断言或模拟核心音频。Windows 定向 81 testcase：68 通过、13 权限跳过；本机该 SHA 完整重验已通过，见上表。该 SHA 的 push CI `44881743384`、PR CI `44881747520` 均成功，8 份 XML 实际 testcase 核对一致：每组 Windows 869 通过、9 缺模型前置条件跳过；Ubuntu/macOS ARM/macOS Intel 各 855 通过、23 跳过（14 平台限定、9 缺模型），均 0 失败/错误。actionlint 和 Security 通过。这不是收尾文档提交尚未产生的 CI 结果；最终 head 仍须单独核对。
+
+收尾若只改上述两份测试及本节/安全研发文档，必须证明应用、构建脚本和实际随包帮助输入与已验构建逐文件不变，且 `frozen-inputs.json` 一致，才能复用已验安装器/便携/Qt 资产。源码 ZIP 与 `SHA256SUMS.txt` 必须重新生成、逐成员核对并重跑解包定向，不能沿用初次源码 ZIP 哈希。实际四资产大小/哈希保留在最终校验清单及本机收据，不写入待打包文档形成自引用。
+
+### 4. 安全与剩余发布门禁
+
+当前扫描器对 483 文件/241 二进制的同画像比较没有新增或加重发现编号；保留未签名、依赖 PDB/CFG、PyInstaller 可解包及有限误报复核。package 画像跳过全部 binary，自检 58/60；不采纳自动分数作为安全保证。准确数量、当前偏移及五节结论见 [SECURITY-051](SECURITY-051.md)。
+
+正式发行仍需：最终准确 head 的 push/PR 四平台 CI 和 actionlint/安全检查；PR 的受保护合并及准确目标确认；本版本真实人工等响听审和限制接受；准确 tag/target/title/notes/资产的最终发布确认。`listening_approved`、`accept_limitations` 不由代理代填，不复用 v0.5.0 批准。尚未创建 v0.5.1 tag、签名更新清单或正式 Release。
+
+仍未验：Windows 10 实体机、实体监听/设备热插拔、完整读屏/混合 DPI/多屏、低内存和长音频预算。Authenticode、自动安装回滚、第二模型、语义模型/VST3 留后续；网络协作取消不承诺 DNS/headers 的硬墙钟总超时，文件系统检查不承诺抵抗恶意并发目录交换或断电原子快照。
+
+---
 
 ## 历史候选 A：VoxMaster AI 0.5.1 交付与发布门禁
 
