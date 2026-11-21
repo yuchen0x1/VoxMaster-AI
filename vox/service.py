@@ -111,6 +111,8 @@ def prepare(doc, cancel, progress, previous=None):
     if doc.get("reference"):
         paths["reference"] = doc["reference"]
     paths.update({"stem/" + name: path for name, path in doc.get("stems", {}).items()})
+    external = (doc.get("studio") or {}).get("external_sources", {})
+    paths.update({"external/" + key: path for key, path in external.items()})
     signatures = {key: signature(path) for key, path in paths.items()}
     hashes = {key: file_hash(path, cancel) for key, path in paths.items()}
     provenance_warnings = verify_separation(doc, hashes)
@@ -217,15 +219,14 @@ def prepare(doc, cancel, progress, previous=None):
             session.mix_sources = dict(tracks)
         progress(0.79, "正在渲染同步混音")
         if doc.get("studio"):
-            signatures = {}
-            for key, path in doc["studio"].get("external_sources", {}).items():
-                stat = Path(path).stat()
-                signatures[key] = (path, stat.st_size, stat.st_mtime_ns)
+            for key in external:
                 cached = previous.external_cache.get(key) if previous else None
-                if cached and cached[0] == signatures[key]:
+                if cached and reusable("external/" + key):
                     tracks[key] = cached[1]
             tracks = load_sources(doc["studio"], tracks, cancel=cancel)
-            session.external_cache = {key: (sig, tracks[key]) for key, sig in signatures.items()}
+            session.external_cache = {
+                key: (signatures["external/" + key], tracks[key]) for key in external
+            }
         mix = MixSession(tracks, SR, state=doc.get("studio"))
         audio = mix.render(cancel=cancel)
         expected_frames = mix.frames
@@ -344,8 +345,11 @@ def separate_project(current, destination, cancel, progress, *, root=None, mode=
         audit["reconstruction"] = song.separation_evidence(current.original, vocal, music, SR, cancel)
         paths = {name: str(staging / (name + ".wav")) for name in ("Vocal", "Instrumental")}
         progress(0.65, "写入可恢复的原始分轨")
+        export_warnings = []
         for name, data in (("Vocal", vocal), ("Instrumental", music)):
-            audioio.encode(paths[name], data, SR, 32, cancel)
+            exported = audioio.encode(paths[name], data, SR, 32, cancel)
+            if exported.warning:
+                export_warnings.append(exported.warning)
         del data, vocal, music
         audit.update(
             status="verified", sample_rate=SR, frames=len(current.original),
@@ -362,6 +366,7 @@ def separate_project(current, destination, cancel, progress, *, root=None, mode=
         result = prepare(doc, cancel, lambda f, m: progress(0.72 + 0.08 * f, m), current)
         if song_options is not None:
             result = plan_song(result, cancel, lambda f, m: progress(0.8 + 0.19 * f, m), **song_options)
+        result.audit.setdefault("warnings", []).extend(export_warnings)
         if signature(source) != initial or file_hash(source, cancel) != source_digest:
             raise ValueError("分离期间原始音频发生变更，未保留本次分轨。")
         check(cancel)

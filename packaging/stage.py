@@ -7,7 +7,6 @@ from pathlib import Path
 import re
 import shutil
 import sys
-import pefile
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist/VoxMasterAI"
@@ -19,6 +18,7 @@ HASHED = re.compile(r"(-[0-9a-f]{32})(?=\.dll$)", re.I)
 
 def install_codecs():
     import av
+    import pefile
     stock = Path(av.__file__).resolve().parents[1] / "av.libs"
     original = {p.name.lower() for p in stock.glob("*.dll")}
     libraries = {p.name.lower() for p in CODECS.glob("*.dll")}
@@ -85,17 +85,64 @@ def copy_licenses():
     shutil.copy2(ROOT / "packaging/build-codecs.sh", INFO)
 
 
+def _assert_safe_target(target):
+    target = Path(target)
+    dist_root = DIST.resolve()
+    absolute = target.absolute()
+    if not absolute.resolve(strict=False).is_relative_to(dist_root):
+        raise ValueError(f'Publication target escapes staging directory: {target}')
+    cursor = absolute
+    while True:
+        if cursor.exists() and (
+            cursor.is_symlink() or cursor.resolve() != cursor.absolute()
+        ):
+            raise ValueError(f'Publication target contains a symlink or junction: {target}')
+        if cursor.parent == cursor:
+            break
+        cursor = cursor.parent
+
+
+def _copy_document(source, target):
+    _assert_safe_target(target)
+    Path(target).parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, target)
+
+
 def copy_documents():
-    # Include test evidence and hearing forms published alongside the manual.
-    for doc in (ROOT / "docs").rglob("*"):
-        if doc.is_file() and doc.suffix.lower() in {".md", ".png", ".json", ".jsonl", ".csv", ".txt"}:
-            target = DIST / doc.relative_to(ROOT)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(doc, target)
-    for name in ["README.md", "CHANGELOG.md", "LICENSE"]:
-        shutil.copy2(ROOT / name, DIST)
-    shutil.copy2(ROOT / "docs/THIRD_PARTY.md", INFO)
-    shutil.copy2(ROOT / "LICENSE", INFO / "VoxMaster-AI-LICENSE.txt")
+    # Share the source kit's allowlist instead of redistributing local notes.
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from scripts.source_archive import source_files
+
+    public = {name: path for path, name in source_files(ROOT)}
+    documents = {name: path for name, path in public.items()
+                 if name.startswith('docs/') and path.suffix.lower() in
+                 {'.md', '.png', '.json', '.jsonl', '.csv', '.txt'}}
+    required = ['README.md', 'CHANGELOG.md', 'LICENSE', 'docs/THIRD_PARTY.md']
+    if any(name not in public for name in required):
+        raise ValueError('Required shipping documents must be tracked source inputs')
+    expected_files = set(documents)
+    expected_dirs = {'docs'}
+    for name in expected_files:
+        expected_dirs.update(
+            parent.as_posix() for parent in Path(name).parents if parent != Path('.')
+        )
+    docs_root = DIST / 'docs'
+    _assert_safe_target(docs_root)
+    if docs_root.exists():
+        for previous in docs_root.rglob('*'):
+            _assert_safe_target(previous)
+            relative = previous.relative_to(DIST).as_posix()
+            if previous.is_file() and relative not in expected_files:
+                raise ValueError('Stale shipping documents found. Run build.ps1 -Phase Freeze first.')
+            if previous.is_dir() and relative not in expected_dirs:
+                raise ValueError('Stale shipping directories found. Run build.ps1 -Phase Freeze first.')
+    for name, doc in documents.items():
+        _copy_document(doc, DIST / name)
+    for name in required[:3]:
+        _copy_document(public[name], DIST / name)
+    _copy_document(public['docs/THIRD_PARTY.md'], INFO)
+    _copy_document(public['LICENSE'], INFO / 'VoxMaster-AI-LICENSE.txt')
 
 
 

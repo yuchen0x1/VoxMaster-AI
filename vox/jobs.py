@@ -19,7 +19,7 @@ class Worker(QThread):
             if self.cancel.is_set() and not getattr(result, "publication_committed", False):
                 self.cancelled.emit()
             else:
-                # A published stem pair is a committed result, not a cancelable draft.
+                # Published files and stem pairs are committed results, not drafts.
                 self.succeeded.emit(result)
         except Exception as exc:
             if self.cancel.is_set() or isinstance(exc, InterruptedError):

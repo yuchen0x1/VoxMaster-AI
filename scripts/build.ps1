@@ -10,6 +10,8 @@ $root = Split-Path $PSScriptRoot -Parent
 Push-Location $root
 $originalPath = $env:PATH
 $originalPyInstallerCache = $env:PYINSTALLER_CONFIG_DIR
+$gitCommand = Get-Command git.exe -ErrorAction SilentlyContinue
+$gitDirectory = if ($gitCommand) { Split-Path -Parent $gitCommand.Source } else { $null }
 try {
     $python = (Resolve-Path .venv\Scripts\python.exe).Path
     $base = (& $python -c 'import sys; print(sys.base_prefix)').Trim()
@@ -23,9 +25,17 @@ try {
     }
     # Discard unrelated directories on the developer's PATH. In particular,
     # Qt 6 uses the Windows ICU API, which incompatible third-party icuuc.dlls can shadow.
-    $env:PATH = "$root\.venv\Scripts;$base;$base\DLLs;$root\.venv\Lib\site-packages\PySide6;$env:SystemRoot\System32;$env:SystemRoot"
+    if ($Phase -eq 'Package' -and -not $gitDirectory) { throw 'Git is required to create a tracked source archive' }
+    $gitPrefix = if ($gitDirectory) { "$gitDirectory;" } else { '' }
+    $env:PATH = "$gitPrefix$root\.venv\Scripts;$base;$base\DLLs;$root\.venv\Lib\site-packages\PySide6;$env:SystemRoot\System32;$env:SystemRoot"
     $env:PYINSTALLER_CONFIG_DIR = Join-Path $root "build\pyinstaller-cache"
     if ($Phase -ne 'Package') {
+        # This directory is generated output; start empty so old documents or
+        # private files cannot leak into the portable or installer payload.
+        $frozenDist = Join-Path $root "dist\VoxMasterAI"
+        if (Test-Path -LiteralPath $frozenDist) {
+            Remove-Item -LiteralPath $frozenDist -Recurse -Force
+        }
         & $python -m PyInstaller --clean --noconfirm --workpath build\isolated packaging\VoxMasterAI.spec
         if ($LASTEXITCODE) {throw 'PyInstaller failed'}
         & $python packaging\stage.py --freeze

@@ -1,6 +1,8 @@
 """Release archives must retain the app license, not private media or model caches."""
 from pathlib import Path
+import os
 import shutil
+import subprocess
 from zipfile import ZipFile
 
 import pytest
@@ -48,3 +50,29 @@ def test_license_is_required_and_non_zip_is_rejected(tmp_path):
         source_archive.archive(tmp_path / 'source.zip', tmp_path)
     with pytest.raises(ValueError, match='.zip'):
         source_archive.archive(tmp_path / 'LICENSE', tmp_path)
+
+
+def test_source_archive_rejects_tree_internal_junction(tmp_path):
+    root = tmp_path / 'source'
+    root.mkdir()
+    (root / 'LICENSE').write_text('test license', encoding='utf-8')
+    public = root / 'docs' / 'public'
+    public.mkdir(parents=True)
+    (public / 'manual.txt').write_text('public', encoding='utf-8')
+    link = root / 'docs' / 'linked'
+    if os.name == 'nt':
+        result = subprocess.run(['cmd', '/c', 'mklink', '/J', str(link), str(public)],
+                                capture_output=True)
+        if result.returncode:
+            pytest.skip('Directory junctions are unavailable on this volume.')
+    else:
+        link.symlink_to(public, target_is_directory=True)
+    try:
+        names = {name for _, name in source_archive.source_files(root)}
+        assert 'docs/public/manual.txt' in names
+        assert not any(name.startswith('docs/linked/') for name in names)
+    finally:
+        if os.name == 'nt':
+            link.rmdir()
+        else:
+            link.unlink()

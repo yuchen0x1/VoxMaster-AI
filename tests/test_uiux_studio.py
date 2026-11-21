@@ -155,8 +155,10 @@ def test_studio_layout_uses_global_theme_and_keeps_accessible_controls(qt_sessio
         assert all(
             not button.isHidden()
             for button in buttons
-            if button is not dialog.cancel_button
+            if button not in (dialog.cancel_button, dialog.restore_button)
         )
+        assert dialog.restore_button.isHidden(), 'Recovery is only offered for an incomplete session.'
+        assert dialog.restore_button.accessibleName() == "重新定位多轨素材"
         workspace = next(
             area
             for area in dialog.findChildren(QScrollArea)

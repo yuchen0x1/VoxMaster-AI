@@ -70,6 +70,8 @@ class StudioDialog(QDialog):
         self._loaded = True
         # A missing source is explicitly relinked before restoring the edit list.
         missing = bool(state and set(state.get("external_sources", {})) - set(tracks))
+        self._pending_restore = (copy.deepcopy(state), dict(tracks)) if missing else None
+        self._restore_relink = False
         self.session = Session(tracks, sr, None if missing else state)
         self.setWindowTitle("专业混音 · VoxMaster AI")
         self.resize(1056, 712)
@@ -221,6 +223,11 @@ class StudioDialog(QDialog):
         transport_controls.addStretch()
         transport_actions = QHBoxLayout()
         transport_actions.addStretch()
+        self.restore_button = self._button(
+            transport_actions, "重新定位素材…", self._retry_restore,
+            "恢复取消或失败后重试；完整恢复前不会应用不完整的混音。",
+        )
+        self.restore_button.setAccessibleName("重新定位多轨素材")
         self.cancel_button = self._button(transport_actions, "取消任务", self._cancel)
         self.apply_button = self._button(transport_actions, "应用混音", self.accept)
         self._button(transport_actions, "关闭", self.reject)
@@ -255,7 +262,7 @@ class StudioDialog(QDialog):
         if missing:
             self._loaded = False
             self._refresh()
-            QTimer.singleShot(0, lambda: self._restore(copy.deepcopy(state), tracks))
+            QTimer.singleShot(0, self._retry_restore)
         elif self.session.frames:
             self.mix_timer.start(0)
 
@@ -288,26 +295,37 @@ class StudioDialog(QDialog):
         ctl.setKeyboardTracking(False)
         return ctl
 
+    def _retry_restore(self):
+        if self._pending_restore is not None and self.future is None and not self.closing:
+            state, tracks = self._pending_restore
+            self._restore(copy.deepcopy(state), tracks)
+
     def _restore(self, state, tracks):
+        self._pending_restore = (state, tracks)
         try:
             for key, name in state["external_sources"].items():
-                if key in tracks or Path(name).is_file():
+                if key in tracks or (Path(name).is_file() and not self._restore_relink):
                     continue
-                path, _ = QFileDialog.getOpenFileName(self, f"重新定位 {Path(name).name}")
+                path, _ = QFileDialog.getOpenFileName(self, f"重新定位 {Path(name).name}", name)
                 if not path:
-                    self.status.setText(f"缺少素材 {name}。请关闭并重新定位。")
+                    self.status.setText(f"缺少素材 {name}。可点击“重新定位素材”重试，或关闭窗口。")
+                    self._refresh()
                     return
                 state["external_sources"][key] = path
+            self._restore_relink = False
             self._job(
                 "正在恢复轨道素材",
                 lambda: Session(load_sources(state, tracks, self.cancel_job), self.sr, state),
                 self._restored,
             )
         except Exception as exc:
+            self._restore_relink = True
             self._error(exc)
 
     def _restored(self, session):
         self.session = self.wave.session = session
+        self._pending_restore = None
+        self._restore_relink = False
         self._loaded = True
         self._changed("已恢复轨道与自动化")
 
@@ -412,12 +430,14 @@ class StudioDialog(QDialog):
                 return
             try:
                 result = job.result()
-                if self.cancel_job.is_set():
+                if self.cancel_job.is_set() and not getattr(result, "publication_committed", False):
                     raise InterruptedError()
                 complete(result)
             except InterruptedError:
                 self.status.setText("已取消任务")
             except Exception as exc:
+                if not self._loaded:
+                    self._restore_relink = True
                 self._error(exc)
             if self.cache is None and self._loaded and self.monitor_future is None:
                 self.mix_timer.start(120)
@@ -448,6 +468,8 @@ class StudioDialog(QDialog):
         self._refreshing = True
         try:
             ready = self._loaded and self.future is None
+            self.restore_button.setVisible(not self._loaded)
+            self.restore_button.setEnabled(self.future is None)
             self.balance_button.setEnabled(ready and self.session.frames > 0)
             self.rack_button.setEnabled(ready)
             self.mono.setEnabled(ready)
@@ -757,9 +779,14 @@ class StudioDialog(QDialog):
 
         def run():
             data = self.session.render(self.cancel_job, track=t)
-            encode(path, data, self.sr, bitdepth=24, cancel=self.cancel_job)
+            return encode(path, data, self.sr, bitdepth=24, cancel=self.cancel_job)
 
-        self._job("正在导出独立轨道", run, lambda _: self.status.setText(f"已导出 {path}"))
+        self._job(
+            "正在导出独立轨道", run,
+            lambda result: self.status.setText(
+                f"已导出 {path}" + ("\n" + result.warning if result.warning else "")
+            ),
+        )
 
     def _balance(self):
         from .studio_balance import measure
@@ -784,12 +811,16 @@ class StudioDialog(QDialog):
                 self._changed("已更新效果器链", live=True)
 
     def done(self, result):
+        if result == QDialog.Accepted and not self._loaded:
+            self.status.setText("请先完整恢复素材，或关闭窗口取消。")
+            return
         self._cancel_monitor()
         if self.future is not None:
             self.closing = True
             self.cancel_job.set()
             self.status.setText("正在停止任务")
             return
+        self.closing = True
         self._stop()
         self.timer.stop()
         self.executor.shutdown(wait=False, cancel_futures=True)

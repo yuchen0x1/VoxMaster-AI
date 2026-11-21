@@ -1485,7 +1485,9 @@ class MainWindow(QMainWindow):
         self.run_job(
             "编码成品",
             lambda ev, pg: audioio.encode(path, source, SR, bits, ev, output_rate=rate, channels=ch),
-            lambda _: self.progress_text.setText("已导出 · " + str(path)),
+            lambda result: self.progress_text.setText(
+                "已导出 · " + str(path) + ("\n" + result.warning if result.warning else "")
+            ),
         )
 
     def settings_view(self):

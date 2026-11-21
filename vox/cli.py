@@ -158,7 +158,7 @@ def main(argv=None):
                     protected.extend(Path(stem) for stem in stems.values())
                     if args.report is not None:
                         validate_report_path(args.report, protected, directories)
-                    audioio.encode(target, rendered.output, SR, cancel=cancel)
+                    exported = audioio.encode(target, rendered.output, SR, cancel=cancel)
                     item.update(output=str(target), stems=stems, measured=rendered.measured,
                                 audit=rendered.audit, style=rendered.document['style'])
                     for key in ('song', 'separation'):
@@ -169,11 +169,13 @@ def main(argv=None):
                     doc.update(applied=True, style=args.style,
                                params=tuning_plan(session.analysis, args.style))
                     rendered = prepare(doc, cancel, _quiet_progress, session)
-                    audioio.encode(target, rendered.output, SR, cancel=cancel)
+                    exported = audioio.encode(target, rendered.output, SR, cancel=cancel)
                     item.update(output=str(target), measured=summary(rendered.measured))
                 elif args.report is not None:
                     # Keep the default summary and, with --report, the same JSON in both sinks.
                     item['intelligence'] = session.analysis
+                if target is not None and exported.warning:
+                    item['warnings'] = [exported.warning]
                 results.append(item)
             except Exception as exc:
                 failed = True

@@ -2,18 +2,36 @@
 
 sources.json 用稳定编号记录输入文件的来源、类型依据、授权范围、制作者、哈希和渲染预设。线上素材取自 [VocalSet 1.1](https://zenodo.org/records/1203819) 和各 Freesound 作品页。Freesound 输入采用发布页公开的 HQ MP3 预览，制作人的设备说明对应原始录音。FLEURS 和 VocalSet 为 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)，列出的 Freesound 录音选用 [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)。VocalSet 作者为 Julia Wilkins、Prem Seetharaman、Alison Wahl 和 Bryan Pardo。各样本音频不会随程序分发，公开样本的获取方式如下。
 
+## 本机素材迁移
+
+公开清单的 local 项使用 `MC01.mp3` 等中性文件名。原文件不必移动或改名：保留在授权的本机目录，通过 `--local` 指定该目录，并显式传入 `--private-files` 指向本机保存的迁移映射 `<local-private-files.json>`。此映射可能包含私人文件名，必须保存在 Git 忽略的位置，不得提交、上传或分发。
+
+映射是 UTF-8 JSON 对象；相对路径以 `--local` 为基准，也可以填写本机绝对路径。仅允许已知 local ID，不允许重复键、空路径或 fixture/external ID。未映射的条目仍从 `--local` 按中性文件名读取；若素材已经使用中性文件名，可以省略 `--private-files`。格式示例（仅占位）：
+
+```json
+{
+  "MC01": "archive/input-01.mp3",
+  "MC02": "D:/private-audio/input-02.mp3"
+}
+```
+
+文件映射不替代指纹。渲染 local 项仍必须显式传入 `--private-digests`，使用被 Git 忽略的 `<local-private-digests.json>` 中已有的 ID → 64 位十六进制 SHA-256。缺失条目、非法指纹或输入不匹配都会拒绝执行；不会自动重建指纹基准。仅选公共素材时可省略这两个参数，仍校验清单中的原哈希。
+
 ## 重建
 
-准备正式 0.1.0 源码包，将其放在 build/acceptance-011/baseline-010-source.zip，脚本会校验已发布的 SHA-256。用户提供的五首歌保存在本机授权目录中。公开清单的 local 项只标记 `private_digest_required=true`，不公开私有 SHA-256；原指纹映射保存在被 `.gitignore` 忽略的 `.audit/040-release-review/private-corpus-digests.json`，格式为 JSON 对象 `{ "MC01": "<64 位十六进制 SHA-256>", ... }`，不得提交或分发。渲染 local 项必须显式传入 `--private-digests`；缺失条目、非法指纹或输入不匹配都会拒绝执行，不会跳过校验或自动重算指纹基准。仅选公共素材时可省略该参数，仍校验清单中的原哈希。生成文件进入 build/acceptance-011，保留输入与各版本原文件，录音、盲听 WAV 和密钥仅本机可见。
+准备正式 0.1.0 源码包，将其放在 build/acceptance-011/baseline-010-source.zip，脚本会校验已发布的 SHA-256。生成文件进入 build/acceptance-011；录音、盲听 WAV、私有映射和旧听审报告均留在本机，不要公开分享。
 
 ```powershell
 $qaRoot = 'build/acceptance-011'
 $py = '.venv/Scripts/python.exe'
+$localDir = 'D:/private-audio' # 换成本机授权目录
+$privateFiles = '<local-private-files.json>'
+$privateDigests = '<local-private-digests.json>'
 & $py tests/mc_corpus/fetch_vocalset.py "$qaRoot/external"
 & $py tests/mc_corpus/fetch_freesound.py "$qaRoot/external"
 & $py tests/mc_corpus/mix_controls.py "$qaRoot/external"
-& $py tests/mc_corpus/render_trials.py 0.1.0 --local "$env:USERPROFILE/Desktop/yin" --private-digests '.audit/040-release-review/private-corpus-digests.json'
-& $py tests/mc_corpus/render_trials.py 0.1.1 --local "$env:USERPROFILE/Desktop/yin" --private-digests '.audit/040-release-review/private-corpus-digests.json'
+& $py tests/mc_corpus/render_trials.py 0.1.0 --local $localDir --private-files $privateFiles --private-digests $privateDigests
+& $py tests/mc_corpus/render_trials.py 0.1.1 --local $localDir --private-files $privateFiles --private-digests $privateDigests
 & $py tests/mc_corpus/blind_trials.py
 ```
 

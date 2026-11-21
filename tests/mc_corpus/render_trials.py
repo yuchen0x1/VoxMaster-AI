@@ -21,6 +21,7 @@ CATALOG = json.loads(
     Path(__file__).with_name("sources.json").read_text(encoding="utf-8")
 )
 BASELINE = "444455fd3e2cb5a5300131e277c29428a4eca39c4b297c55cdbaae0a35339844"
+_PRIVATE_ABSOLUTE = re.compile(r"(?i)^(?:[A-Z]:[\\/]|/|\\\\\\\\)")
 
 
 def digest(path):
@@ -65,6 +66,43 @@ def select_ranges(x, rate, source_id):
     ]
 
 
+def load_private_files(path):
+    """Read an explicit local ID -> path mapping without reporting private values."""
+    if path is None:
+        return {}
+
+    def unique_keys(pairs):
+        result = dict(pairs)
+        if len(result) != len(pairs):
+            raise ValueError("--private-files must not contain duplicate keys.")
+        return result
+
+    try:
+        values = json.loads(
+            Path(path).read_text(encoding="utf-8-sig"), object_pairs_hook=unique_keys
+        )
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        raise ValueError("Cannot read --private-files: supply a UTF-8 JSON object.") from None
+    if not isinstance(values, dict):
+        raise ValueError("--private-files must be a JSON object mapping local IDs to paths.")
+    local_ids = {item["id"] for item in CATALOG if item["location"] == "local"}
+    for sid, value in values.items():
+        if sid not in local_ids:
+            raise ValueError("--private-files may contain only known local source IDs.")
+        if (
+            not isinstance(value, str)
+            or not value.strip()
+            or re.search(r"[\x00-\x1f\ud800-\udfff]", value)
+        ):
+            raise ValueError(f"--private-files entry {sid} must be a nonempty path string.")
+        target = Path(value)
+        if target.anchor and not target.is_absolute():
+            raise ValueError(
+                f"--private-files entry {sid} must be fully absolute or relative to --local."
+            )
+    return values
+
+
 def load_private_digests(path):
     """Read an explicitly supplied, local-only ID -> SHA-256 mapping."""
     if path is None:
@@ -107,22 +145,77 @@ def verify_source_digest(path, item, private_digests):
         expected = expected.lower()
     else:
         expected = item["sha256"]
-    if digest(path) != expected:
+    try:
+        actual = digest(path)
+    except OSError:
+        if item["location"] != "local":
+            raise
+        raise ValueError(f"Cannot read local input {sid}; check --local and --private-files.") from None
+    if actual != expected:
         raise RuntimeError(f"Input digest mismatch: {sid}")
+
+
+def without_source_path(metadata):
+    return {key: value for key, value in metadata.items() if key != "path"}
+
+
+def without_analysis_source_path(analysis):
+    metadata = analysis.get("source_metadata")
+    if isinstance(metadata, dict):
+        return dict(analysis, source_metadata=without_source_path(metadata))
+    return analysis
+
+
+def _resume_report_is_public(path, item):
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return False
+    if item["location"] != "local":
+        return True
+    if report.get("source") != item:
+        return False
+
+    def contains_private_path(value, key=None):
+        if isinstance(value, dict):
+            return any(
+                contains_private_path(child, child_key)
+                for child_key, child in value.items()
+                if child_key != "source"
+            )
+        if isinstance(value, list):
+            return any(contains_private_path(child, key) for child in value)
+        if not isinstance(value, str):
+            return False
+        return key in {"path", "file", "filename"} or _PRIVATE_ABSOLUTE.search(value) is not None
+
+    return not contains_private_path(report)
 
 
 def render(args):
     private_digests = load_private_digests(args.private_digests)
+    private_files = load_private_files(args.private_files)
     dirs = {
         "local": args.local,
         "external": args.output / "external",
         "fixture": ROOT / "tests/fixtures",
     }
     items = [item for item in CATALOG if not args.only or item["id"] in args.only]
-    # Reject missing/invalid private mappings and changed inputs before any
-    # snapshot, report or output is created, including when resuming.
+    # Resolve once and verify before creating any output, including on resume.
+    sources = []
     for item in items:
-        verify_source_digest(dirs[item["location"]] / item["file"], item, private_digests)
+        sid, location = item["id"], item["location"]
+        filename = item["file"]
+        if location == "local":
+            filename = private_files.get(sid, filename)
+        try:
+            path = (dirs[location] / filename).resolve()
+        except (OSError, RuntimeError):
+            if location != "local":
+                raise
+            raise ValueError(f"Cannot resolve local input {sid}; check --local and --private-files.") from None
+        verify_source_digest(path, item, private_digests)
+        sources.append((item, path))
     code_path = args.baseline_zip if args.version == "0.1.0" else args.snapshot
     if args.version == "0.1.0" and digest(code_path) != BASELINE:
         raise RuntimeError("0.1.0 source ZIP digest differs from the shipped version")
@@ -143,16 +236,20 @@ def render(args):
         )
     version_dir = args.output / "engineering" / args.version
     version_dir.mkdir(parents=True, exist_ok=True)
-    for item in items:
+    for item, path in sources:
         sid = item["id"]
-        path = dirs[item["location"]] / item["file"]
         dest = version_dir / sid
-        if (dest / "report.json").is_file() and args.resume:
+        existing_report = dest / "report.json"
+        if existing_report.is_file() and args.resume:
+            if not _resume_report_is_public(existing_report, item):
+                raise ValueError(
+                    f"--resume refuses a report with a private source path: {sid}"
+                )
             continue
         dest.mkdir(exist_ok=True)
         cancel = Event()
         document = dict(
-            source=str(path.resolve()),
+            source=str(path),
             style=item["preset"],
             kind=item["kind"],
             history=[],
@@ -196,17 +293,22 @@ def render(args):
             )
         verify_source_digest(path, item, private_digests)
         source_id = digest(code_path)
+        input_spec, before, after = dry.metadata, dry.analysis, wet.measured
+        if item["location"] == "local":
+            input_spec = without_source_path(input_spec)
+            before = without_analysis_source_path(before)
+            after = without_analysis_source_path(after)
         report = dict(
             source=item,
-            input_spec=dry.metadata,
+            input_spec=input_spec,
             version=args.version,
             implementation=source_id,
             date=datetime.now().astimezone().isoformat(timespec="seconds"),
             processing_device="CPU / " + platform.platform(),
             listening_device=None,
             params=wet.document["params"],
-            before=dry.analysis,
-            after=wet.measured,
+            before=before,
+            after=after,
             clips=selected,
             execution=getattr(wet, "audit", None),
             warnings=getattr(wet, "warnings", None),
@@ -227,6 +329,11 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("version", choices=["0.1.0", "0.1.1"])
     p.add_argument("--local", required=True, type=Path)
+    p.add_argument(
+        "--private-files",
+        type=Path,
+        help="Local-only JSON mapping of IDs to absolute paths or paths relative to --local",
+    )
     p.add_argument(
         "--private-digests",
         type=Path,

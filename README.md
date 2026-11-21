@@ -1,8 +1,18 @@
-# VoxMaster AI 0.5.0
+# VoxMaster AI 0.5.1（源码 / 发布候选）
 
 **AI-Powered Vocal Production & Music Mixing Workstation** · 本地优先的人声制作与歌曲混音工作站
 
 [![CI](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml) · [官方下载](https://github.com/yuchen0x1/VoxMaster-AI/releases/latest) · [反馈](https://github.com/yuchen0x1/VoxMaster-AI/issues)
+
+## 0.5.1 兼容修复候选
+
+当前正式下载通道仍为 **0.5.0**；0.5.1 未获得当前版本人工听审批准前，不宣称已正式发布。
+
+- 外部多轨素材增加内容哈希与提交前复核，同大小/同时间的替换会重新读取；渲染中被改动或删除的素材不会提交到当前会话。
+- 成品和轨道导出提交后不再误报晚到取消；临时文件清理失败会明确警告，已有录音/成品仍禁止覆盖。
+- 多轨恢复取消或失败后可在窗口内重新定位；损坏/过短候选可改选，完整恢复前不允许应用不完整混音。
+
+不改变 DSP、导出规格、v1 工程、模型或依赖。[本轮审查与交付](docs/DELIVERY-051.md) · [六个开源仓库的源码/许可研究](docs/RESEARCH-051.md)。
 
 ## 0.5.0 更新
 
@@ -107,7 +117,7 @@ py -3.11 -m venv .venv
 
 ## 真实音频与听审
 
-两版各自对五首本地中文混音整曲执行一键调音。把《王斩 - 习武弃文》00:57–01:09 的两个成品截取、匹配到 −23 LUFS 并隐藏版本，听者选中 A，揭盲对应 0.1.1。两版试听相差 0.001 LU。此次得到一位听者对一个片段的偏好；设备、分项打分与选择原因均未提供。另有带作者记录的真人 Rap、长音、气声等测试材料。用户歌曲仅供本机验收。[音频报告](docs/AUDIO-011.md) · [听审记录与评分表](docs/LISTENING-011.md) · [测试素材与来源](tests/mc_corpus/README.md)
+两版各自对五首本地中文混音整曲执行一键调音。把《本地私有验收素材 P001》00:57–01:09 的两个成品截取、匹配到 −23 LUFS 并隐藏版本，听者选中 A，揭盲对应 0.1.1。两版试听相差 0.001 LU。此次得到一位听者对一个片段的偏好；设备、分项打分与选择原因均未提供。另有带作者记录的真人 Rap、长音、气声等测试材料。用户歌曲仅供本机验收。[音频报告](docs/AUDIO-011.md) · [听审记录与评分表](docs/LISTENING-011.md) · [测试素材与来源](tests/mc_corpus/README.md)
 
 [使用手册](docs/MANUAL.md) · [多轨编辑手册](docs/MULTITRACK.md) · [技术架构](docs/ARCHITECTURE.md) · [工程基线与开源调研](docs/RESEARCH.md) · [音频验收记录](docs/ACCEPTANCE.md)
 
