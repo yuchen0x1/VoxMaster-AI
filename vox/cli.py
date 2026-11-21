@@ -5,6 +5,7 @@ import multiprocessing
 import os
 from pathlib import Path
 import sys
+from tempfile import TemporaryDirectory
 import threading
 import unicodedata
 
@@ -27,8 +28,8 @@ def _path_key(path):
     return unicodedata.normalize('NFC', os.path.normcase(str(path))).casefold()
 
 
-def validate_report_path(report, protected, directories=()):
-    """Reject report aliases of protected files and paths needed as directories."""
+def validate_report_path(report, protected, directories=(), *, overwrite=False):
+    """Reject protected aliases, required directories, and unapproved replacement."""
     resolved = report.resolve()
     report_key = _path_key(resolved)
     file_blockers = {report_key, *map(_path_key, resolved.parents)}
@@ -41,8 +42,35 @@ def validate_report_path(report, protected, directories=()):
         directory = path.resolve()
         if report_key in {_path_key(directory), *map(_path_key, directory.parents)}:
             raise ValueError('报告路径与所需目录冲突：' + str(report))
-    if report.exists() and not report.is_file():
-        raise ValueError('报告路径必须是文件：' + str(report))
+    if report.exists() or report.is_symlink():
+        if not report.is_file():
+            raise ValueError('报告路径必须是文件：' + str(report))
+        if not overwrite:
+            raise FileExistsError('报告文件已存在，请选择新路径或显式使用 --overwrite-report：' + str(report))
+
+
+def write_report(path, payload, protected, directories=(), *, overwrite=False):
+    """Stage bounded JSON, recheck aliases, then publish with explicit replacement policy."""
+    # Resolve the parent, not the leaf: replacement must never follow a report symlink.
+    path = path.parent.resolve() / path.name
+    with TemporaryDirectory(dir=path.parent, prefix='.vox-report-') as temporary:
+        staged = Path(temporary) / path.name
+        write_json(staged, payload)
+        validate_report_path(path, protected, directories, overwrite=overwrite)
+        if overwrite:
+            os.replace(staged, path)
+        elif os.name == 'nt':
+            # Windows rename refuses even a destination created after the last check.
+            os.rename(staged, path)
+        else:
+            # POSIX rename replaces by default; hard-link publication is no-replace.
+            os.link(staged, path)
+
+
+def add_report_arguments(parser):
+    parser.add_argument('--report', type=Path, help='将完整 JSON 结果写入新文件（默认不覆盖）')
+    parser.add_argument('--overwrite-report', action='store_true',
+                        help='允许覆盖既有报告文件；不能覆盖输入、导出音频、权重或恢复工程')
 
 
 def add_song_arguments(parser):
@@ -97,16 +125,16 @@ def main(argv=None):
     commands = parser.add_subparsers(dest='command', required=True)
     analyze = commands.add_parser('analyze', help='读取音频，输出 JSON 测量')
     analyze.add_argument('input', type=Path)
-    analyze.add_argument('--report', type=Path, help='将完整 JSON 结果写入此文件')
+    add_report_arguments(analyze)
     tune = commands.add_parser('tune', help='逐个调音，保留已有文件')
     tune.add_argument('inputs', nargs='+', type=Path)
     tune.add_argument('--output-dir', type=Path, required=True)
     tune.add_argument('--style', choices=list(PRESETS), default='经典喊麦')
     tune.add_argument('--format', choices=FORMATS, default='wav')
-    tune.add_argument('--report', type=Path, help='将完整 JSON 结果写入此文件')
+    add_report_arguments(tune)
     song = commands.add_parser('song', help='使用现有权重分轨、混音与母带处理')
     add_song_arguments(song)
-    song.add_argument('--report', type=Path, help='将完整 JSON 结果写入此文件')
+    add_report_arguments(song)
     commands.add_parser('styles', help='列出可用风格并退出')
     args = parser.parse_args(argv)
     cancel = threading.Event()
@@ -130,7 +158,8 @@ def main(argv=None):
             directories.append(cache)
             protected.extend([*weights, *song_model_state(cache)])
         if args.report is not None:
-            validate_report_path(args.report, protected, directories)
+            validate_report_path(args.report, protected, directories,
+                                 overwrite=args.overwrite_report)
             args.report.parent.mkdir(parents=True, exist_ok=True)
     except (OSError, ValueError, RuntimeError) as exc:
         print(('报告路径无效：' if args.report is not None else '权重路径无效：') + str(exc),
@@ -138,6 +167,7 @@ def main(argv=None):
         return 2
     try:
         for path, target in zip(inputs, targets):
+            published = {}
             try:
                 if target is not None and (target.exists() or target.is_symlink()):
                     raise FileExistsError('目标文件已存在：' + str(target))
@@ -155,11 +185,14 @@ def main(argv=None):
                         song_options={'style': args.style, 'target': args.target, 'master': args.master},
                     )
                     stems = rendered.document['stems']
+                    published = dict(stems=stems, recovery_project=rendered.publication_project)
                     protected.extend(Path(stem) for stem in stems.values())
+                    protected.append(Path(rendered.publication_project))
                     if args.report is not None:
-                        validate_report_path(args.report, protected, directories)
-                    audioio.encode(target, rendered.output, SR, cancel=cancel)
-                    item.update(output=str(target), stems=stems, measured=rendered.measured,
+                        validate_report_path(args.report, protected, directories,
+                                             overwrite=args.overwrite_report)
+                    exported = audioio.encode(target, rendered.output, SR, cancel=cancel)
+                    item.update(published, output=str(target), measured=rendered.measured,
                                 audit=rendered.audit, style=rendered.document['style'])
                     for key in ('song', 'separation'):
                         if key in rendered.document:
@@ -169,15 +202,19 @@ def main(argv=None):
                     doc.update(applied=True, style=args.style,
                                params=tuning_plan(session.analysis, args.style))
                     rendered = prepare(doc, cancel, _quiet_progress, session)
-                    audioio.encode(target, rendered.output, SR, cancel=cancel)
+                    exported = audioio.encode(target, rendered.output, SR, cancel=cancel)
                     item.update(output=str(target), measured=summary(rendered.measured))
                 elif args.report is not None:
                     # Keep the default summary and, with --report, the same JSON in both sinks.
                     item['intelligence'] = session.analysis
+                if target is not None and exported.warning:
+                    item['warnings'] = [exported.warning]
                 results.append(item)
             except Exception as exc:
                 failed = True
-                results.append(dict(input=str(path), error=str(exc)))
+                # The pair and its project are independent of master encoding; report
+                # how to recover them without claiming a master file was written.
+                results.append(dict(input=str(path), error=str(exc), **published))
     except KeyboardInterrupt:
         cancel.set()
         return 130
@@ -189,10 +226,10 @@ def main(argv=None):
         return 2
     print(printed)
     if args.report is not None:
-        # Recheck protected paths and publish atomically, preserving an old report on failure.
+        # Recheck after staging and use no-replace publication unless explicitly opted in.
         try:
-            validate_report_path(args.report, protected, directories)
-            write_json(args.report, payload)
+            write_report(args.report, payload, protected, directories,
+                         overwrite=args.overwrite_report)
         except (OSError, ValueError, RuntimeError) as exc:
             print('报告写入失败：' + str(exc), file=sys.stderr)
             return 2

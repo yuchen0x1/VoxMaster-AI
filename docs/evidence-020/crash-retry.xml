@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="219.106" timestamp="2026-11-18T22:27:58.072253+08:00" hostname="lenmo"><testcase classname="tests.test_compatibility_011" name="test_crash_recovery_with_relocated_audio" time="169.873"><failure message="subprocess.TimeoutExpired: Command '['E:\\移动云盘同步盘\\AI 喊麦调音工作站\\.venv\\Scripts\\python.exe', '-c', '\nimport ctypes, hashlib, os, sys, time\nfrom pathlib import Path\nfrom PySide6.QtWidgets import QApplication\nfrom vox.interface import MainWindow\napp = QApplication([])\nMainWindow.detect = lambda self: None\nwindow = MainWindow()\ndef wait():\n    deadline = time.monotonic() + 40\n    while window.worker and time.monotonic() &lt; deadline:\n        app.processEvents()\n        time.sleep(.01)\n   ...&#10;[truncated; full report in element text]">tmp_path = WindowsPath('C:/Users/lenmo/AppData/Local/Temp/pytest-of-lenmo/pytest-151/test_crash_recovery_with_reloc0')
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="219.106" timestamp="2026-11-18T22:27:58.072253+08:00"><testcase classname="tests.test_compatibility_011" name="test_crash_recovery_with_relocated_audio" time="169.873"><failure message="subprocess.TimeoutExpired: Command '['PROJECT_ROOT\\.venv\\Scripts\\python.exe', '-c', '\nimport ctypes, hashlib, os, sys, time\nfrom pathlib import Path\nfrom PySide6.QtWidgets import QApplication\nfrom vox.interface import MainWindow\napp = QApplication([])\nMainWindow.detect = lambda self: None\nwindow = MainWindow()\ndef wait():\n    deadline = time.monotonic() + 40\n    while window.worker and time.monotonic() &lt; deadline:\n        app.processEvents()\n        time.sleep(.01)\n   ...&#10;[truncated; full report in element text]">tmp_path = WindowsPath('USER_HOME/AppData/Local/Temp/pytest-user/pytest-151/test_crash_recovery_with_reloc0')
 
     def test_crash_recovery_with_relocated_audio(tmp_path):
         from vox.service import prepare
@@ -49,15 +49,15 @@
 
 tests\test_compatibility_011.py:130: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-C:\Users\lenmo\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:550: in run
+USER_HOME\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:550: in run
     stdout, stderr = process.communicate(input, timeout=timeout)
                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\lenmo\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1209: in communicate
+USER_HOME\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1209: in communicate
     stdout, stderr = self._communicate(input, endtime, timeout)
                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-self = &lt;Popen: returncode: 1 args: ['E:\\移动云盘同步盘\\AI 喊麦调音工作站\\.venv\\Scripts\\pytho...&gt;
+self = &lt;Popen: returncode: 1 args: ['PROJECT_ROOT\\.venv\\Scripts\\pytho...&gt;
 input = None, endtime = 10047.406, orig_timeout = 75
 
     def _communicate(self, input, endtime, orig_timeout):
@@ -88,6 +88,6 @@ input = None, endtime = 10047.406, orig_timeout = 75
             self.stdout_thread.join(self._remaining_time(endtime))
             if self.stdout_thread.is_alive():
 &gt;               raise TimeoutExpired(self.args, orig_timeout)
-E               subprocess.TimeoutExpired: Command '['E:\\移动云盘同步盘\\AI 喊麦调音工作站\\.venv\\Scripts\\python.exe', '-c', '\nimport ctypes, hashlib, os, sys, time\nfrom pathlib import Path\nfrom PySide6.QtWidgets import QApplication\nfrom vox.interface import MainWindow\napp = QApplication([])\nMainWindow.detect = lambda self: None\nwindow = MainWindow()\ndef wait():\n    deadline = time.monotonic() + 40\n    while window.worker and time.monotonic() &lt; deadline:\n        app.processEvents()\n        time.sleep(.01)\n    if window.worker: raise TimeoutError()\nwindow.open_path(sys.argv[1])\nwait()\nwindow.go.click()\nwait()\nif window.s.output is None: raise ValueError("missing render")\nPath(sys.argv[2]).write_text(hashlib.sha256(window.s.output.tobytes()).hexdigest())\nif os.name == "nt":\n    ctypes.windll.kernel32.TerminateProcess(ctypes.c_void_p(-1), 91)\nelse:\n    os._exit(91)\n', 'C:\\Users\\lenmo\\AppData\\Local\\Temp\\pytest-of-lenmo\\pytest-151\\test_crash_recovery_with_reloc0\\导入.wav', 'C:\\Users\\lenmo\\AppData\\Local\\Temp\\pytest-of-lenmo\\pytest-151\\test_crash_recovery_with_reloc0\\render.sha']' timed out after 75 seconds
+E               subprocess.TimeoutExpired: Command '['PROJECT_ROOT\\.venv\\Scripts\\python.exe', '-c', '\nimport ctypes, hashlib, os, sys, time\nfrom pathlib import Path\nfrom PySide6.QtWidgets import QApplication\nfrom vox.interface import MainWindow\napp = QApplication([])\nMainWindow.detect = lambda self: None\nwindow = MainWindow()\ndef wait():\n    deadline = time.monotonic() + 40\n    while window.worker and time.monotonic() &lt; deadline:\n        app.processEvents()\n        time.sleep(.01)\n    if window.worker: raise TimeoutError()\nwindow.open_path(sys.argv[1])\nwait()\nwindow.go.click()\nwait()\nif window.s.output is None: raise ValueError("missing render")\nPath(sys.argv[2]).write_text(hashlib.sha256(window.s.output.tobytes()).hexdigest())\nif os.name == "nt":\n    ctypes.windll.kernel32.TerminateProcess(ctypes.c_void_p(-1), 91)\nelse:\n    os._exit(91)\n', 'USER_HOME\\AppData\\Local\\Temp\\pytest-user\\pytest-151\\test_crash_recovery_with_reloc0\\导入.wav', 'USER_HOME\\AppData\\Local\\Temp\\pytest-user\\pytest-151\\test_crash_recovery_with_reloc0\\render.sha']' timed out after 75 seconds
 
-C:\Users\lenmo\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1630: TimeoutExpired</failure></testcase></testsuite></testsuites>
+USER_HOME\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\subprocess.py:1630: TimeoutExpired</failure></testcase></testsuite></testsuites>

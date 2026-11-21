@@ -7,6 +7,7 @@ from pathlib import Path
 import platform
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -37,20 +38,22 @@ def trusted_url(url):
         return False
 
 
-def response(url):
+def response(url, cancel=None):
     for _ in range(6):
+        check_cancel(cancel)
         if not trusted_url(url):
             raise ValueError('更新下载来源不受信任。')
         r = requests.get(url, stream=True, allow_redirects=False, timeout=(8, 30),
                          headers={'Accept-Encoding': 'identity', 'User-Agent': 'VoxMasterAI/' + __version__})
-        if r.status_code in (301, 302, 303, 307, 308):
-            location = r.headers.get('Location', '')
-            r.close()
-            if not location:
-                raise ValueError('更新重定向缺少目标。')
-            url = urljoin(url, location)
-            continue
         try:
+            check_cancel(cancel)
+            if r.status_code in (301, 302, 303, 307, 308):
+                location = r.headers.get('Location', '')
+                if not location:
+                    raise ValueError('更新重定向缺少目标。')
+                url = urljoin(url, location)
+                r.close()
+                continue
             r.raise_for_status()
         except Exception:
             r.close()
@@ -59,13 +62,21 @@ def response(url):
     raise ValueError('更新重定向次数过多。')
 
 
-def fetch(url, limit):
+def check_cancel(cancel):
+    if cancel is not None and cancel.is_set():
+        raise InterruptedError('更新已取消。')
+
+
+def fetch(url, limit, cancel=None):
+    check_cancel(cancel)
     data = bytearray()
-    with response(url) as r:
+    with response(url, cancel) as r:
         for chunk in r.iter_content(65536):
+            check_cancel(cancel)
             data.extend(chunk)
             if len(data) > limit:
                 raise ValueError('更新响应超过大小限制。')
+    check_cancel(cancel)
     return bytes(data)
 
 
@@ -98,25 +109,69 @@ def verify_manifest(body, signature):
     return data
 
 
-def check_release():
-    body = fetch(MANIFEST, 65536)
-    signature = fetch(MANIFEST + '.sig', 256).strip()
+def check_release(cancel=None):
+    body = fetch(MANIFEST, 65536, cancel)
+    signature = fetch(MANIFEST + '.sig', 256, cancel).strip()
+    check_cancel(cancel)
     return verify_manifest(body, signature)
 
 
-def download(asset, cancel, progress, directory=None):
+def _cache_path(asset, directory):
     root = Path(directory) if directory else data_directory() / 'updates'
+    # The digest, not a remote filename, determines the local destination.
+    return root / (asset['sha256'] + Path(asset['name']).suffix)
+
+
+def _installer_matches(path, asset, cancel=None):
+    check_cancel(cancel)
+    info = path.stat()
+    size = asset['size']
+    if not stat.S_ISREG(info.st_mode) or info.st_size != size:
+        return False
+    count = 0
+    digest = hashlib.sha256()
+    with path.open('rb') as source:
+        while True:
+            check_cancel(cancel)
+            chunk = source.read(256 * 1024)
+            if not chunk:
+                break
+            count += len(chunk)
+            if count > size:
+                return False
+            digest.update(chunk)
+    check_cancel(cancel)
+    return count == size and digest.hexdigest() == asset['sha256']
+
+
+def cached_installer(asset, cancel, directory=None):
+    """Find a cache entry only if its bytes match the verified release asset."""
+    check_cancel(cancel)
+    path = _cache_path(asset, directory)
+    try:
+        if _installer_matches(path, asset, cancel):
+            return path
+    except InterruptedError:
+        raise
+    except OSError:
+        # An unavailable cache must not prevent a fresh verified download.
+        pass
+    return None
+
+
+def download(asset, cancel, progress, directory=None):
+    check_cancel(cancel)
+    dest = _cache_path(asset, directory)
+    root = dest.parent
     root.mkdir(parents=True, exist_ok=True)
     if shutil.disk_usage(root).free < asset['size'] + 32 * 1024**2:
         raise OSError('更新缓存磁盘空间不足。')
-    # The digest, not a remote filename, determines the local destination.
-    dest = root / (asset['sha256'] + Path(asset['name']).suffix)
     fd, tempname = tempfile.mkstemp(prefix='download-', suffix='.part', dir=root)
     temp = Path(tempname)
     count = 0
     digest = hashlib.sha256()
     try:
-        with os.fdopen(fd, 'wb') as out, response(asset['url']) as r:
+        with os.fdopen(fd, 'wb') as out, response(asset['url'], cancel) as r:
             for chunk in r.iter_content(256 * 1024):
                 if cancel.is_set():
                     raise InterruptedError('更新已取消。')
@@ -128,12 +183,14 @@ def download(asset, cancel, progress, directory=None):
                 progress(count / asset['size'], f'{count // 1024} / {asset["size"] // 1024} KiB')
             out.flush()
             os.fsync(out.fileno())
+        check_cancel(cancel)
         if count != asset['size'] or digest.hexdigest() != asset['sha256']:
             raise ValueError('更新包长度或 SHA-256 校验失败。')
         os.replace(temp, dest)
-        return dest
-    finally:
+    except BaseException:
         temp.unlink(missing_ok=True)
+        raise
+    return dest
 
 
 def installer_asset(data):
@@ -146,7 +203,7 @@ def launch_installer(path, data):
     """Launch only a verified installer, after the user explicitly confirms installation."""
     asset = installer_asset(data)
     path = Path(path).resolve()
-    if path.stat().st_size != asset['size'] or hashlib.sha256(path.read_bytes()).hexdigest() != asset['sha256']:
+    if not _installer_matches(path, asset):
         raise ValueError('安装前复核失败，请重新下载。')
     if Version(data['version']) <= Version(__version__):
         raise ValueError('拒绝安装相同或更旧的更新。')

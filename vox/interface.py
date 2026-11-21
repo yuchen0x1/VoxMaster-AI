@@ -44,7 +44,7 @@ from .storage import (
     write_json,
 )
 from .dialogs import choices, label, ParameterDialog, ExportDialog, managed_dialog
-from .jobs import Worker
+from .jobs import PublishedFile, Worker
 from .service import prepare, tuning_plan, SR
 from .reference import comparison, describe_match, space_notes
 from .review import ReportDialog, PreviewDialog
@@ -418,29 +418,60 @@ class MainWindow(QMainWindow):
     def run_job(self, text, work, success):
         if self.worker:
             return
-        job = Worker(work, self)
+        validation = {}
+
+        def action(cancel, progress):
+            result = work(cancel, progress)
+            if isinstance(result, service.Session):
+                try:
+                    # Published stem pairs must still be delivered after a late cancel.
+                    validation['receipt'] = service.verify_session_media(
+                        result, None if result.publication_committed else cancel,
+                    )
+                except InterruptedError:
+                    raise
+                except (OSError, ValueError) as exc:
+                    failure = self.commit_error(result, exc)
+                    if failure is exc:
+                        raise
+                    raise failure from exc
+            return result
+
+        job = Worker(action, self)
         self.worker = job
         self.progress.setRange(0, 0)
         self.progress_text.setText(text)
         self.refresh_controls()
-        job.progress.connect(self.on_progress)
-        job.succeeded.connect(lambda result: self.job_success(success, result))
-        job.failed.connect(self.failed)
-        job.cancelled.connect(lambda: self.progress_text.setText("任务已取消"))
-        job.finished.connect(self.job_finished)
+        job.progress.connect(lambda f, message: self.on_progress(f, message)
+                             if self.worker is job else None)
+        job.succeeded.connect(lambda result: self.job_success(
+            success, result, job=job, receipt=validation.get('receipt'),
+        ))
+        job.failed.connect(lambda message: self.failed(message) if self.worker is job else None)
+        job.cancelled.connect(lambda: self.progress_text.setText("任务已取消")
+                              if self.worker is job else None)
+        job.finished.connect(lambda: self.job_finished(job))
         job.start()
 
-    def job_success(self, cb, result):
+    def job_success(self, cb, result, *, job=None, receipt=None):
+        if job is not None and self.worker is not job:
+            return
         if self.worker and self.worker.cancel.is_set() and not getattr(result, "publication_committed", False):
             self.progress_text.setText("任务已取消，保留上一版本")
             return
+        previous_validation = getattr(self, '_commit_validation', None)
+        self._commit_validation = (result, receipt)
         try:
             self.progress_text.setText("任务完成")
             cb(result)
         except Exception as exc:
             self.failed(str(exc))
+        finally:
+            self._commit_validation = previous_validation
 
-    def job_finished(self):
+    def job_finished(self, job=None):
+        if job is not None and self.worker is not job:
+            return
         job = self.worker
         self.worker = None
         if job:
@@ -634,10 +665,22 @@ class MainWindow(QMainWindow):
     def home(self):
         self.timeline.setFocus()
 
-    def remember(self, path):
+    def recent_paths(self):
         recent = self.settings.get("recent", [])
-        self.settings["recent"] = [str(path)] + [p for p in recent if p != str(path)][:15]
-        self.save_settings()
+        if not isinstance(recent, list):
+            return []
+        return [p for p in recent if isinstance(p, str) and p]
+
+    def remember(self, path):
+        self.settings["recent"] = [str(path)] + [
+            p for p in self.recent_paths() if p != str(path)
+        ][:15]
+        try:
+            self.save_settings()
+        except Exception as exc:
+            # Preferences are ancillary to an already committed project/checkpoint.
+            return "最近工程记录未保存：" + str(exc)
+        return None
 
     def autosave(self):
         if not self.s:
@@ -647,6 +690,13 @@ class MainWindow(QMainWindow):
         self.last_autosave = path
 
     def commit(self, session, *, path=None, reset=False, record=True):
+        # Full hashing stays on the worker; fence any change during queued delivery
+        # before writing the checkpoint or mutating live state. Direct callers also hash.
+        validated = getattr(self, '_commit_validation', None)
+        if validated is not None and validated[0] is session and validated[1] is not None:
+            service.verify_media_receipt(session, validated[1])
+        else:
+            service.verify_session_media(session)
         recovery_id = uuid.uuid4().hex if reset else getattr(self, "recovery_id", uuid.uuid4().hex)
         checkpoint = ROOT / "recovery" / (recovery_id + PROJECT_EXT)
         # Write the recovery checkpoint before changing live audio or undo history.
@@ -670,7 +720,8 @@ class MainWindow(QMainWindow):
         self.refresh()
         self.last_autosave = checkpoint
         if reset and path:
-            self.remember(path)
+            return self.remember(path)
+        return None
 
     @staticmethod
     def render_warnings(session):
@@ -697,10 +748,12 @@ class MainWindow(QMainWindow):
         previous = None if reset else self.s
 
         def success(session):
-            self.commit(session, path=path, reset=reset, record=done is None)
+            warning = self.commit(session, path=path, reset=reset, record=done is None)
             if done:
                 done()
             self.show_ready(session)
+            if warning:
+                self.progress_text.setText(self.progress_text.text() + " · " + warning)
 
         self.run_job(msg, lambda ev, pg: prepare(doc, ev, pg, previous), success)
 
@@ -782,9 +835,10 @@ class MainWindow(QMainWindow):
         try:
             save_project(p, self.s.document)
             self.path = p
-            self.remember(p)
+            warning = self.remember(p)
             self.refresh()
-            self.progress_text.setText("工程已保存 · " + Path(p).name)
+            self.progress_text.setText("工程已保存 · " + Path(p).name
+                                       + (" · " + warning if warning else ""))
         except Exception as exc:
             self.failed(str(exc))
 
@@ -967,22 +1021,35 @@ class MainWindow(QMainWindow):
         lay = QVBoxLayout(d)
         lay.addWidget(label("最近工程与恢复记录", "section"))
         files = QListWidget()
-        recent = [Path(p) for p in self.settings.get("recent", []) if Path(p).is_file()]
-        recoveries = sorted(
-            (ROOT / "recovery").glob("*.voxproj"), key=lambda p: p.stat().st_mtime, reverse=True
-        )[:20]
-        history = (
-            sorted(Path(str(self.path) + ".history").glob("*.voxproj"), reverse=True)
-            if self.path
-            else []
-        )
+        recent = [Path(p) for p in self.recent_paths()]
+
+        def modified(path):
+            try:
+                return path.stat().st_mtime
+            except OSError:
+                return float("-inf")
+
+        try:
+            recoveries = sorted(
+                (ROOT / "recovery").glob("*.voxproj"), key=modified, reverse=True
+            )[:20]
+        except OSError:
+            recoveries = []
+        try:
+            history = (
+                sorted(Path(str(self.path) + ".history").glob("*.voxproj"), reverse=True)
+                if self.path
+                else []
+            )
+        except OSError:
+            history = []
         for group, paths in [("工程", recent), ("备份", history), ("自动保存", recoveries)]:
             for path in paths:
                 try:
                     title = load_project(path)["name"]
+                    stamp = datetime.datetime.fromtimestamp(path.stat().st_mtime).strftime("%m-%d %H:%M")
                 except Exception:
                     continue
-                stamp = datetime.datetime.fromtimestamp(path.stat().st_mtime).strftime("%m-%d %H:%M")
                 files.addItem(f"{group}    {title}    {stamp}")
                 files.item(files.count() - 1).setData(Qt.UserRole, str(path))
                 files.item(files.count() - 1).setToolTip(str(path))
@@ -1285,16 +1352,27 @@ class MainWindow(QMainWindow):
         except Exception as exc:
             self.failed(str(exc))
 
+    @staticmethod
+    def commit_error(session, error):
+        if session.publication_committed and session.publication_project:
+            failure = type(error)(
+                f"{error}\n分轨已完成，但会话提交失败。可从以下工程恢复分轨与方案：\n"
+                f"{session.publication_project}"
+            )
+            failure.publication_committed = True
+            return failure
+        return error
+
     def commit_render(self, session):
         try:
             self.commit(session)
-        except OSError as exc:
-            if session.publication_committed and session.publication_project:
-                raise OSError(
-                    f"{exc}\n分轨已完成，但会话提交失败。可从以下工程恢复分轨与方案：\n"
-                    f"{session.publication_project}"
-                ) from exc
+        except InterruptedError:
             raise
+        except (OSError, ValueError) as exc:
+            failure = self.commit_error(session, exc)
+            if failure is exc:
+                raise
+            raise failure from exc
         self.show_ready(session)
 
     def separate(self):
@@ -1482,10 +1560,19 @@ class MainWindow(QMainWindow):
             return
         if Path(path).suffix.lower() != "." + fmt:
             return self.notice("目标文件扩展名与所选格式不符。")
+        def encode(cancel, _progress):
+            result = audioio.encode(path, source, SR, bits, cancel, output_rate=rate, channels=ch)
+            # Keep encoder receipts and warnings; legacy encoders returned no receipt.
+            # A late cancellation cannot undo the completed no-replace publication.
+            return result if result is not None else PublishedFile(Path(path))
+
         self.run_job(
             "编码成品",
-            lambda ev, pg: audioio.encode(path, source, SR, bits, ev, output_rate=rate, channels=ch),
-            lambda _: self.progress_text.setText("已导出 · " + str(path)),
+            encode,
+            lambda result: self.progress_text.setText(
+                "已导出 · " + str(result.path)
+                + ("\n" + result.warning if getattr(result, "warning", None) else "")
+            ),
         )
 
     def settings_view(self):

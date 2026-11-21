@@ -1,5 +1,17 @@
 import threading
+from dataclasses import dataclass
+from pathlib import Path
+from typing import ClassVar
+
 from PySide6.QtCore import QThread, Signal
+
+
+@dataclass(frozen=True)
+class PublishedFile:
+    """Receipt for an output that has already been made durable for the user."""
+
+    path: Path
+    publication_committed: ClassVar[bool] = True
 
 
 class Worker(QThread):
@@ -19,10 +31,12 @@ class Worker(QThread):
             if self.cancel.is_set() and not getattr(result, "publication_committed", False):
                 self.cancelled.emit()
             else:
-                # A published stem pair is a committed result, not a cancelable draft.
+                # Published files and stem pairs are committed results, not drafts.
                 self.succeeded.emit(result)
         except Exception as exc:
-            if self.cancel.is_set() or isinstance(exc, InterruptedError):
+            if (self.cancel.is_set() or isinstance(exc, InterruptedError)) and not getattr(
+                exc, "publication_committed", False,
+            ):
                 self.cancelled.emit()
             else:
                 self.failed.emit(str(exc) or type(exc).__name__)

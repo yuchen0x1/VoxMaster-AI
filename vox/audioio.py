@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import tempfile
+from dataclasses import dataclass
 from fractions import Fraction
 from pathlib import Path
 
@@ -132,8 +133,15 @@ def _bitrate(kind, channels):
     return channels * (160000 if kind == "mp3" else 128000)
 
 
+@dataclass(frozen=True)
+class ExportResult:
+    path: Path
+    publication_committed: bool = True
+    warning: str | None = None
+
+
 def encode(path, audio, sr, bitdepth=24, cancel=None, *, output_rate=None, channels=2):
-    """Encode to a sibling temporary file and publish only if destination is new."""
+    """Encode without overwriting; return a receipt only after publication succeeds."""
     path = Path(path)
     if path.exists():
         raise FileExistsError(f"文件已存在，请选择新文件名：{path.name}")
@@ -166,6 +174,8 @@ def encode(path, audio, sr, bitdepth=24, cancel=None, *, output_rate=None, chann
     fd, name = tempfile.mkstemp(prefix=".vox-", suffix=".part", dir=path.parent)
     os.close(fd)
     temporary = Path(name)
+    committed = False
+    warning = None
     try:
         options = {"rf64": "auto"} if kind == "wav" else {}
         with av.open(str(temporary), "w", format=muxer, options=options) as container:
@@ -201,5 +211,12 @@ def encode(path, audio, sr, bitdepth=24, cancel=None, *, output_rate=None, chann
             os.rename(temporary, path)
         else:
             os.link(temporary, path)
+        committed = True
     finally:
-        temporary.unlink(missing_ok=True)
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError as exc:
+            if not committed:
+                raise
+            warning = f"成品已保存，但临时文件未能清理（{temporary.name}）：{exc}"
+    return ExportResult(path, warning=warning)

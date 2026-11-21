@@ -3,11 +3,25 @@ import ctypes
 import hashlib
 import json
 from importlib import metadata
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import re
 import shutil
+import stat
 import sys
 import pefile
+
+# Resolve the reviewed publisher from this script's own directory. This also
+# works when stage.py is loaded by file path, without trusting import search paths.
+_shipping_docs_path = Path(__file__).resolve().with_name('shipping_docs.py')
+_shipping_docs_spec = spec_from_file_location('_voxmaster_shipping_docs', _shipping_docs_path)
+if _shipping_docs_spec is None or _shipping_docs_spec.loader is None:
+    raise ImportError(f'Cannot load shipping document publisher: {_shipping_docs_path}')
+_shipping_docs = module_from_spec(_shipping_docs_spec)
+_shipping_docs_spec.loader.exec_module(_shipping_docs)
+DOCUMENTS = _shipping_docs.DOCUMENTS
+IMAGES = _shipping_docs.IMAGES
+stage_documents = _shipping_docs.copy_documents
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist/VoxMasterAI"
@@ -85,17 +99,71 @@ def copy_licenses():
     shutil.copy2(ROOT / "packaging/build-codecs.sh", INFO)
 
 
+def _assert_safe_target(target):
+    target = Path(target)
+    try:
+        dist_root = DIST.resolve(strict=False)
+        absolute = target.absolute()
+        if not absolute.resolve(strict=False).is_relative_to(dist_root):
+            raise ValueError(f'Publication target escapes staging directory: {target}')
+    except OSError as exc:
+        raise ValueError(f'Cannot verify publication target: {target}') from exc
+    cursor = absolute
+    while True:
+        try:
+            info = cursor.lstat()
+            resolved = cursor.resolve(strict=False)
+        except FileNotFoundError:
+            pass
+        except OSError as exc:
+            raise ValueError(f'Cannot verify publication target: {target}') from exc
+        else:
+            reparse = bool(
+                getattr(info, 'st_file_attributes', 0)
+                & getattr(stat, 'FILE_ATTRIBUTE_REPARSE_POINT', 0x400)
+            )
+            if stat.S_ISLNK(info.st_mode) or reparse or resolved != cursor.absolute():
+                raise ValueError(f'Publication target contains a symlink or junction: {target}')
+        if cursor.parent == cursor:
+            break
+        cursor = cursor.parent
+
+
 def copy_documents():
-    # Include test evidence and hearing forms published alongside the manual.
-    for doc in (ROOT / "docs").rglob("*"):
-        if doc.is_file() and doc.suffix.lower() in {".md", ".png", ".json", ".jsonl", ".csv", ".txt"}:
-            target = DIST / doc.relative_to(ROOT)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(doc, target)
-    for name in ["README.md", "CHANGELOG.md", "LICENSE"]:
-        shutil.copy2(ROOT / name, DIST)
-    shutil.copy2(ROOT / "docs/THIRD_PARTY.md", INFO)
-    shutil.copy2(ROOT / "LICENSE", INFO / "VoxMaster-AI-LICENSE.txt")
+    # Validate the source-kit allowlist before the transactional documentation
+    # publisher touches the staging tree. This excludes untracked developer notes
+    # while shipping_docs supplies the explicit offline-help whitelist and rollback.
+    _assert_safe_target(DIST)
+    docs_root = DIST / 'docs'
+    _assert_safe_target(docs_root)
+    expected_docs = {
+        f'docs/{name}' for name in (*DOCUMENTS, *IMAGES, 'INDEX.md')
+    }
+    if docs_root.exists():
+        for previous in docs_root.iterdir():
+            _assert_safe_target(previous)
+            relative = previous.relative_to(DIST).as_posix()
+            if previous.is_dir() or relative not in expected_docs:
+                raise ValueError(
+                    'Stale shipping documents found. Run build.ps1 -Phase Freeze first.'
+                )
+
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from scripts.source_archive import source_files
+
+    public = {name: path for path, name in source_files(ROOT)}
+    required = {
+        'README.md', 'CHANGELOG.md', 'LICENSE', 'docs/THIRD_PARTY.md',
+        *(f'docs/{name}' for name in (*DOCUMENTS, *IMAGES)),
+    }
+    missing = sorted(required.difference(public))
+    if missing:
+        raise ValueError(
+            'Required shipping documents must be tracked source inputs: '
+            + ', '.join(missing)
+        )
+    stage_documents(ROOT, DIST)
 
 
 

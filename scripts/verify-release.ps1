@@ -54,11 +54,62 @@ function New-IsolatedInstaller([string]$ReleaseFolder, [string]$Label) {
     }
     $oldGroup = 'DefaultGroupName=VoxMaster AI'
     if (([regex]::Matches($original, [regex]::Escape($oldGroup))).Count -ne 1) { throw 'Unexpected Start Menu group' }
-    $isolatedRecipe = $original.Replace($oldLine, ('AppId={{' + $testId + '}')).Replace($oldGroup, "DefaultGroupName=VoxMaster QA $testId")
-    [IO.File]::WriteAllText($iss, $isolatedRecipe, [Text.UTF8Encoding]::new($true))
-    & $InnoCompiler /Q $iss | Out-Host
-    if ($LASTEXITCODE) { throw "Could not compile isolated $Label installer" }
-    return "$recipe\dist\VoxMasterAI-Setup.exe"
+    $oldSource = 'Source: "..\dist\VoxMasterAI\*"'
+    if (([regex]::Matches($original, [regex]::Escape($oldSource))).Count -ne 1) { throw 'Unexpected payload source in installer recipe' }
+
+    $payloadRoot = Join-Path (Resolve-Path -LiteralPath "$recipe\dist").Path 'VoxMasterAI'
+    if (-not (Test-Path -LiteralPath $payloadRoot -PathType Container)) {
+        throw 'Extracted payload root is missing'
+    }
+    $payloadItem = Get-Item -LiteralPath $payloadRoot -Force
+    if (($payloadItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw 'Extracted payload root must not be a reparse point'
+    }
+
+    # Inno expands every Source member before compiling. A deep checkout can
+    # put an otherwise valid dependency license beyond MAX_PATH even though the
+    # recipe itself is valid. Use one unique, self-owned junction as a short
+    # read-only view; never fall back to the deep path after alias creation fails.
+    $aliasRoot = Join-Path ([IO.Path]::GetTempPath()) ('vox-qa-' + [guid]::NewGuid().ToString('N'))
+    $aliasPayload = Join-Path $aliasRoot 'VoxMasterAI'
+    $createdAliasRoot = $false
+    $createdAlias = $false
+    try {
+        if (Test-Path -LiteralPath $aliasRoot) { throw 'Short payload alias already exists' }
+        $null = New-Item -ItemType Directory -Path $aliasRoot
+        $createdAliasRoot = $true
+        $alias = New-Item -ItemType Junction -Path $aliasPayload -Target $payloadRoot
+        if (($alias.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0) {
+            throw 'Short payload alias is not a reparse point'
+        }
+        $createdAlias = $true
+        $payload = Join-Path $aliasRoot 'VoxMasterAI\*'
+        if ($payload.Length -ge 120) {
+            throw "Short payload alias is unexpectedly long: $payload"
+        }
+        $isolatedRecipe = $original.Replace($oldLine, ('AppId={{' + $testId + '}')).Replace($oldGroup, "DefaultGroupName=VoxMaster QA $testId").Replace($oldSource, ('Source: "' + $payload + '"'))
+        [IO.File]::WriteAllText($iss, $isolatedRecipe, [Text.UTF8Encoding]::new($true))
+        & $InnoCompiler /Q $iss | Out-Host
+        if ($LASTEXITCODE) { throw "Could not compile isolated $Label installer" }
+        return "$recipe\dist\VoxMasterAI-Setup.exe"
+    } finally {
+        if ($createdAlias) {
+            # PowerShell 5.1 Remove-Item can throw NullReferenceException for
+            # directory junctions. Delete only the self-owned reparse point;
+            # never recurse through it into the extracted payload.
+            if (Test-Path -LiteralPath $aliasPayload) {
+                $aliasItem = Get-Item -LiteralPath $aliasPayload -Force
+                if (($aliasItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0) {
+                    throw 'Short payload alias was replaced before cleanup'
+                }
+                [IO.Directory]::Delete($aliasPayload)
+            }
+            $createdAlias = $false
+        }
+        if ($createdAliasRoot -and (Test-Path -LiteralPath $aliasRoot)) {
+            [IO.Directory]::Delete($aliasRoot)
+        }
+    }
 }
 
 try {

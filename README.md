@@ -1,8 +1,21 @@
-# VoxMaster AI 0.5.0
+# VoxMaster AI 0.5.1（源码 / 发布候选）
 
 **AI-Powered Vocal Production & Music Mixing Workstation** · 本地优先的人声制作与歌曲混音工作站
 
 [![CI](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml) · [官方下载](https://github.com/yuchen0x1/VoxMaster-AI/releases/latest) · [反馈](https://github.com/yuchen0x1/VoxMaster-AI/issues)
+
+## 0.5.1 兼容修复候选
+
+当前正式下载通道仍为 **0.5.0**；0.5.1 未获得当前版本人工听审批准前，不宣称已正式发布。
+
+- 外部多轨素材增加 SHA-256 内容身份与提交前复核，同大小/同修改时间的替换会重新读取；渲染中被改动或删除的素材不会提交到当前会话，外部别名不遮蔽内置人声/伴奏。
+- 成品和轨道导出提交后不再误报晚到取消；临时文件清理失败会明确警告，已有录音/成品仍禁止覆盖。整曲 CLI 在母带编码失败时仍返回已保存的分轨与恢复工程。
+- 多轨恢复取消或失败后可在窗口内重新定位；损坏/过短候选可改选，完整恢复前不允许应用不完整混音。异常最近工程记录不再阻断恢复入口，附属记录写入失败与工程保存成功分开提示。
+- 历史备份相对定位素材，支持随工程目录整体搬迁；模型迁移持锁后复核活动目录。官方及自定义清单检查支持取消与安全收尾，过期结果不覆盖当前状态。
+- 安装/便携版只携带明确审核的离线手册与导航，不递归附带研发日志。源码归档排除未跟踪文档、私有目录及 Windows junction 别名，校验暂存树与工作树的一致性，并兼容 LF/CRLF。
+- 叠加淡入/淡出使用有界包络乘积细分，避免端点直连造成错误静音；保留 v1 格式及撤销/重做。
+
+不更换人声 DSP 默认链、分离模型、`.voxproj` v1 格式、默认音色或导出规格，不新增运行依赖；淡变修改仅纠正用户叠加编辑的包络乘积。[整合交付与未验边界](docs/DELIVERY-051.md) · [前期能力与验证](docs/EVOLUTION-051.md) · [精确提交开源研究](docs/RESEARCH-051.md) · [安全与隐私核验](docs/SECURITY-051.md)。正式发布仍须通过本版本人工听审与发行验收门禁，不以版本号或候选构建代替公开发布。
 
 ## 0.5.0 更新
 
@@ -25,6 +38,12 @@ Windows 本地喊麦与歌曲制作工作站。人声处理继续使用测量驱
 「设备与设置 → 外观」支持 **跟随系统 / 浅色 / 深色**，切换立即预览，取消恢复原主题，保存后下次启动继续使用。原生 Qt 控件、菜单与自绘波形/图表共用语义颜色；系统标题栏及 OS 原生文件选择器仍由系统管理。较小窗口可滚动访问全部操作，时间轴增加键盘定位与选区，原音频引擎、工程格式和导出规格不变。
 
 完整界面清单、前后截图、双主题与有效 DPI 验收、独立二审和未验边界见 [UI/UX 专项报告](docs/UIUX-040.md)。上面的 0.4.0 旧截图早于新主题，不代表当前外观。
+
+![0.5.1 深色工作台，公开 FLEURS 普通话夹具](docs/evidence-051/workstation-dark.png)
+
+![0.5.1 浅色整曲工作台，公开语音与合成伴奏演示](docs/evidence-051/song-light.png)
+
+这两张截图来自本轮隔离快照的真实 Windows/Qt 渲染，不是界面设计稿；使用 CC BY 4.0 FLEURS 及合成素材，不是私人歌曲，也不代表主观音质听审通过。[更新窗口](docs/evidence-051/update-light.png) · [本轮验证边界](docs/EVOLUTION-051.md)。
 
 ## 安装和首次使用
 
@@ -67,7 +86,7 @@ python app.py --cli styles
 # VoxMasterAI-CLI.exe song full-song.mp3 --output-dir outputs --format flac
 ```
 
-结果为 JSON；批量中某文件失败会继续其他文件并以非零码退出。禁止覆盖成品；同名输入使用不同输出目录。Linux 需 PortAudio/EGL 和中文字体，macOS 需 PortAudio。用户数据分别使用 LocalAppData、XDG_DATA_HOME、Application Support；可用 VOXMASTER_DATA 指定隔离目录。[更新机制与恢复](docs/UPDATING.md)
+结果为 JSON；批量中某文件失败会继续其他文件并以非零码退出。`--report` 默认拒绝覆盖已有报告；只有明确希望替换普通 JSON 报告时才加 `--overwrite-report`。该选项不允许覆盖输入音频、计划成品、模型文件或恢复工程，也不允许覆盖成品；同名输入使用不同输出目录。Linux 需 PortAudio/EGL 和中文字体，macOS 需 PortAudio。用户数据分别使用 LocalAppData、XDG_DATA_HOME、Application Support；可用 VOXMASTER_DATA 指定隔离目录。[更新机制与恢复](docs/UPDATING.md)
 
 ## 开发和构建
 
@@ -107,7 +126,7 @@ py -3.11 -m venv .venv
 
 ## 真实音频与听审
 
-两版各自对五首本地中文混音整曲执行一键调音。把《王斩 - 习武弃文》00:57–01:09 的两个成品截取、匹配到 −23 LUFS 并隐藏版本，听者选中 A，揭盲对应 0.1.1。两版试听相差 0.001 LU。此次得到一位听者对一个片段的偏好；设备、分项打分与选择原因均未提供。另有带作者记录的真人 Rap、长音、气声等测试材料。用户歌曲仅供本机验收。[音频报告](docs/AUDIO-011.md) · [听审记录与评分表](docs/LISTENING-011.md) · [测试素材与来源](tests/mc_corpus/README.md)
+两版各自对五首本地中文混音整曲执行一键调音。把《本地私有验收素材 P001》00:57–01:09 的两个成品截取、匹配到 −23 LUFS 并隐藏版本，听者选中 A，揭盲对应 0.1.1。两版试听相差 0.001 LU。此次得到一位听者对一个片段的偏好；设备、分项打分与选择原因均未提供。另有带作者记录的真人 Rap、长音、气声等测试材料。用户歌曲仅供本机验收。[音频报告](docs/AUDIO-011.md) · [听审记录与评分表](docs/LISTENING-011.md) · [测试素材与来源](tests/mc_corpus/README.md)
 
 [使用手册](docs/MANUAL.md) · [多轨编辑手册](docs/MULTITRACK.md) · [技术架构](docs/ARCHITECTURE.md) · [工程基线与开源调研](docs/RESEARCH.md) · [音频验收记录](docs/ACCEPTANCE.md)
 

@@ -64,11 +64,76 @@ def file_hash(path, cancel=None):
     return hasher.hexdigest()
 
 
+def media_paths(document):
+    """Return every source whose identity contributes to a prepared session."""
+    paths = {"original": document["source"]}
+    if document.get("reference"):
+        paths["reference"] = document["reference"]
+    paths.update({"stem/" + name: path for name, path in document.get("stems", {}).items()})
+    supplied = {"Vocal", *document.get("stems", {})}
+    external = {name: path for name, path in
+                (document.get("studio") or {}).get("external_sources", {}).items()
+                if name not in supplied}
+    paths.update({"external/" + name: path for name, path in external.items()})
+    return paths
+
+
 def check_media(paths, session, cancel):
     for key, path in paths.items():
-        if (signature(path) != session.file_signatures[key]
-                or file_hash(path, cancel) != session.media_hashes[key]):
-            raise ValueError("处理期间素材已变更，未提交本次结果；请重新打开工程。")
+        expected_signature = session.file_signatures.get(key)
+        expected_hash = session.media_hashes.get(key)
+        if expected_signature is None or expected_hash is None:
+            raise ValueError("处理结果缺少媒体身份；未提交本次结果，请重新打开工程。")
+        try:
+            current_signature = signature(path)
+            if current_signature != expected_signature:
+                raise ValueError("处理期间素材已变更；未提交本次结果，请重新打开工程。")
+            current_hash = file_hash(path, cancel)
+        except InterruptedError:
+            raise
+        except OSError as exc:
+            raise ValueError(
+                "处理期间素材已变更或缺失；未提交本次结果，请重新打开工程。"
+            ) from exc
+        if current_hash != expected_hash:
+            raise ValueError("处理期间素材已变更；未提交本次结果，请重新打开工程。")
+
+
+def media_version(session):
+    """Bind a verification receipt to its paths, expected hashes and file versions."""
+    versions = []
+    for key, path in media_paths(session.document).items():
+        try:
+            resolved = Path(path).resolve()
+            stat = resolved.stat()
+        except OSError as exc:
+            raise ValueError(
+                "处理期间素材已变更或缺失；未提交本次结果，请重新打开工程。"
+            ) from exc
+        versions.append((
+            key, str(path), tuple(session.file_signatures.get(key, ())),
+            session.media_hashes.get(key), str(resolved), stat.st_dev, stat.st_ino,
+            stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns,
+        ))
+    return tuple(versions)
+
+
+def verify_media_receipt(session, receipt):
+    """Fence queued GUI delivery without rereading complete media on the GUI thread."""
+    if media_version(session) != receipt:
+        raise ValueError("处理期间素材已变更；未提交本次结果，请重新打开工程。")
+
+
+def verify_session_media(session, cancel=None):
+    """Hash on the worker, then return a version fence for the GUI commit boundary.
+
+    This is change detection, not a filesystem snapshot or a lock against a
+    concurrent writer that can preserve every observed metadata field.
+    """
+    before = media_version(session)
+    check_media(media_paths(session.document), session, cancel)
+    verify_media_receipt(session, before)
+    return before
 
 
 def verify_separation(document, hashes):
@@ -107,10 +172,11 @@ def tuning_plan(report, style="经典喊麦", kind="自动判断", reference=Non
 
 def prepare(doc, cancel, progress, previous=None):
     doc = deepcopy(doc)
-    paths = {"original": doc["source"]}
-    if doc.get("reference"):
-        paths["reference"] = doc["reference"]
-    paths.update({"stem/" + name: path for name, path in doc.get("stems", {}).items()})
+    paths = media_paths(doc)
+    supplied = {"Vocal", *doc.get("stems", {})}
+    external = {name: path for name, path in
+                (doc.get("studio") or {}).get("external_sources", {}).items()
+                if name not in supplied}
     signatures = {key: signature(path) for key, path in paths.items()}
     hashes = {key: file_hash(path, cancel) for key, path in paths.items()}
     provenance_warnings = verify_separation(doc, hashes)
@@ -217,15 +283,16 @@ def prepare(doc, cancel, progress, previous=None):
             session.mix_sources = dict(tracks)
         progress(0.79, "正在渲染同步混音")
         if doc.get("studio"):
-            signatures = {}
-            for key, path in doc["studio"].get("external_sources", {}).items():
-                stat = Path(path).stat()
-                signatures[key] = (path, stat.st_size, stat.st_mtime_ns)
+            # Match load_sources: supplied built-in tracks take precedence over external aliases.
+            external_keys = [key for key in external if key not in tracks]
+            for key in external_keys:
                 cached = previous.external_cache.get(key) if previous else None
-                if cached and cached[0] == signatures[key]:
+                if cached and reusable("external/" + key):
                     tracks[key] = cached[1]
             tracks = load_sources(doc["studio"], tracks, cancel=cancel)
-            session.external_cache = {key: (sig, tracks[key]) for key, sig in signatures.items()}
+            session.external_cache = {
+                key: (signatures["external/" + key], tracks[key]) for key in external_keys
+            }
         mix = MixSession(tracks, SR, state=doc.get("studio"))
         audio = mix.render(cancel=cancel)
         expected_frames = mix.frames
@@ -344,8 +411,11 @@ def separate_project(current, destination, cancel, progress, *, root=None, mode=
         audit["reconstruction"] = song.separation_evidence(current.original, vocal, music, SR, cancel)
         paths = {name: str(staging / (name + ".wav")) for name in ("Vocal", "Instrumental")}
         progress(0.65, "写入可恢复的原始分轨")
+        export_warnings = []
         for name, data in (("Vocal", vocal), ("Instrumental", music)):
-            audioio.encode(paths[name], data, SR, 32, cancel)
+            exported = audioio.encode(paths[name], data, SR, 32, cancel)
+            if exported.warning:
+                export_warnings.append(exported.warning)
         del data, vocal, music
         audit.update(
             status="verified", sample_rate=SR, frames=len(current.original),
@@ -362,6 +432,7 @@ def separate_project(current, destination, cancel, progress, *, root=None, mode=
         result = prepare(doc, cancel, lambda f, m: progress(0.72 + 0.08 * f, m), current)
         if song_options is not None:
             result = plan_song(result, cancel, lambda f, m: progress(0.8 + 0.19 * f, m), **song_options)
+        result.audit.setdefault("warnings", []).extend(export_warnings)
         if signature(source) != initial or file_hash(source, cancel) != source_digest:
             raise ValueError("分离期间原始音频发生变更，未保留本次分轨。")
         check(cancel)

@@ -179,6 +179,52 @@ def test_song_existing_export_is_not_overwritten(tmp_path, source):
     assert digest(existing) == digest(source) == FIXTURE_HASH
 
 
+def test_song_reports_recoverable_stems_when_master_export_fails(
+        tmp_path, source, monkeypatch, capsys):
+    from types import SimpleNamespace
+    from vox.cli import main
+    from vox import service
+
+    out = tmp_path / 'outputs'
+    folder = out / 'vox-stems-test'
+    recovery = folder / 'Separated.voxproj'
+    paths = {name: str(folder / f'{name}.wav') for name in ('Vocal', 'Instrumental')}
+    report = tmp_path / 'report.json'
+    weights = tmp_path / 'weights'
+    weights.mkdir()
+    for name in models_store.FILES:
+        (weights / name).touch()
+    monkeypatch.setattr(service, 'prepare', lambda *_: SimpleNamespace(analysis={}))
+    monkeypatch.setattr(models_store, 'app_data', lambda: tmp_path / 'isolated-data')
+
+    def separate(*_args, **_kwargs):
+        folder.mkdir()
+        for path in paths.values():
+            shutil.copyfile(source, path)
+        from vox.storage import project, save_project
+        doc = project(source)
+        doc['stems'] = paths.copy()
+        save_project(recovery, doc, False)
+        return SimpleNamespace(document={'stems': paths}, output=None,
+                               publication_project=str(recovery))
+
+    def encode(*_args, **_kwargs):
+        raise OSError('simulated master write failure')
+
+    monkeypatch.setattr(service, 'separate_project', separate)
+    monkeypatch.setattr(audioio, 'encode', encode)
+    assert main(['song', str(source), '--output-dir', str(out), '--weights', str(weights),
+                 '--report', str(report)]) == 1
+    printed = json.loads(capsys.readouterr().out)
+    assert printed == json.loads(report.read_text(encoding='utf-8'))
+    assert printed['results'] == [{'input': str(source), 'error': 'simulated master write failure',
+                                   'stems': paths, 'recovery_project': str(recovery)}]
+    from vox.storage import load_project
+    assert load_project(recovery)['stems'] == paths
+    assert not (out / EXPORT_NAME).exists()
+    assert digest(source) == FIXTURE_HASH
+
+
 def test_real_song_writes_stems_and_mixed_master(tmp_path, source, cached_weights):
     out, report = tmp_path / 'outputs', tmp_path / 'reports' / 'song.json'
     result = cli(tmp_path, 'song', source, '--output-dir', out, '--weights', cached_weights,

@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QLabel, QMessageBox,
                                QProgressBar, QPushButton, QTextBrowser, QVBoxLayout)
 
 from . import __version__, updating
-from .jobs import Worker
+from .jobs import PublishedFile, Worker
 
 
 class UpdateDialog(QDialog):
@@ -17,6 +17,7 @@ class UpdateDialog(QDialog):
         self.setWindowTitle('VoxMaster AI · 官方更新')
         self.resize(620, 450)
         self.job = None
+        self.close_pending = False
         self.release = None
         self.package = None
         layout = QVBoxLayout(self)
@@ -40,15 +41,36 @@ class UpdateDialog(QDialog):
         layout.addWidget(buttons)
 
     def run(self, task, complete):
+        if self.job is not None:
+            return
         self.action.setEnabled(False)
         self.job = Worker(task, self)
         self.job.progress.connect(self.on_progress)
-        self.job.succeeded.connect(complete)
+        self.job.succeeded.connect(lambda result: self.completed(complete, result))
         self.job.failed.connect(self.failure)
-        self.job.finished.connect(lambda: self.action.setEnabled(True))
+        self.job.cancelled.connect(self.cancelled)
+        self.job.finished.connect(self.job_finished)
         self.job.start()
 
+    def completed(self, complete, result):
+        if not self.close_pending or isinstance(result, PublishedFile):
+            complete(result)
+
+    def cancelled(self):
+        self.status.setText('更新已取消。')
+
+    def job_finished(self):
+        job = self.job
+        self.job = None
+        if job:
+            job.deleteLater()
+        self.action.setEnabled(True)
+        if self.close_pending:
+            self.reject()
+
     def on_progress(self, value, message):
+        if self.close_pending:
+            return
         self.progress.setValue(int(value * 100))
         elapsed = max(.01, time.monotonic() - self.started)
         size = updating.installer_asset(self.release)['size']
@@ -75,17 +97,34 @@ class UpdateDialog(QDialog):
                 self.failure(str(exc))
                 return
             self.started = time.monotonic()
-            self.run(lambda ev, pg: updating.download(asset, ev, pg), self.downloaded)
+            self.run(lambda ev, pg: PublishedFile(updating.download(asset, ev, pg)),
+                     lambda receipt: self.downloaded(receipt.path))
         else:
             self.status.setText('正在校验官方版本与 Ed25519 签名…')
-            self.run(lambda ev, pg: updating.check_release(), self.checked)
+            self.run(self.check, self.checked)
 
-    def checked(self, data):
+    @staticmethod
+    def check(cancel, _progress):
+        data = updating.check_release(cancel)
+        if Version(data['version']) > Version(__version__):
+            try:
+                asset = updating.installer_asset(data)
+            except (KeyError, ValueError):
+                pass  # The GUI shows the existing unsupported-platform or missing-asset message.
+            else:
+                return data, updating.cached_installer(asset, cancel)
+        return data, None
+
+    def checked(self, result):
+        data, cached = result
         self.notes.setPlainText(data['notes'])
         if Version(data['version']) <= Version(__version__):
             self.status.setText('已是最新版本 ' + __version__)
             return
         self.release = data
+        if cached is not None:
+            self.downloaded(cached)
+            return
         # Trust transparency: show what will be downloaded before asking to continue.
         try:
             asset = updating.installer_asset(data)
@@ -99,22 +138,24 @@ class UpdateDialog(QDialog):
     def downloaded(self, path):
         self.package = path
         self.progress.setValue(100)
-        self.status.setText('签名清单、下载大小与 SHA-256 均已校验。保存工程后可启动安装器。')
+        self.status.setText('签名清单、安装包大小与 SHA-256 均已校验。保存工程后可启动安装器。')
         self.action.setText('启动已验证的安装器')
 
     def failure(self, text):
         self.status.setText('更新失败：' + text)
 
     def reject(self):
-        if self.job and self.job.isRunning():
+        if self.job is not None:
+            self.close_pending = True
             self.job.cancel.set()
-            self.status.setText('正在取消，请等待当前网络请求结束后关闭。')
+            self.status.setText('正在取消，请等待当前更新任务结束后关闭。')
             return
+        self.close_pending = False
         super().reject()
 
     def closeEvent(self, event):
-        if self.job and self.job.isRunning():
-            self.job.cancel.set()
+        if self.job is not None:
+            self.reject()
             event.ignore()
         else:
             event.accept()
