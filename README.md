@@ -1,12 +1,12 @@
-# VoxMaster AI 0.5.1（源码 / 发布候选）
+# VoxMaster AI 0.5.1
 
 **AI-Powered Vocal Production & Music Mixing Workstation** · 本地优先的人声制作与歌曲混音工作站
 
 [![CI](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml) · [官方下载](https://github.com/yuchen0x1/VoxMaster-AI/releases/latest) · [反馈](https://github.com/yuchen0x1/VoxMaster-AI/issues)
 
-## 0.5.1 兼容修复候选
+## 0.5.1 兼容修复
 
-当前正式下载通道仍为 **0.5.0**；0.5.1 未获得当前版本人工听审批准前，不宣称已正式发布。
+制作人已确认：“0.5.1 听审通过，接受已知限制”。官方下载版本和正式公开状态以 GitHub Release 及已验签的官方更新清单为准。
 
 - 外部多轨素材增加 SHA-256 内容身份与提交前复核，同大小/同修改时间的替换会重新读取；渲染中被改动或删除的素材不会提交到当前会话，外部别名不遮蔽内置人声/伴奏。
 - 成品和轨道导出提交后不再误报晚到取消；临时文件清理失败会明确警告，已有录音/成品仍禁止覆盖。整曲 CLI 在母带编码失败时仍返回已保存的分轨与恢复工程。
@@ -15,7 +15,7 @@
 - 安装/便携版只携带明确审核的离线手册与导航，不递归附带研发日志。源码归档排除未跟踪文档、私有目录及 Windows junction 别名，校验暂存树与工作树的一致性，并兼容 LF/CRLF。
 - 叠加淡入/淡出使用有界包络乘积细分，避免端点直连造成错误静音；保留 v1 格式及撤销/重做。
 
-不更换人声 DSP 默认链、分离模型、`.voxproj` v1 格式、默认音色或导出规格，不新增运行依赖；淡变修改仅纠正用户叠加编辑的包络乘积。[整合交付与未验边界](docs/DELIVERY-051.md) · [前期能力与验证](docs/EVOLUTION-051.md) · [精确提交开源研究](docs/RESEARCH-051.md) · [安全与隐私核验](docs/SECURITY-051.md)。正式发布仍须通过本版本人工听审与发行验收门禁，不以版本号或候选构建代替公开发布。
+不更换人声 DSP 默认链、分离模型、`.voxproj` v1 格式、默认音色或导出规格，不新增运行依赖；淡变修改仅纠正用户叠加编辑的包络乘积。[候选验收与未验边界](docs/DELIVERY-051.md) · [前期能力与验证](docs/EVOLUTION-051.md) · [精确提交开源研究](docs/RESEARCH-051.md) · [候选安全与隐私核验](docs/SECURITY-051.md)。本版听审批准与限制接受已明确记录；准确标签、构建、隔离安装验收与签名清单核验仍是正式发布门禁，不以版本号或候选构建代替公开发布。
 
 ## 0.5.0 更新
 
