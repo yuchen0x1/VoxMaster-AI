@@ -15,6 +15,7 @@ class Response:
     def __init__(self, blocks):
         self.blocks = blocks
         self.closed = False
+        self.headers = {}
 
     def __enter__(self):
         return self
@@ -52,6 +53,30 @@ def test_cancelled_response_is_closed_and_not_parsed(monkeypatch, at_eof):
     monkeypatch.setattr(settings_dialog.requests, "get", lambda *_a, **_k: response)
     with pytest.raises(InterruptedError, match="取消"):
         settings_dialog.check_version(URL, cancel)
+    assert response.closed
+
+
+def test_check_rejects_oversized_content_length_before_reading(monkeypatch):
+    response = Response(())
+    response.headers = {"Content-Length": "65537"}
+    monkeypatch.setattr(settings_dialog.requests, "get", lambda *_a, **_k: response)
+    with pytest.raises(ValueError, match="超过 64 KiB"):
+        settings_dialog.check_version(URL)
+    assert response.closed
+
+
+def test_check_has_a_total_deadline_for_trickling_responses(monkeypatch):
+    clock = iter((100.0, 100.0, 131.0))
+    monkeypatch.setattr(settings_dialog.time, "monotonic", lambda: next(clock))
+
+    class SlowResponse(Response):
+        def iter_content(self, _size):
+            yield b"{\"version\":\"99.0.0\"}"
+
+    response = SlowResponse(())
+    monkeypatch.setattr(settings_dialog.requests, "get", lambda *_a, **_k: response)
+    with pytest.raises(TimeoutError, match="超时"):
+        settings_dialog.check_version(URL)
     assert response.closed
 
 

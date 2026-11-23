@@ -4,6 +4,7 @@ import json
 import queue
 import tempfile
 import threading
+import time
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -33,6 +34,10 @@ from .hardware import resolve_output
 from .theme import manager as theme_manager, normalize_mode, set_status
 
 
+_CHECK_DEADLINE = 30
+_CHECK_MAX_BYTES = 65536
+
+
 def _valid_url(url):
     try:
         parsed = urlparse(url)
@@ -53,7 +58,14 @@ def _check_cancelled(cancel):
 def check_version(url, cancel=None):
     if not _valid_url(url):
         raise ValueError("请输入不含账号信息的 HTTPS 清单地址。")
-    _check_cancelled(cancel)
+    deadline = time.monotonic() + _CHECK_DEADLINE
+
+    def checkpoint():
+        _check_cancelled(cancel)
+        if time.monotonic() >= deadline:
+            raise TimeoutError("更新清单检查超时，请稍后重试。")
+
+    checkpoint()
     with requests.get(
         url,
         headers={"Accept": "application/json"},
@@ -61,16 +73,32 @@ def check_version(url, cancel=None):
         stream=True,
         timeout=(4, 8),
     ) as response:
+        checkpoint()
         if response.status_code != 200:
             raise ValueError(f"服务器返回 HTTP {response.status_code}，请使用清单的直接地址。")
+        headers = getattr(response, "headers", {})
+        content_length = headers.get("Content-Length")
+        if content_length is not None:
+            try:
+                content_length = int(content_length)
+            except (TypeError, ValueError) as exc:
+                raise ValueError("更新清单长度无效。") from exc
+            if content_length < 0:
+                raise ValueError("更新清单长度无效。")
+            if content_length > _CHECK_MAX_BYTES:
+                raise ValueError("更新清单超过 64 KiB。")
         data = bytearray()
         for block in response.iter_content(8192):
-            _check_cancelled(cancel)
+            checkpoint()
             data.extend(block)
-            if len(data) > 65536:
+            if len(data) > _CHECK_MAX_BYTES:
                 raise ValueError("更新清单超过 64 KiB。")
-    _check_cancelled(cancel)
-    manifest = json.loads(data)
+        checkpoint()
+    checkpoint()
+    try:
+        manifest = json.loads(data)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("更新清单不是有效 JSON。") from exc
     if not isinstance(manifest, dict) or not isinstance(manifest.get("version"), str):
         raise ValueError("更新清单需要字符串字段 version。")
     latest = Version(manifest["version"])
