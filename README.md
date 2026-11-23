@@ -4,6 +4,10 @@
 
 [![CI](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml) · [官方下载](https://github.com/yuchen0x1/VoxMaster-AI/releases/latest) · [反馈](https://github.com/yuchen0x1/VoxMaster-AI/issues)
 
+## 0.5.2 更新
+
+自定义 HTTPS 更新清单检查现在有 30 秒总时限，并在读取前拒绝超过 64 KiB 的响应；慢速网络不会让设置窗口的后台检查无限等待。官方更新仍只接受签名清单，且自定义清单只用于查询版本，不参与下载或安装。
+
 ## 0.5.1 兼容修复
 
 制作人已确认：“0.5.1 听审通过，接受已知限制”。官方下载版本和正式公开状态以 GitHub Release 及已验签的官方更新清单为准。
