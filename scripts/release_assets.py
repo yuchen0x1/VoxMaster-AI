@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import sys
 import tempfile
@@ -16,6 +17,17 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from vox import __version__
 from vox.updating import RELEASES, verify_manifest
+
+
+def release_notes(root):
+    text = (Path(root) / 'docs/releases/release-notes.md').read_text('utf-8')
+    match = re.search(
+        r'(?ms)^## \d+\.\d+\.\d+[^\n]*\n(.*?)(?=^## \d+\.\d+\.\d+[^\n]*\n|\Z)',
+        text,
+    )
+    if match is None:
+        raise ValueError('Release notes do not contain a version section')
+    return match.group(1).strip()
 
 
 def prepare_release(root, key):
@@ -45,7 +57,7 @@ def prepare_release(root, key):
         qt = staging / 'Qt-6.12.0-Corresponding-Sources.zip'
         shutil.copy2(root / 'dist' / qt.name, qt)
         files.append(qt)
-        notes = (root / 'docs/releases/release-notes.md').read_text('utf-8').split('\n## ', 2)[1]
+        notes = release_notes(root)
         manifest = dict(schema=1, version=__version__, minimum_version='0.1.1',
                         published_at=dt.datetime.now(dt.timezone.utc).isoformat(), notes=notes,
                         assets=assets)
@@ -68,7 +80,11 @@ def prepare_release(root, key):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--key-file', type=Path)
+    parser.add_argument('--notes-only', type=Path)
     args = parser.parse_args()
+    if args.notes_only:
+        args.notes_only.write_text(release_notes(ROOT), 'utf-8')
+        return
     key_bytes = args.key_file.read_bytes() if args.key_file else os.environ['UPDATE_SIGNING_KEY'].encode()
     key = serialization.load_pem_private_key(key_bytes, password=None)
     prepare_release(ROOT, key)

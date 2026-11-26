@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import math
+from numbers import Real
 from pathlib import Path
 
 import numpy as np
@@ -97,6 +98,10 @@ def mixer_strip():
 
 
 def number(value, low, high):
+    # Reject JSON strings and booleans instead of coercing them.  Coercion
+    # allowed malformed project files to load and fail only when rendering.
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
+        raise ValueError("工程包含无效的混音参数")
     value = float(value)
     if not math.isfinite(value) or not low <= value <= high:
         raise ValueError("工程包含无效的混音参数")
@@ -211,6 +216,17 @@ class Session:
 
     def set_param(self, track, key, value):
         target = self.state if key == "master_db" else self.strip(track)
+        if key == "master_db":
+            value = number(value, -60, 12)
+        elif key in {"gain", "pan", "highpass", "drive"}:
+            bounds = {"gain": (-60, 12), "pan": (-1, 1),
+                      "highpass": (0, 500), "drive": (0, 4)}[key]
+            value = number(value, *bounds)
+        elif key in {"mute", "solo"}:
+            if not isinstance(value, bool):
+                raise ValueError("无效的轨道开关")
+        else:
+            raise KeyError(key)
         if target[key] != value:
             self.checkpoint()
             target[key] = value

@@ -80,7 +80,10 @@ def test_isolated_recipe_uses_canonical_payload_paths(tmp_path):
     assert result['compiled'] is True
     expected = work / 'current/dist/VoxMasterAI-Setup.exe'
     assert Path(result['installer']) == expected
-    assert long_member.is_file()
+    path = str(long_member)
+    if os.name == 'nt':
+        path = '\\\\?\\' + path
+    assert Path(path).is_file()
     recipe = (tmp_path / 'compiled-recipe.txt').read_text(encoding='utf-8-sig')
     assert 'AppId={{00000000-0000-0000-0000-000000000051}' in recipe
     assert 'DefaultGroupName=VoxMaster QA 00000000-0000-0000-0000-000000000051' in recipe

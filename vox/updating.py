@@ -11,6 +11,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 from urllib.parse import urljoin, urlparse
 
 from cryptography.exceptions import InvalidSignature
@@ -26,6 +27,7 @@ REPOSITORY = 'yuchen0x1/VoxMaster-AI'
 RELEASES = 'https://github.com/' + REPOSITORY + '/releases'
 MANIFEST = RELEASES + '/latest/download/update.json'
 MAX_PACKAGE = 512 * 1024**2
+METADATA_TIMEOUT = 30
 
 
 def trusted_url(url):
@@ -68,15 +70,35 @@ def check_cancel(cancel):
 
 
 def fetch(url, limit, cancel=None):
-    check_cancel(cancel)
+    deadline = time.monotonic() + METADATA_TIMEOUT
+
+    def checkpoint():
+        check_cancel(cancel)
+        if time.monotonic() >= deadline:
+            raise TimeoutError('更新清单检查超时，请稍后重试。')
+
+    checkpoint()
     data = bytearray()
     with response(url, cancel) as r:
-        for chunk in r.iter_content(65536):
-            check_cancel(cancel)
+        checkpoint()
+        length = getattr(r, 'headers', {}).get('Content-Length')
+        if length is not None:
+            try:
+                length = int(length)
+            except (TypeError, ValueError) as exc:
+                raise ValueError('更新响应长度无效。') from exc
+            if length < 0:
+                raise ValueError('更新响应长度无效。')
+            if length > limit:
+                raise ValueError('更新响应超过大小限制。')
+        # Metadata is small. Read each available byte so a trickling server cannot
+        # keep a large iter_content chunk pending beyond the deadline.
+        for chunk in r.iter_content(1):
+            checkpoint()
             data.extend(chunk)
             if len(data) > limit:
                 raise ValueError('更新响应超过大小限制。')
-    check_cancel(cancel)
+    checkpoint()
     return bytes(data)
 
 

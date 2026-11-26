@@ -1,5 +1,5 @@
 altgraph==0.17.5
-av==18.1.0
+av==18.1.1
 certifi==2026.11.20
 cffi==2.1.1
 charset-normalizer==3.5.2

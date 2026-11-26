@@ -88,7 +88,9 @@ def check_version(url, cancel=None):
             if content_length > _CHECK_MAX_BYTES:
                 raise ValueError("更新清单超过 64 KiB。")
         data = bytearray()
-        for block in response.iter_content(8192):
+        # A larger chunk can remain pending indefinitely while a server trickles
+        # bytes more frequently than the socket read timeout.
+        for block in response.iter_content(1):
             checkpoint()
             data.extend(block)
             if len(data) > _CHECK_MAX_BYTES:

@@ -52,9 +52,17 @@ def save_settings(**changes):
     with locked(base, "model-config"):
         cfg = settings()
         cfg.update(changes)
-        with tempfile.NamedTemporaryFile(dir=base, mode="w", encoding="utf-8", delete=False) as tmp:
-            json.dump(cfg, tmp, ensure_ascii=False)
-        Path(tmp.name).replace(base / "model-center.json")
+        temporary = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                dir=base, mode="w", encoding="utf-8", delete=False,
+            ) as tmp:
+                temporary = Path(tmp.name)
+                json.dump(cfg, tmp, ensure_ascii=False)
+            temporary.replace(base / "model-center.json")
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
 
 
 def directory():

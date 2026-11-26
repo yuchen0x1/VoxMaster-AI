@@ -49,6 +49,20 @@ def test_version_one_project_with_omitted_optional_fields_remains_compatible(tmp
     assert loaded["history"] == []
 
 
+def test_empty_optional_media_references_remain_empty_on_load(tmp_path):
+    path = tmp_path / "empty-media.voxproj"
+    raw = storage.project("recording.wav")
+    raw["stems"] = {"Vocal": "", "Instrumental": "backing.wav"}
+    raw["studio"] = {"schema": 1, "external_sources": {"FX": ""}}
+    storage.write_json(path, raw)
+
+    loaded = storage.load_project(path)
+
+    assert loaded["stems"]["Vocal"] == ""
+    assert loaded["stems"]["Instrumental"] == str((tmp_path / "backing.wav").resolve())
+    assert loaded["studio"]["external_sources"]["FX"] == ""
+
+
 @pytest.mark.parametrize(
     ("field", "bad_value"),
     [

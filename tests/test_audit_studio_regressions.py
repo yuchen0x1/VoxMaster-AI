@@ -103,6 +103,27 @@ class MoveTransactionTests(unittest.TestCase):
             self.assertEqual(session.undo_stack, undo_before)
             self.assertEqual(session.redo_stack, redo_before)
 
+    def test_numeric_strings_and_booleans_are_rejected_before_render(self):
+        session = self.make_session()
+        malformed = deepcopy(session.state)
+        malformed["master_db"] = "-3"
+        with self.assertRaises(ValueError):
+            Session(session.sources, self.rate, malformed)
+
+        malformed = deepcopy(session.state)
+        malformed["tracks"]["Vocal"]["gain"] = True
+        with self.assertRaises(ValueError):
+            Session(session.sources, self.rate, malformed)
+
+    def test_set_param_validates_numeric_and_boolean_values(self):
+        session = self.make_session()
+        with self.assertRaises(ValueError):
+            session.set_param("Vocal", "gain", "2")
+        with self.assertRaises(ValueError):
+            session.set_param("Vocal", "mute", 1)
+        with self.assertRaises(ValueError):
+            session.set_param(None, "master_db", float("nan"))
+
 
 class ClockTextTests(unittest.TestCase):
     def test_rounds_before_splitting_minutes_and_seconds(self):

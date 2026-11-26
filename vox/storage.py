@@ -127,13 +127,19 @@ def load_project(path):
     for field in ("source", "reference"):
         if data[field]:
             data[field] = str((Path(path).parent / data[field]).resolve())
+    # Empty optional references are intentionally preserved as empty strings.
+    # Resolving ``parent / ""`` would silently turn a missing stem into the
+    # project directory, which later makes media loading fail with a confusing
+    # "is a directory" error.
     data["stems"] = {
-        key: str((Path(path).parent / val).resolve()) for key, val in data["stems"].items()
+        key: str((Path(path).parent / val).resolve()) if val else ""
+        for key, val in data["stems"].items()
     }
     if data.get("studio"):
         ext = data["studio"].get("external_sources", {})
         data["studio"]["external_sources"] = {
-            key: str((Path(path).parent / val).resolve()) for key, val in ext.items()
+            key: str((Path(path).parent / val).resolve()) if val else ""
+            for key, val in ext.items()
         }
     return data
 
