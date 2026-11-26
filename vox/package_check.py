@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+import sys
 import tempfile
 import traceback
 
@@ -38,8 +39,9 @@ def main(args):
         evidence["qt_platform"] = app.platformName()
         evidence["portaudio"] = sounddevice.get_portaudio_version()
         from importlib.metadata import version
+        runtime = "onnxruntime-directml" if sys.platform == "win32" else "onnxruntime"
         evidence["runtimes"] = {pkg: version(pkg) for pkg in (
-            "av", "numpy", "scipy", "sounddevice", "pyside6-essentials", "onnxruntime-directml"
+            "av", "numpy", "scipy", "sounddevice", "pyside6-essentials", runtime
         )}
         evidence["providers"] = onnxruntime.get_available_providers()
         evidence["ffmpeg"] = av.ffmpeg_version_info

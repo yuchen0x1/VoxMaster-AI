@@ -989,6 +989,9 @@ class MainWindow(QMainWindow):
             peak = float(np.abs(block).max()) if len(block) else 0
             self.meter.setText(f"{20 * np.log10(max(peak, 1e-6)):.1f} dBFS")
         elif self.play_btn.text() == "Ⅱ  暂停":
+            # The stream can finish between timer ticks; retain its final cursor.
+            self.cursor = self.player.position
+            self.player.pause()
             self.spectrum.update_audio([])
             self.meter.setText("— dBFS")
         self.play_btn.setText("Ⅱ  暂停" if self.player.playing else "▶  播放")

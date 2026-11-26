@@ -1,6 +1,6 @@
 # 第三方软件及再分发说明
 
-适用于 VoxMaster AI 0.4.0 Windows x64 本机构建。安装目录 ThirdParty 保存 wheel 随附的许可证、版权声明、嵌套组件声明及版本元数据。requirements.txt 同时锁定运行、测试和打包工具。应用自有代码按仓库根目录 [MIT LICENSE](../LICENSE) 授权，第三方组件、模型和媒体不因此变更许可。
+适用于 VoxMaster AI 0.5.3 Windows x64 发行配方；最终捆绑版本仍以构建验收结果为准。安装目录 ThirdParty 保存 wheel 随附的许可证、版权声明、嵌套组件声明及版本元数据。requirements.txt 同时锁定运行、测试和打包工具。应用自有代码按仓库根目录 [MIT LICENSE](../LICENSE) 授权，第三方组件、模型和媒体不因此变更许可。
 
 0.4.0 **未新增运行依赖、模型权重、商业 SDK 或第三方源代码**。新歌曲流程只组合已有 NumPy / SciPy DSP、PyAV、ONNX Runtime 与 Qt；未复制竞品实现。详见 [竞品与四层许可研究](RESEARCH-040.md)。模型条款不明确的组件继续按需获取，不随发行包分发权重。
 
@@ -9,7 +9,7 @@
 | CPython 3.11.18 | PSF License 及 Python-LICENSE.txt 所列历史与标准库第三方许可。|
 | Qt 6.12、PySide6 Essentials、Shiboken6 | Qt Widgets 原生界面。使用开源 LGPLv3 选项，保留可替换的 DLL、PySide6 绑定及 LGPL/GPL 文本。Qt 内嵌的 ICU、图像、字体与压缩库另有第三方声明。|
 | NumPy、SciPy | BSD-3-Clause。wheel 中还含 OpenBLAS、LAPACK、运行库与其他第三方组件，各包 LICENSE 与附属文件列出正文。|
-| PyAV 18.1.0 | BSD-3-Clause。分发包的 PyAV 扩展导入表已恢复标准 FFmpeg ABI DLL 名称，以便更换编解码库。|
+| PyAV 18.1.1 | BSD-3-Clause。使用未撤回的修复版本；分发包的 PyAV 扩展导入表已恢复标准 FFmpeg ABI DLL 名称，以便更换编解码库。|
 | FFmpeg 8.1.2 | 本包从官方源构建共享库，LGPL-2.1-or-later。配置、源码压缩包、许可证和构建脚本随包提供。支持本地文件、音频解码、滤镜与编码。|
 | LAME 3.100、winpthreads | MP3 编码器 LGPL，带对应 MSYS2 源码包。winpthreads 版权与例外见 COPYING.winpthreads。|
 | python-sounddevice、PortAudio | MIT 系列许可。分发 Windows x64 常规 PortAudio 动态库，支持系统音频设备。|
@@ -24,7 +24,7 @@
 - [PySide 官方版本标签](https://code.qt.io/cgit/pyside/pyside-setup.git/tag/?h=v6.12.0)
 - [Qt 第三方组件说明与授权](https://doc.qt.io/qt-6/licenses-used-in-qt.html)
 - [FFmpeg 源码与授权条件](https://ffmpeg.org/legal.html)
-- [PyAV 源码与版本](https://github.com/PyAV-Org/PyAV/tree/v18.1.0)
+- [PyAV 源码与版本](https://github.com/PyAV-Org/PyAV/tree/v18.1.1)
 - [MSYS2 LAME 源码包](https://repo.msys2.org/mingw/sources/mingw-w64-lame-3.100-3.src.tar.zst)
 - [DirectML 官方包和许可](https://www.nuget.org/packages/Microsoft.AI.DirectML/1.15.4)
 - [Microsoft Visual C++ 可再分发条款](https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files)

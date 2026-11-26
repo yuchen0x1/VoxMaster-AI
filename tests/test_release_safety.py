@@ -67,6 +67,47 @@ def test_release_only_publishes_explicit_assets(release_root, release_key):
     assert not list(out.parent.glob('.vox-release-*'))
 
 
+def test_release_manifest_contains_all_current_version_notes(release_root, release_key):
+    notes = release_root / 'docs/releases/release-notes.md'
+    notes.write_text(
+        '# Releases\n\n## 0.5.3 · 2026-11-27\n\n'
+        '## 📢 版本概述\n\n概述内容。\n\n'
+        '## 🐛 问题修复\n\n完整修复内容。\n\n'
+        '## 🧪 验证结果\n\n验证内容。\n\n'
+        '## 0.5.2 · 2026-11-23\n\n旧版内容。\n',
+        'utf-8',
+    )
+
+    out = release_assets.prepare_release(release_root, release_key)
+    manifest = updating.verify_manifest((out / 'update.json').read_bytes(),
+                                        (out / 'update.json.sig').read_bytes())
+
+    assert '概述内容。' in manifest['notes']
+    assert '完整修复内容。' in manifest['notes']
+    assert '验证内容。' in manifest['notes']
+    assert '旧版内容。' not in manifest['notes']
+
+
+def test_notes_only_cli_needs_no_signing_key(release_root, monkeypatch):
+    notes = release_root / 'docs/releases/release-notes.md'
+    notes.write_text(
+        '# Releases\n\n## 0.5.3 · 2026-11-27\n\n'
+        '## 📢 版本概述\n\n当前正文。\n\n## 🐛 修复\n\n本次修复。\n\n'
+        '## 0.5.2 · 2026-11-23\n\n历史正文。\n',
+        'utf-8',
+    )
+    output = release_root / 'dist/release-notes.md'
+    monkeypatch.setattr(release_assets, 'ROOT', release_root)
+    monkeypatch.setattr(sys, 'argv', ['release_assets.py', '--notes-only', str(output)])
+
+    release_assets.main()
+
+    body = output.read_text('utf-8')
+    assert body.startswith('## 📢 版本概述')
+    assert '本次修复。' in body
+    assert '历史正文。' not in body
+
+
 def test_release_wrong_signing_key_cleans_only_temporary_files(release_root, release_key):
     with pytest.raises(ValueError, match='签名'):
         release_assets.prepare_release(release_root, Ed25519PrivateKey.generate())
@@ -141,6 +182,8 @@ def test_release_workflow_does_not_publish_on_tag_push():
     workflow = (Path(__file__).resolve().parents[1] / '.github/workflows/release.yml').read_text('utf-8')
     assert 'run: ./scripts/verify-release.ps1 -IsolatedRegistration' in workflow
     assert 'Stable publication requires the exact tag' in workflow
+    assert '--notes-only dist/release-notes.md' in workflow
+    assert '--notes-file dist/release-notes.md' in workflow
     for name in ('Prepare signed stable update assets', 'Publish explicitly approved stable release',
                  'Verify the exact published version through the public update channel'):
         step = workflow.split('- name: ' + name + '\n', 1)[1].split('\n      - ', 1)[0]

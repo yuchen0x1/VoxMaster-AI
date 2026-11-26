@@ -111,7 +111,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create $env:GITHUB_REF_NAME --verify-tag --draft --latest=false --title "VoxMaster AI $env:GITHUB_REF_NAME" --notes-file docs/releases/release-notes.md
+          .venv/Scripts/python scripts/release_assets.py --notes-only dist/release-notes.md
+          if ($LASTEXITCODE) { throw 'Could not extract current version release notes' }
+          gh release create $env:GITHUB_REF_NAME --verify-tag --draft --latest=false --title "VoxMaster AI $env:GITHUB_REF_NAME" --notes-file dist/release-notes.md
           if ($LASTEXITCODE) { throw 'Release creation failed' }
           gh release upload $env:GITHUB_REF_NAME (Get-ChildItem dist/release -File).FullName
           if ($LASTEXITCODE) { throw 'Asset upload failed; release remains a draft' }

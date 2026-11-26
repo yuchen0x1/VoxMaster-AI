@@ -1,8 +1,15 @@
-# VoxMaster AI 0.5.1
+# VoxMaster AI 0.5.3
 
 **AI-Powered Vocal Production & Music Mixing Workstation** · 本地优先的人声制作与歌曲混音工作站
 
 [![CI](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/yuchen0x1/VoxMaster-AI/actions/workflows/ci.yml) · [官方下载](https://github.com/yuchen0x1/VoxMaster-AI/releases/latest) · [反馈](https://github.com/yuchen0x1/VoxMaster-AI/issues)
+
+## 0.5.3 更新
+
+- 修复自然播放结束后再次播放只重播末尾片段的问题，并在模型设置写入失败时清理临时文件。
+- 更新检查增加官方清单总时限、长度早拒绝和逐字节边界检查；跨平台包诊断使用对应的 ONNX Runtime 分发名。
+- 修复空素材引用被解析为工程目录，以及损坏混音工程的数值字符串/布尔参数延迟到渲染阶段才失败的问题。
+- 升级 PyAV 至 18.1.1，避开 18.1.0 的已撤回版本。
 
 ## 0.5.2 更新
 
