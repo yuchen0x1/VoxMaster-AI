@@ -67,6 +67,37 @@ def test_natural_completion_releases_stream_and_next_play_restarts(window):
     assert window.player.playing
 
 
+def test_seek_before_completion_tick_keeps_requested_position(window):
+    window.play()
+    advance(window.player, 4000)
+    window.tick()
+    with pytest.raises(sd.CallbackStop):
+        advance(window.player, 1024)
+    window.player._stream.finished()
+
+    window.seek(0.025)
+
+    assert window.cursor == 0.025
+    assert window.timeline.cursor == 0.025
+    assert not window.player.playing
+    window.play()
+    assert window.player.position == pytest.approx(0.025, abs=1 / 44100)
+
+
+def test_play_before_completion_tick_restarts_from_zero(window):
+    window.play()
+    advance(window.player, 4000)
+    window.tick()
+    with pytest.raises(sd.CallbackStop):
+        advance(window.player, 1024)
+    window.player._stream.finished()
+
+    window.play()
+
+    assert window.player.position == 0
+    assert window.player.playing
+
+
 def test_manual_pause_preserves_position_for_resume(window):
     window.play()
     advance(window.player, 1764)

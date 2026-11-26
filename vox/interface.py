@@ -918,6 +918,7 @@ class MainWindow(QMainWindow):
             self.start_playback()
 
     def seek(self, t):
+        self._sync_finished_playback()
         playing = self.player.playing
         if playing:
             self.player.stop()
@@ -964,12 +965,23 @@ class MainWindow(QMainWindow):
         self.player.volume = gain
 
     def play(self):
+        self._sync_finished_playback()
         if self.player.playing:
             self.cursor = self.player.position
             self.player.pause()
         else:
             self.start_playback()
         self.tick()
+
+    def _sync_finished_playback(self):
+        """Commit a PortAudio completion before another transport action."""
+        if self.player.playing or self.play_btn.text() != "Ⅱ  暂停":
+            return
+        self.cursor = self.player.position
+        self.player.pause()
+        self.spectrum.update_audio([])
+        self.meter.setText("— dBFS")
+        self.play_btn.setText("▶  播放")
 
     def stop(self):
         self.player.stop()
@@ -989,11 +1001,7 @@ class MainWindow(QMainWindow):
             peak = float(np.abs(block).max()) if len(block) else 0
             self.meter.setText(f"{20 * np.log10(max(peak, 1e-6)):.1f} dBFS")
         elif self.play_btn.text() == "Ⅱ  暂停":
-            # The stream can finish between timer ticks; retain its final cursor.
-            self.cursor = self.player.position
-            self.player.pause()
-            self.spectrum.update_audio([])
-            self.meter.setText("— dBFS")
+            self._sync_finished_playback()
         self.play_btn.setText("Ⅱ  暂停" if self.player.playing else "▶  播放")
         self.clock.setText(timecode(self.cursor))
         if abs(self.timeline.cursor - self.cursor) > 1e-5:
